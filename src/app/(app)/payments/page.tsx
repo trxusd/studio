@@ -138,14 +138,14 @@ export default function PaymentsPage() {
                  <Label key={plan.id} htmlFor={plan.id} className={cn("flex flex-col items-start space-y-1 rounded-md border p-4 cursor-pointer transition-all", selectedPlan === plan.id && "border-primary ring-2 ring-primary")}>
                   <RadioGroupItem value={plan.id} id={plan.id} className="sr-only" />
                   <div className="flex justify-between w-full items-center">
-                    <span className="font-bold text-lg">{plan.name} Plan</span>
+                    <span className="font-bold text-lg">{plan.name}</span>
                     {plan.popular && <Badge variant="default">Most Popular</Badge>}
                   </div>
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-bold">${plan.price}</span>
                     <span className="text-sm text-muted-foreground">({plan.htg})</span>
                   </div>
-                  <span className="text-sm text-muted-foreground">{plan.value || `Get started with the ${plan.name} plan`}</span>
+                   <span className="text-sm text-muted-foreground">{plan.value || `Get started with the ${plan.name} plan`}</span>
                 </Label>
               ))}
             </RadioGroup>
@@ -163,14 +163,12 @@ export default function PaymentsPage() {
               <Label className="mb-2 block font-medium">1. Select Payment Method</Label>
                <RadioGroup value={selectedPaymentMethod} className="grid grid-cols-3 gap-4" onValueChange={(v) => setSelectedPaymentMethod(v as PaymentMethod)}>
                 {paymentMethods.map(method => (
-                    <div key={method.id}>
-                      <RadioGroupItem value={method.id} id={method.id} className="peer sr-only" />
-                      <Label htmlFor={method.id} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                        {method.name}
-                      </Label>
-                    </div>
+                    <Label htmlFor={method.id} key={method.id} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                      <RadioGroupItem value={method.id} id={method.id} className="sr-only" />
+                      {method.name}
+                    </Label>
                   )
-                })}
+                )}
               </RadioGroup>
             </div>
             
@@ -265,5 +263,3 @@ export default function PaymentsPage() {
     </div>
   );
 }
-
-    
