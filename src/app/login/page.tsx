@@ -79,6 +79,9 @@ export default function LoginPage() {
         case 'auth/invalid-email':
             friendlyMessage = "Please enter a valid email address.";
             break;
+        case 'auth/api-key-not-valid':
+            friendlyMessage = "The Firebase API Key is not valid. Please check your configuration.";
+            break;
         default:
           friendlyMessage = err.message;
       }
@@ -200,13 +203,28 @@ export default function LoginPage() {
                   <Label>Telefòn</Label>
                   <div className="flex gap-2">
                     <Select value={countryCode} onValueChange={setCountryCode}>
-                      <SelectTrigger className="w-[120px]">
+                      <SelectTrigger className="w-[140px]">
                         <SelectValue placeholder="Country" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="+509">HT (+509)</SelectItem>
-                        <SelectItem value="+1">US (+1)</SelectItem>
-                        <SelectItem value="+55">BR (+55)</SelectItem>
+                        <SelectGroup>
+                            <Label className="px-2 py-1.5 text-xs font-semibold">Amerik</Label>
+                            <SelectItem value="+1">USA (+1)</SelectItem>
+                            <SelectItem value="+1">Canada (+1)</SelectItem>
+                            <SelectItem value="+509">Haiti (+509)</SelectItem>
+                            <SelectItem value="+1-809">Dom. Rep. (+1-809)</SelectItem>
+                            <SelectItem value="+55">Brazil (+55)</SelectItem>
+                            <SelectItem value="+56">Chile (+56)</SelectItem>
+                            <SelectItem value="+52">Mexico (+52)</SelectItem>
+                        </SelectGroup>
+                         <SelectGroup>
+                            <Label className="px-2 py-1.5 text-xs font-semibold">Afrik</Label>
+                            <SelectItem value="+234">Nigeria (+234)</SelectItem>
+                            <SelectItem value="+221">Senegal (+221)</SelectItem>
+                            <SelectItem value="+225">Côte d'Ivoire (+225)</SelectItem>
+                            <SelectItem value="+233">Ghana (+233)</SelectItem>
+                            <SelectItem value="+27">South Africa (+27)</SelectItem>
+                         </SelectGroup>
                       </SelectContent>
                     </Select>
                     <Input id="phone-signup" placeholder="Phone number" required value={phone} onChange={(e) => setPhone(e.target.value)} />
@@ -245,5 +263,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
