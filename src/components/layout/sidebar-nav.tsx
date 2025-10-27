@@ -22,12 +22,14 @@ import {
   Settings,
   Shield,
   LifeBuoy,
+  Footprints,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/predictions', icon: BarChart2, label: 'Predictions' },
+  { href: '/matches', icon: Footprints, label: 'Matches' },
+  { href: '/predictions', icon: BarChart2, label: 'Old Predictions' },
   { href: '/vip-predictions', icon: Crown, label: 'VIP' },
   { href: '/community', icon: MessageSquare, label: 'Community' },
   { href: '/payments', icon: CreditCard, label: 'Payments' },
@@ -57,7 +59,7 @@ export function SidebarNav() {
             <SidebarMenuItem key={item.href}>
               <Link href={item.href}>
                 <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
+                  isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
                   tooltip={{ children: item.label, side: 'right' }}
                 >
                   <item.icon />
