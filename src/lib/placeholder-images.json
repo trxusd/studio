@@ -2,9 +2,9 @@
   "placeholderImages": [
     {
       "id": "hero-background",
-      "description": "A football stadium at night",
-      "imageUrl": "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmb290YmFsbCUyMHN0YWRpdW18ZW58MHx8fHwxNzYxNTgxMTMzfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "football stadium"
+      "description": "Abstract dark background with geometric patterns",
+      "imageUrl": "https://images.unsplash.com/photo-1533134486753-c833f0ed4866?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxhYnN0cmFjdCUyMGRhcmt8ZW58MHx8fHwxNzYxNDU4MjUzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract dark"
     },
     {
       "id": "team-logo-1",
