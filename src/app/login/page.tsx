@@ -18,11 +18,14 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [countryCode, setCountryCode] = useState('+509');
+  const [phone, setPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,12 +48,15 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, email, password);
         toast({ title: "Welcome back!" });
       } else {
-        if (!fullName) {
-            setError("Please enter your full name.");
+        if (!fullName || !email || !password || !phone) {
+            setError("Please fill in all fields.");
             setIsLoading(false);
             return;
         }
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        // Note: Phone number is not stored in auth profile directly this way.
+        // It needs to be stored in a separate database (like Firestore) associated with the user UID.
+        // For now, we are just updating the display name.
         await updateProfile(userCredential.user, { displayName: fullName });
         toast({ title: "Account created successfully!" });
       }
@@ -109,6 +115,8 @@ export default function LoginPage() {
     setEmail('');
     setPassword('');
     setFullName('');
+    setPhone('');
+    setCountryCode('+509');
     setError(null);
   }
 
@@ -188,6 +196,22 @@ export default function LoginPage() {
                   <Label htmlFor="email-signup">Email</Label>
                   <Input id="email-signup" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
+                <div className="space-y-2">
+                  <Label>Telefòn</Label>
+                  <div className="flex gap-2">
+                    <Select value={countryCode} onValueChange={setCountryCode}>
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Country" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="+509">HT (+509)</SelectItem>
+                        <SelectItem value="+1">US (+1)</SelectItem>
+                        <SelectItem value="+55">BR (+55)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input id="phone-signup" placeholder="Phone number" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  </div>
+                </div>
                  <div className="space-y-2">
                   <Label htmlFor="password-signup">Password</Label>
                    <div className="relative">
@@ -221,3 +245,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
