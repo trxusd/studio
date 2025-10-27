@@ -8,27 +8,52 @@ export function AppLogo(props: SVGProps<SVGSVGElement>) {
       {...props}
     >
       <defs>
-        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="hsl(var(--primary))" />
-          <stop offset="100%" stopColor="hsl(45 93% 60%)" />
+        <linearGradient id="yellow-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))' }} />
+          <stop offset="100%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 0.8 }} />
+        </linearGradient>
+        <linearGradient id="sky-blue-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{ stopColor: '#38bdf8' }} />
+          <stop offset="100%" style={{ stopColor: '#0ea5e9' }} />
+        </linearGradient>
+        <linearGradient id="blue-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style={{ stopColor: 'hsl(var(--accent))' }} />
+          <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))' }} />
         </linearGradient>
       </defs>
-      <circle cx="50" cy="50" r="48" fill="hsl(var(--background))" stroke="url(#grad1)" strokeWidth="4" />
-      <g transform="translate(50, 50) scale(0.9)">
-        <polygon points="0,-30 28.5,-15 17.5,24 -17.5,24 -28.5,-15" fill="hsl(45 93% 47% / 0.8)" />
-        <path d="M 0,-32 V -42 L 8,-37 V-32 Z" fill="hsl(210 100% 98% / 0.9)" />
-        <path d="M 29,-16 L 39,-10 L 39,0 L 29,-6 Z" fill="hsl(210 100% 98% / 0.9)" />
-        <path d="M 18,25 L 24,35 L 14,40 L 8,30 Z" fill="hsl(210 100% 98% / 0.9)" />
-        <path d="M -18,25 L -24,35 L -14,40 L -8,30 Z" fill="hsl(200 80% 60% / 0.9)" />
-        <path d="M -29,-16 L -39,-10 L -39,0 L -29,-6 Z" fill="hsl(200 80% 60% / 0.9)" />
-        <path d="M 0,-30 L -12, -22 V -12 L 0, -20 V -30 Z" fill="hsl(var(--background))" />
-        <path d="M 0,-30 L 12, -22 V -12 L 0, -20 V -30 Z" fill="hsl(var(--card))" />
-        <path d="M 28.5, -15 L 12, -22 V -12 L 23, -5 Z" fill="hsl(var(--background))" />
-        <path d="M -28.5, -15 L -12, -22 V -12 L -23, -5 Z" fill="hsl(var(--card))" />
-        <path d="M -17.5, 24 L -12, 10 L 0, 18 L -12, 28 Z" fill="hsl(var(--background))" />
-        <path d="M 17.5, 24 L 12, 10 L 0, 18 L 12, 28 Z" fill="hsl(var(--card))" />
-        <path d="M 0, 18 L -12, 10 L -12, -12 L 0, -20 L 12, -12 L 12, 10 Z" fill="hsl(var(--background))" opacity="0.5" />
-      </g>
+
+      {/* Yellow Border Circle */}
+      <circle cx="50" cy="50" r="48" fill="none" stroke="hsl(var(--primary))" strokeWidth="4" />
+
+      {/* Main Hexagon (Ball) - Outline */}
+      <path
+        d="M50 8 L89.6 29.5 L89.6 70.5 L50 92 L10.4 70.5 L10.4 29.5 Z"
+        fill="none"
+        stroke="hsl(var(--foreground))"
+        strokeWidth="1"
+      />
+
+      {/* Center Pentagon - Yellow */}
+      <polygon
+        points="50,36 67,47 59.5,68 40.5,68 33,47"
+        fill="hsl(var(--primary))"
+      />
+
+      {/* Top Triangle - White */}
+      <path d="M50 8 L62 31 L38 31 Z" fill="hsl(var(--foreground))" />
+
+      {/* Right Triangle - Sky Blue */}
+      <path d="M89.6 29.5 L69 39 L69 61 Z" fill="url(#sky-blue-gradient)" />
+
+      {/* Bottom Right Triangle - White */}
+      <path d="M89.6 70.5 L69 61 L59.5 68 L62 89 Z" fill="hsl(var(--foreground))" />
+
+      {/* Bottom Left Triangle - Sky Blue */}
+      <path d="M10.4 70.5 L31 61 L40.5 68 L38 89 Z" fill="url(#sky-blue-gradient)" />
+
+      {/* Left Triangle - White */}
+      <path d="M10.4 29.5 L31 39 L31 61 Z" fill="hsl(var(--foreground))" />
+
     </svg>
   );
 }
