@@ -1,7 +1,8 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowUpRight, Award, Crown, Futbol } from "lucide-react";
+import { ArrowUpRight, Award, Crown, LifeBuoy } from "lucide-react";
 import Link from 'next/link';
 import { MatchCard } from "@/components/match-card";
 import { matches } from "@/lib/data";
@@ -137,7 +138,7 @@ export default function DashboardPage() {
        <Card className="col-span-full">
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2">
-              <Futbol className="text-primary"/> All Matches
+              <LifeBuoy className="text-primary"/> All Matches
             </CardTitle>
             <CardDescription>
               Browse all upcoming matches and find your next winning bet.
@@ -158,5 +159,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

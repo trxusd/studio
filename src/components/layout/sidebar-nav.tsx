@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -22,13 +23,12 @@ import {
   Settings,
   Shield,
   LifeBuoy,
-  Futbol,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/matches', icon: Futbol, label: 'Matches' },
+  { href: '/matches', icon: LifeBuoy, label: 'Matches' },
   { href: '/predictions', icon: BarChart2, label: 'Prédictions' },
   { href: '/vip-predictions', icon: Crown, label: 'VIP' },
   { href: '/community', icon: MessageSquare, label: 'Community' },
