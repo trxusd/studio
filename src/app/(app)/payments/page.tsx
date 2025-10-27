@@ -7,22 +7,23 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { automatedPaymentVerification } from "@/ai/flows/automated-payment-verification";
-import { Crown, Loader2, Upload, Copy } from 'lucide-react';
+import { Crown, Loader2, Upload, Copy, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
 
 type PaymentMethod = 'MonCash' | 'NatCash' | 'Crypto';
+type Step = 'select-plan' | 'select-method' | 'verify-payment';
 
 export default function PaymentsPage() {
   const { toast } = useToast();
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
+  const [currentStep, setCurrentStep] = useState<Step>('select-plan');
   const [selectedPlan, setSelectedPlan] = useState('quarterly');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('MonCash');
   const [email, setEmail] = useState('');
@@ -116,6 +117,10 @@ export default function PaymentsPage() {
           description: "We have received your confirmation and will verify it shortly.",
           variant: 'default',
         });
+        setCurrentStep('select-plan');
+        setSelectedPlan('quarterly');
+        setTransactionId('');
+        setFile(null);
       } else {
         showErrorToast(result.verificationDetails || 'Verification failed. Please check the details and try again.');
       }
@@ -135,6 +140,17 @@ export default function PaymentsPage() {
     });
   };
 
+  const nextStep = () => {
+    if (currentStep === 'select-plan') setCurrentStep('select-method');
+    else if (currentStep === 'select-method') setCurrentStep('verify-payment');
+  }
+
+  const prevStep = () => {
+    if (currentStep === 'verify-payment') setCurrentStep('select-method');
+    else if (currentStep === 'select-method') setCurrentStep('select-plan');
+  }
+
+
   if (userLoading || !user) {
     return (
         <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
@@ -145,141 +161,155 @@ export default function PaymentsPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <h2 className="font-headline text-3xl font-bold tracking-tight">Payments & Subscriptions</h2>
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Subscription Plan Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><Crown className="text-yellow-500"/> Choose Your VIP Plan</CardTitle>
-            <CardDescription>Select a plan that suits you best.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan} className="grid gap-4">
-              {Object.values(plans).map(plan => (
-                 <Label key={plan.id} htmlFor={plan.id} className={cn("flex flex-col items-start space-y-1 rounded-md border p-4 cursor-pointer transition-all", selectedPlan === plan.id && "border-primary ring-2 ring-primary")}>
-                  <RadioGroupItem value={plan.id} id={plan.id} className="sr-only" />
-                  <div className="flex justify-between w-full items-center">
-                    <span className="font-bold text-lg">{plan.name}</span>
-                    {plan.popular && <Badge variant="default">Most Popular</Badge>}
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">${plan.price}</span>
-                    <span className="text-sm text-muted-foreground">({plan.htg})</span>
-                  </div>
-                   <span className="text-sm text-muted-foreground">{plan.value || `Get started with the ${plan.name} plan`}</span>
-                </Label>
-              ))}
-            </RadioGroup>
-          </CardContent>
-        </Card>
+      <div className="flex items-center gap-4">
+        {currentStep !== 'select-plan' && (
+          <Button variant="outline" size="icon" onClick={prevStep}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        )}
+        <h2 className="font-headline text-3xl font-bold tracking-tight">Payments & Subscriptions</h2>
+      </div>
 
-        {/* Payment and Verification */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">Complete Your Purchase</CardTitle>
-            <CardDescription>Select a payment method and provide confirmation.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <Label className="mb-2 block font-medium">1. Select Payment Method</Label>
-               <RadioGroup value={selectedPaymentMethod} className="grid grid-cols-3 gap-4" onValueChange={(v) => setSelectedPaymentMethod(v as PaymentMethod)}>
-                {paymentMethods.map(method => (
-                    <Label htmlFor={method.id} key={method.id} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
-                      <RadioGroupItem value={method.id} id={method.id} className="sr-only" />
-                      {method.name}
-                    </Label>
-                  )
-                )}
+      <div className="mx-auto max-w-2xl">
+        {currentStep === 'select-plan' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline flex items-center gap-2"><Crown className="text-yellow-500"/> 1. Choose Your VIP Plan</CardTitle>
+              <CardDescription>Select a plan that suits you best.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup value={selectedPlan} onValueChange={setSelectedPlan} className="grid gap-4">
+                {Object.values(plans).map(plan => (
+                  <Label key={plan.id} htmlFor={plan.id} className={cn("flex flex-col items-start space-y-1 rounded-md border p-4 cursor-pointer transition-all", selectedPlan === plan.id && "border-primary ring-2 ring-primary")}>
+                    <RadioGroupItem value={plan.id} id={plan.id} className="sr-only" />
+                    <div className="flex justify-between w-full items-center">
+                      <span className="font-bold text-lg">{plan.name}</span>
+                      {plan.popular && <Badge variant="default">Most Popular</Badge>}
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-2xl font-bold">${plan.price}</span>
+                      <span className="text-sm text-muted-foreground">({plan.htg})</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">{plan.value || `Get started with the ${plan.name} plan`}</span>
+                  </Label>
+                ))}
               </RadioGroup>
-            </div>
-            
-            <div className='p-4 border rounded-lg bg-muted/50'>
-              <h4 className='font-semibold mb-2'>Payment Information</h4>
-              {selectedPaymentMethod === 'MonCash' && (
-                <div className='text-sm'>
-                  <p>Please send the payment to:</p>
-                  <p><strong>Number:</strong> {paymentDetails.MonCash.info}</p>
-                  <p><strong>Name:</strong> {paymentDetails.MonCash.name}</p>
-                </div>
-              )}
-              {selectedPaymentMethod === 'NatCash' && (
-                <div className='text-sm'>
-                  <p>Please send the payment to:</p>
-                  <p><strong>Number:</strong> {paymentDetails.NatCash.info}</p>
-                  <p><strong>Name:</strong> {paymentDetails.NatCash.name}</p>
-                </div>
-              )}
-              {selectedPaymentMethod === 'Crypto' && (
-                <div className='text-sm space-y-2'>
-                  <p>Send <strong>USDT</strong> to one of the following addresses:</p>
-                  <div>
-                    <strong className='block'>TRC20 (Tron Network):</strong>
-                    <div className="flex items-center gap-2">
-                      <span className='truncate text-muted-foreground'>{paymentDetails.Crypto.trc20}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(paymentDetails.Crypto.trc20)}><Copy className='h-4 w-4'/></Button>
-                    </div>
-                  </div>
-                  <div>
-                    <strong className='block'>Polygon (Matic Network):</strong>
-                     <div className="flex items-center gap-2">
-                      <span className='truncate text-muted-foreground'>{paymentDetails.Crypto.polygon}</span>
-                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(paymentDetails.Crypto.polygon)}><Copy className='h-4 w-4'/></Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            </CardContent>
+            <CardFooter>
+                <Button className="w-full" onClick={nextStep}>Next Step</Button>
+            </CardFooter>
+          </Card>
+        )}
 
-            <div>
-              <Label className="mb-2 block font-medium">2. Provide Payment Confirmation</Label>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} required readOnly={!!user?.email} />
+        {currentStep === 'select-method' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline">2. Complete Your Purchase</CardTitle>
+              <CardDescription>Select a payment method and follow the instructions.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div>
+                  <Label className="mb-2 block font-medium">Select Payment Method</Label>
+                  <RadioGroup value={selectedPaymentMethod} className="grid grid-cols-3 gap-4" onValueChange={(v) => setSelectedPaymentMethod(v as PaymentMethod)}>
+                    {paymentMethods.map(method => (
+                        <Label htmlFor={method.id} key={method.id} className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer">
+                          <RadioGroupItem value={method.id} id={method.id} className="sr-only" />
+                          {method.name}
+                        </Label>
+                      )
+                    )}
+                  </RadioGroup>
                 </div>
-                 <div className="space-y-2">
-                  <Label htmlFor="plan">Plan</Label>
-                   <Select value={selectedPlan} onValueChange={setSelectedPlan}>
-                      <SelectTrigger id="plan">
-                          <SelectValue placeholder="Select plan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="monthly">1 Month - $5</SelectItem>
-                          <SelectItem value="quarterly">3 Months - $10</SelectItem>
-                          <SelectItem value="semi">6 Months - $30</SelectItem>
-                          <SelectItem value="yearly">1 Year - $50</SelectItem>
-                          <SelectItem value="lifetime">Lifetime - $100</SelectItem>
-                      </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="mt-4 space-y-2">
-                <Label htmlFor="transactionId">Transaction ID (ID, TXID)</Label>
-                <Input id="transactionId" placeholder="Paste your transaction ID" value={transactionId} onChange={e => setTransactionId(e.target.value)} required />
-              </div>
-              <div className="mt-4 space-y-2">
-                <Label htmlFor="screenshot-upload">Upload Screenshot (Optional)</Label>
-                 <div className="flex items-center justify-center w-full">
-                    <label htmlFor="screenshot-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-8 h-8 mb-2 text-muted-foreground"/>
-                            <p className="mb-2 text-sm text-muted-foreground">{file ? file.name : <><span className="font-semibold">Click to upload</span> or drag and drop</>}</p>
-                            <p className="text-xs text-muted-foreground">PNG, JPG or GIF</p>
+                
+                <div className='p-4 border rounded-lg bg-muted/50'>
+                  <h4 className='font-semibold mb-2'>Payment Information for {selectedPaymentMethod}</h4>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Please send <strong>${plans[selectedPlan as keyof typeof plans].price} USD ({plans[selectedPlan as keyof typeof plans].htg})</strong> to the details below.
+                  </p>
+                  {selectedPaymentMethod === 'MonCash' && (
+                    <div className='text-sm'>
+                      <p><strong>Number:</strong> {paymentDetails.MonCash.info}</p>
+                      <p><strong>Name:</strong> {paymentDetails.MonCash.name}</p>
+                    </div>
+                  )}
+                  {selectedPaymentMethod === 'NatCash' && (
+                    <div className='text-sm'>
+                      <p><strong>Number:</strong> {paymentDetails.NatCash.info}</p>
+                      <p><strong>Name:</strong> {paymentDetails.NatCash.name}</p>
+                    </div>
+                  )}
+                  {selectedPaymentMethod === 'Crypto' && (
+                    <div className='text-sm space-y-2'>
+                      <p>Send <strong>USDT</strong> to one of the following addresses:</p>
+                      <div>
+                        <strong className='block'>TRC20 (Tron Network):</strong>
+                        <div className="flex items-center gap-2">
+                          <span className='truncate text-muted-foreground'>{paymentDetails.Crypto.trc20}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(paymentDetails.Crypto.trc20)}><Copy className='h-4 w-4'/></Button>
                         </div>
-                        <Input id="screenshot-upload" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
-                    </label>
-                </div> 
-              </div>
+                      </div>
+                      <div>
+                        <strong className='block'>Polygon (Matic Network):</strong>
+                        <div className="flex items-center gap-2">
+                          <span className='truncate text-muted-foreground'>{paymentDetails.Crypto.polygon}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(paymentDetails.Crypto.polygon)}><Copy className='h-4 w-4'/></Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <Button className="w-full" onClick={nextStep}>Next: Verify Payment</Button>
+            </CardFooter>
+          </Card>
+        )}
 
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full font-bold" onClick={handleVerification} disabled={isVerifying}>
-              {isVerifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              Verify Payment
-            </Button>
-          </CardFooter>
-        </Card>
+        {currentStep === 'verify-payment' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-headline">3. Verify Payment</CardTitle>
+              <CardDescription>Provide your payment confirmation details below.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input id="email" type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} required readOnly={!!user?.email} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="plan">Plan</Label>
+                          <Input id="plan" value={`${plans[selectedPlan as keyof typeof plans].name} - $${plans[selectedPlan as keyof typeof plans].price}`} disabled />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="transactionId">Transaction ID (ID, TXID)</Label>
+                      <Input id="transactionId" placeholder="Paste your transaction ID" value={transactionId} onChange={e => setTransactionId(e.target.value)} required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="screenshot-upload">Upload Screenshot (Optional)</Label>
+                      <div className="flex items-center justify-center w-full">
+                          <label htmlFor="screenshot-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
+                              <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                  <Upload className="w-8 h-8 mb-2 text-muted-foreground"/>
+                                  <p className="mb-2 text-sm text-muted-foreground">{file ? file.name : <><span className="font-semibold">Click to upload</span> or drag and drop</>}</p>
+                                  <p className="text-xs text-muted-foreground">PNG, JPG or GIF</p>
+                              </div>
+                              <Input id="screenshot-upload" type="file" className="hidden" onChange={handleFileChange} accept="image/*" />
+                          </label>
+                      </div> 
+                    </div>
+                </div>
+            </CardContent>
+            <CardFooter>
+              <Button className="w-full font-bold" onClick={handleVerification} disabled={isVerifying}>
+                {isVerifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Submit Verification
+              </Button>
+            </CardFooter>
+          </Card>
+        )}
       </div>
     </div>
   );
