@@ -119,7 +119,7 @@ export default function DashboardPage() {
             </ul>
             <div className="mt-6">
                 <h4 className="font-semibold text-yellow-900">Your VIP Progress</h4>
-                <Progress value={25} className="w-full mt-2" indicatorClassName="bg-yellow-600" />
+                <Progress value={25} className="w-full mt-2 [&>div]:bg-yellow-600" />
                 <p className="text-xs text-yellow-700/80 mt-1">You're one step away from joining the winners circle.</p>
             </div>
           </CardContent>
