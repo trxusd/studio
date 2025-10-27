@@ -1,3 +1,52 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-background",
+      "description": "A football stadium at night",
+      "imageUrl": "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmb290YmFsbCUyMHN0YWRpdW18ZW58MHx8fHwxNzYxNTgxMTMzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "football stadium"
+    },
+    {
+      "id": "team-logo-1",
+      "description": "Logo for a football team",
+      "imageUrl": "https://images.unsplash.com/photo-1679776699410-a9e54a010928?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxzcG9ydHMlMjBsb2dvfGVufDB8fHx8MTc2MTUwMzY0Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sports logo"
+    },
+    {
+      "id": "team-logo-2",
+      "description": "Logo for another football team",
+      "imageUrl": "https://images.unsplash.com/photo-1760037028517-e5cc6e3ebd3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzcG9ydHMlMjBsb2dvfGVufDB8fHx8MTc2MTUwMzY0Mnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "sports logo"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "Avatar for a user",
+      "imageUrl": "https://images.unsplash.com/photo-1590086782792-42dd2350140d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjE1NDUzOTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "Avatar for another user",
+      "imageUrl": "https://images.unsplash.com/photo-1600180758890-6b94519a8ba6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwZXJzb24lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjE1NDUzOTl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person portrait"
+    },
+    {
+      "id": "payment-moncash",
+      "description": "MonCash logo",
+      "imageUrl": "https://images.unsplash.com/photo-1585689074349-04ae60e74cc7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxsb2dvJTIwcGF5bWVudHxlbnwwfHx8fDE3NjE1NjIyMzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "logo payment"
+    },
+    {
+      "id": "payment-crypto",
+      "description": "Cryptocurrency logo",
+      "imageUrl": "https://images.unsplash.com/photo-1639603683079-7398c604497a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjcnlwdG8lMjBsb2dvfGVufDB8fHx8MTc2MTU4MzMwMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "crypto logo"
+    },
+    {
+      "id": "payment-visa",
+      "description": "Visa logo",
+      "imageUrl": "https://images.unsplash.com/photo-1753453218794-0dcd1e98442d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx2aXNhJTIwbG9nb3xlbnwwfHx8fDE3NjE1ODMzMDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "visa logo"
+    }
+  ]
 }

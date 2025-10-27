@@ -1,0 +1,48 @@
+import { MatchCard } from "@/components/match-card";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { matches } from "@/lib/data";
+import { Crown, Lock } from "lucide-react";
+import Link from 'next/link';
+
+export default function VipPredictionsPage() {
+  const isVip = false; // Mock value
+
+  return (
+    <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
+      <div className="flex items-center gap-2">
+        <Crown className="h-8 w-8 text-yellow-500" />
+        <h2 className="font-headline text-3xl font-bold tracking-tight text-yellow-700 dark:text-yellow-400">VIP Predictions</h2>
+      </div>
+      <p className="text-muted-foreground">
+        Access our highest-accuracy predictions, available only to VIP members.
+      </p>
+      
+      {isVip ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {matches.map((match) => (
+            <MatchCard key={match.id} match={match} isVip />
+          ))}
+        </div>
+      ) : (
+        <Card className="mt-8 border-yellow-500/50 bg-gradient-to-br from-yellow-300/20 to-transparent">
+            <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                <div className="rounded-full bg-yellow-500/20 p-4">
+                    <Lock className="h-12 w-12 text-yellow-600"/>
+                </div>
+                <h3 className="mt-6 font-headline text-2xl font-bold text-yellow-800">This Content is Locked</h3>
+                <p className="mt-2 max-w-md text-yellow-700/80">
+                    You must be a VIP member to view these premium predictions. Upgrade your plan to unlock instant access.
+                </p>
+                <Button asChild className="mt-6 bg-yellow-600 hover:bg-yellow-700 text-white font-bold shadow-lg">
+                    <Link href="/payments">
+                        Upgrade to VIP
+                        <Crown className="ml-2 h-4 w-4"/>
+                    </Link>
+                </Button>
+            </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
