@@ -1,5 +1,8 @@
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { DollarSign, Users, BarChart, Activity } from "lucide-react";
+
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
+import { DollarSign, Users, BarChart, Activity, Bot, Trophy, CheckCheck, ArrowRight } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export default function AdminDashboardPage() {
     return (
@@ -60,6 +63,52 @@ export default function AdminDashboardPage() {
                     </CardContent>
                 </Card>
             </div>
+            
+            <div className="mt-8">
+                <h2 className="text-xl font-semibold tracking-tight font-headline mb-4">Management Tools</h2>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Bot /> Official Predictions</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Manually trigger the daily AI prediction generation process.</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href="/admin/official-predictions">Go to predictions <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><CheckCheck /> Payment Verification</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Review and approve or reject user payment submissions.</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href="/admin/payment-verification">Review payments <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2"><Trophy /> Check Results</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CardDescription>Automatically check prediction outcomes against final scores.</CardDescription>
+                        </CardContent>
+                        <CardFooter>
+                            <Button asChild variant="outline" size="sm">
+                                <Link href="/admin/check-results">View results <ArrowRight className="ml-2 h-4 w-4" /></Link>
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            </div>
+
              <div className="mt-8">
                 <Card>
                     <CardHeader>
