@@ -6,10 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ThumbsUp, MessageSquare, Send, Loader2 } from "lucide-react";
-import { useUser } from "@/firebase/auth/use-user";
-import { useCollection } from "@/firebase/firestore/use-collection";
+import { useUser, useFirestore, useCollection } from "@/firebase";
 import { collection, addDoc, serverTimestamp, updateDoc, doc, query, orderBy } from "firebase/firestore";
-import { useFirestore } from "@/firebase";
 import { formatDistanceToNow } from 'date-fns';
 
 type Post = {
@@ -87,12 +85,12 @@ export default function CommunityPage() {
 
       <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-6">
         <div className="mx-auto max-w-3xl">
-          {postsLoading && (
+          {(postsLoading || userLoading) && (
             <div className="flex justify-center items-center h-full">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           )}
-          {!postsLoading && posts.map((post) => (
+          {!postsLoading && posts && posts.map((post) => (
             <Card key={post.id} className="overflow-hidden mb-6">
               <CardHeader className="flex flex-row items-center gap-3 space-y-0 p-4">
                 <Avatar>
@@ -119,7 +117,7 @@ export default function CommunityPage() {
               </CardFooter>
             </Card>
           ))}
-           {!postsLoading && posts.length === 0 && (
+           {!postsLoading && (!posts || posts.length === 0) && (
             <div className="text-center text-muted-foreground py-12">
               <p>Pa gen mesaj nan chat la pou kounye a. Fè premye a!</p>
             </div>
@@ -130,7 +128,7 @@ export default function CommunityPage() {
       <div className="mt-auto bg-background border-t p-4">
         <div className="mx-auto max-w-3xl">
            {userLoading ? (
-             <p className="text-sm text-muted-foreground">Loading...</p>
+             <div className="text-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
            ) : user ? (
             <div className="flex items-start gap-4">
               <Avatar>
@@ -150,16 +148,15 @@ export default function CommunityPage() {
                 }}
                 disabled={isSending}
               />
-              <Button size="icon" className="h-10 w-10 shrink-0" onClick={handleSendMessage} disabled={isSending}>
+              <Button size="icon" className="h-10 w-10 shrink-0" onClick={handleSendMessage} disabled={isSending || !newMessage.trim()}>
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
            ): (
-            <p className="text-sm text-muted-foreground">Tanpri <a href="/login" className="underline">konekte w</a> pou w patisipe nan chat la.</p>
+            <p className="text-sm text-muted-foreground text-center">Tanpri <a href="/login" className="underline font-semibold text-primary">konekte w</a> pou w patisipe nan chat la.</p>
            )}
         </div>
       </div>
     </div>
   );
 }
-
