@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -9,9 +10,9 @@ import { ThumbsUp, MessageSquare, Send } from "lucide-react";
 export default function CommunityPage() {
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <h2 className="font-headline text-3xl font-bold tracking-tight">Community Feed</h2>
+      <h2 className="font-headline text-3xl font-bold tracking-tight">Community tchat</h2>
       <p className="text-muted-foreground">
-        Join the discussion, share your predictions, and connect with other bettors.
+        Antre nan chat la, pataje prediksyon ou, epi konekte ak lòt itilizatè.
       </p>
 
       <div className="mx-auto max-w-3xl">
