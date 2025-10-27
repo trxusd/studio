@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppLogo } from "@/components/icons";
-import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft } from "lucide-react";
+import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft, Bot } from "lucide-react";
 
 const navItems = [
     { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
@@ -13,6 +13,7 @@ const navItems = [
     { href: "/admin/vip-manager", icon: Crown, label: "VIP Manager" },
     { href: "/admin/check-results", icon: Trophy, label: "Check Results" },
     { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
+    { href: "/admin/official-predictions", icon: Bot, label: "Official Predictions" },
     { href: "/admin/analytics", icon: LineChart, label: "Analytics" },
 ];
 
