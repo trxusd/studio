@@ -4,7 +4,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
 
-  const apiKey = process.env.FOOTBALL_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
   const apiHost = process.env.NEXT_PUBLIC_RAPIDAPI_HOST;
 
   if (!apiKey || !apiHost) {
