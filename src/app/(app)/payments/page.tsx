@@ -23,9 +23,11 @@ export default function PaymentsPage() {
   const [isVerifying, setIsVerifying] = useState(false);
 
   const plans = {
-    monthly: { name: 'Monthly', price: 10, id: 'monthly' },
-    quarterly: { name: 'Quarterly', price: 25, id: 'quarterly' },
-    yearly: { name: 'Yearly', price: 80, id: 'yearly' },
+    monthly: { name: '1 Month', price: 5, htg: '~660 HTG', id: 'monthly', popular: false, value:'' },
+    quarterly: { name: '3 Months', price: 10, htg: '~1325 HTG', id: 'quarterly', popular: true, value:'' },
+    semi: { name: '6 Months', price: 30, htg: '~3975 HTG', id: 'semi', popular: false, value: 'Good Value' },
+    yearly: { name: '1 Year', price: 50, htg: '~6625 HTG', id: 'yearly', popular: false, value: 'Best Value' },
+    lifetime: { name: 'Lifetime', price: 100, htg: '~13250 HTG', id: 'lifetime', popular: false, value: 'Ultimate' },
   };
 
   const paymentMethods = [
@@ -113,9 +115,15 @@ export default function PaymentsPage() {
               {Object.values(plans).map(plan => (
                  <Label key={plan.id} htmlFor={plan.id} className={cn("flex flex-col items-start space-y-1 rounded-md border p-4 cursor-pointer transition-all", selectedPlan === plan.id && "border-primary ring-2 ring-primary")}>
                   <RadioGroupItem value={plan.id} id={plan.id} className="sr-only" />
-                  <span className="font-bold text-lg">{plan.name} Plan</span>
-                  <span className="text-2xl font-bold">${plan.price}</span>
-                  <span className="text-sm text-muted-foreground">{plan.name === 'Yearly' ? 'Best Value' : (plan.name === 'Quarterly' ? 'Most Popular' : 'Get Started')}</span>
+                  <div className="flex justify-between w-full items-center">
+                    <span className="font-bold text-lg">{plan.name} Plan</span>
+                    {plan.popular && <span className="text-xs font-bold text-primary bg-primary/20 px-2 py-1 rounded-full">Most Popular</span>}
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold">${plan.price}</span>
+                    <span className="text-sm text-muted-foreground">({plan.htg})</span>
+                  </div>
+                  <span className="text-sm text-muted-foreground">{plan.value || `Get started with the ${plan.name} plan`}</span>
                 </Label>
               ))}
             </RadioGroup>
