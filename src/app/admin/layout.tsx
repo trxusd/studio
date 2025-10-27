@@ -4,11 +4,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppLogo } from "@/components/icons";
-import { BarChart, Bell, Ticket, Home, LineChart, Package, Settings, ShoppingCart, Users } from "lucide-react";
+import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft } from "lucide-react";
 
 const navItems = [
     { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
     { href: "/admin/users", icon: Users, label: "Users" },
+    { href: "/admin/payment-verification", icon: CheckCheck, label: "Payment Verification" },
+    { href: "/admin/vip-manager", icon: Crown, label: "VIP Manager" },
+    { href: "/admin/check-results", icon: Trophy, label: "Check Results" },
     { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
     { href: "/admin/analytics", icon: LineChart, label: "Analytics" },
 ];
@@ -39,7 +42,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex flex-col">
                 <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
                     <div className="w-full flex-1">
-                        {/* Can add a mobile nav trigger here */}
+                        <Button asChild variant="outline" size="icon">
+                                <Link href="/dashboard">
+                                    <ArrowLeft className="h-4 w-4" />
+                                </Link>
+                        </Button>
                     </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>

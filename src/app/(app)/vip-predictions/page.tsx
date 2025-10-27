@@ -4,7 +4,7 @@ import { MatchCard } from "@/components/match-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { matches } from "@/lib/data";
-import { Crown, Lock, Loader2 } from "lucide-react";
+import { Crown, Lock, Loader2, ArrowLeft } from "lucide-react";
 import Link from 'next/link';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
@@ -59,9 +59,16 @@ export default function VipPredictionsPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <div className="flex items-center gap-2">
-        <Crown className="h-8 w-8 text-yellow-500" />
-        <h2 className="font-headline text-3xl font-bold tracking-tight text-yellow-700 dark:text-yellow-400">VIP Predictions</h2>
+      <div className="flex items-center gap-4">
+         <Button asChild variant="outline" size="icon" className="md:hidden">
+          <Link href="/dashboard">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <div className="flex items-center gap-2">
+            <Crown className="h-8 w-8 text-yellow-500" />
+            <h2 className="font-headline text-3xl font-bold tracking-tight text-yellow-700 dark:text-yellow-400">VIP Predictions</h2>
+        </div>
       </div>
       <p className="text-muted-foreground">
         Access our highest-accuracy predictions, available only to VIP members.

@@ -5,11 +5,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ThumbsUp, MessageSquare, Send, Loader2 } from "lucide-react";
+import { ThumbsUp, MessageSquare, Send, Loader2, ArrowLeft } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection, addDoc, serverTimestamp, updateDoc, doc, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, updateDoc, doc, query, orderBy, writeBatch } from "firebase/firestore";
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 type Post = {
     id: string;
@@ -18,6 +19,7 @@ type Post = {
     content: string;
     likes: number;
     comments: number;
+    likedBy: string[];
 };
 
 export default function CommunityPage() {
@@ -58,6 +60,7 @@ export default function CommunityPage() {
                 timestamp: serverTimestamp(),
                 likes: 0,
                 comments: 0,
+                likedBy: []
             });
             setNewMessage("");
         } catch (error) {
@@ -67,12 +70,27 @@ export default function CommunityPage() {
         }
     };
 
-    const handleLike = async (postId: string, currentLikes: number) => {
-        if (!firestore) return;
+    const handleLike = async (postId: string, currentLikes: number, likedBy: string[]) => {
+        if (!firestore || !user) return;
         const postRef = doc(firestore, "community-posts", postId);
-        await updateDoc(postRef, {
-            likes: currentLikes + 1
-        });
+        const batch = writeBatch(firestore);
+
+        if (likedBy.includes(user.uid)) {
+            // User has already liked, so unlike
+            const newLikedBy = likedBy.filter(uid => uid !== user.uid);
+            batch.update(postRef, {
+                likes: currentLikes - 1,
+                likedBy: newLikedBy
+            });
+        } else {
+            // User has not liked, so like
+            const newLikedBy = [...likedBy, user.uid];
+            batch.update(postRef, {
+                likes: currentLikes + 1,
+                likedBy: newLikedBy
+            });
+        }
+        await batch.commit();
     };
     
     const formatTimestamp = (timestamp: any) => {
@@ -91,11 +109,18 @@ export default function CommunityPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)]">
-        <div className="p-4 border-b">
-            <h2 className="font-headline text-3xl font-bold tracking-tight">Community tchat</h2>
-            <p className="text-muted-foreground">
-                Antre nan chat la, pataje prediksyon ou, epi konekte ak lòt itilizatè.
-            </p>
+        <div className="p-4 border-b flex items-center gap-4">
+            <Button asChild variant="outline" size="icon" className="md:hidden">
+              <Link href="/dashboard">
+                <ArrowLeft className="h-4 w-4" />
+              </Link>
+            </Button>
+            <div>
+              <h2 className="font-headline text-3xl font-bold tracking-tight">Community tchat</h2>
+              <p className="text-muted-foreground">
+                  Antre nan chat la, pataje prediksyon ou, epi konekte ak lòt itilizatè.
+              </p>
+            </div>
         </div>
 
       <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-6">
@@ -121,8 +146,8 @@ export default function CommunityPage() {
                 <p className="whitespace-pre-wrap">{post.content}</p>
               </CardContent>
               <CardFooter className="flex items-center gap-4 bg-muted/50 p-2">
-                <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => handleLike(post.id, post.likes)}>
-                  <ThumbsUp className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => handleLike(post.id, post.likes, post.likedBy || [])} disabled={!user}>
+                  <ThumbsUp className={`h-4 w-4 ${post.likedBy?.includes(user.uid) ? 'text-primary fill-current' : ''}`} />
                   <span>{post.likes}</span>
                 </Button>
                 <Button variant="ghost" size="sm" className="flex items-center gap-2">

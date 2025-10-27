@@ -11,8 +11,9 @@ import { useUser, useAuth } from "@/firebase"
 import { updateProfile, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function SettingsPage() {
   const { user, loading: userLoading } = useUser();
@@ -101,7 +102,14 @@ export default function SettingsPage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
-      <h2 className="font-headline text-3xl font-bold tracking-tight">Settings</h2>
+      <div className="flex items-center gap-4">
+        <Button asChild variant="outline" size="icon" className="md:hidden">
+          <Link href="/dashboard">
+            <ArrowLeft className="h-4 w-4" />
+          </Link>
+        </Button>
+        <h2 className="font-headline text-3xl font-bold tracking-tight">Settings</h2>
+      </div>
       <Tabs defaultValue="profile" className="space-y-4">
         <TabsList>
           <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -198,5 +206,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-
-    
