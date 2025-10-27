@@ -123,4 +123,22 @@ export const adminPaymentVerifications: AdminPaymentVerification[] = [
     { id: 'verif-3', userId: 'user3@example.com', plan: 'Monthly', amount: 5, method: 'NatCash', transactionId: 'NAT-98765XYZ', status: 'Pending', timestamp: '2024-07-28 18:00' },
     { id: 'verif-4', userId: 'user4@example.com', plan: 'Yearly', amount: 50, method: 'Crypto', transactionId: '0x123...456', status: 'Approved', timestamp: '2024-07-28 15:20' },
 ];
+
+export type PastPrediction = {
+    id: string;
+    teamA: { name: string; };
+    teamB: { name: string; };
+    league: string;
+    prediction: string;
+    finalScore: string;
+};
+
+export const pastPredictions: PastPrediction[] = [
+    { id: 'res-1', teamA: { name: 'Real Madrid' }, teamB: { name: 'Barcelona' }, league: 'La Liga', prediction: '1 (Real Madrid)', finalScore: '3-1', },
+    { id: 'res-2', teamA: { name: 'Man City' }, teamB: { name: 'Liverpool' }, league: 'Premier League', prediction: 'Over 2.5', finalScore: '2-2', },
+    { id: 'res-3', teamA: { name: 'Juventus' }, teamB: { name: 'Inter Milan' }, league: 'Serie A', prediction: 'X (Draw)', finalScore: '0-1', },
+    { id: 'res-4', teamA: { name: 'Bayern Munich' }, teamB: { name: 'Dortmund' }, league: 'Bundesliga', prediction: 'Under 3.5', finalScore: '4-0', },
+    { id: 'res-5', teamA: { name: 'PSG' }, teamB: { name: 'Marseille' }, league: 'Ligue 1', prediction: 'PSG to win', finalScore: '2-0', },
+    { id: 'res-6', teamA: { name: 'Chelsea' }, teamB: { name: 'Arsenal' }, league: 'Premier League', prediction: 'Draw', finalScore: '2-2', },
+];
     
