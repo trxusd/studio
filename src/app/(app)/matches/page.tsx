@@ -91,7 +91,7 @@ type GroupedMatches = Record<string, Record<string, ApiMatch[]>>;
 
 
 async function getMatches(date: string) {
-  const apiKey = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
+  const apiKey = process.env.RAPIDAPI_KEY;
   const apiHost = process.env.NEXT_PUBLIC_RAPIDAPI_HOST;
 
   if (!apiKey || !apiHost) {
