@@ -15,8 +15,7 @@ let firebaseApp: FirebaseApp;
 let auth: Auth;
 let firestore: Firestore;
 
-// This is a kludge to support HMR
-function initialize(): { firebaseApp: FirebaseApp; auth: Auth; firestore: Firestore } {
+function initialize() {
   if (getApps().length === 0) {
     if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "REPLACE_WITH_YOUR_API_KEY") {
       console.error("Firebase config is not set. Please update src/firebase/config.ts");
@@ -24,16 +23,16 @@ function initialize(): { firebaseApp: FirebaseApp; auth: Auth; firestore: Firest
     firebaseApp = initializeApp(firebaseConfig);
     auth = getAuth(firebaseApp);
     firestore = getFirestore(firebaseApp);
+  } else {
+    firebaseApp = getApps()[0];
+    auth = getAuth(firebaseApp);
+    firestore = getFirestore(firebaseApp);
   }
   return { firebaseApp, auth, firestore };
 }
 
-const { 
-  firebaseApp: _getFirebaseApp, 
-  auth: _getAuthInstance, 
-  firestore: _getFirestoreInstance 
-} = initialize();
+const instances = initialize();
 
-export const getFirebaseApp = _getFirebaseApp;
-export const getAuthInstance = _getAuthInstance;
-export const getFirestoreInstance = _getFirestoreInstance;
+export const getFirebaseApp = () => instances.firebaseApp;
+export const getAuthInstance = () => instances.auth;
+export const getFirestoreInstance = () => instances.firestore;
