@@ -80,8 +80,8 @@ type ApiMatch = {
 };
 
 async function getMatchDetails(matchId: string) {
-  const apiKey = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
-  const apiHost = process.env.NEXT_PUBLIC_RAPIDAPI_HOST;
+  const apiKey = process.env.FOOTBALL_API_KEY;
+  const apiHost = "api-football.p.rapidapi.com";
 
   if (!apiKey || !apiHost) {
     console.error("API key or host is not configured.");
@@ -89,7 +89,7 @@ async function getMatchDetails(matchId: string) {
   }
 
   try {
-    const response = await fetch(`https://${apiHost}/v3/fixtures?id=${matchId}`, {
+    const response = await fetch(`https://v3.football.api-sports.io/fixtures?id=${matchId}`, {
       headers: {
         'x-rapidapi-host': apiHost,
         'x-rapidapi-key': apiKey,
