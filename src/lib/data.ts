@@ -1,5 +1,8 @@
+
 import type { AiPoweredMatchPredictionsOutput } from "@/ai/flows/ai-powered-match-predictions";
 
+// This type is now mainly for the static fallback data and can be removed
+// if the API is the single source of truth.
 export type Match = {
     id: string;
     teamA: { name: string; logo: string };
@@ -9,11 +12,13 @@ export type Match = {
     prediction?: AiPoweredMatchPredictionsOutput;
 };
 
+// This static data is no longer used by the main matches page,
+// but can be kept for other parts of the app or as a fallback.
 export const matches: Match[] = [
     {
-        id: 'match-1',
-        teamA: { name: 'Real Madrid', logo: 'https://picsum.photos/seed/rm/40/40' },
-        teamB: { name: 'Barcelona', logo: 'https://picsum.photos/seed/bar/40/40' },
+        id: '1144573', // Example ID, align with API if possible
+        teamA: { name: 'Real Madrid', logo: 'https://media.api-sports.io/football/teams/541.png' },
+        teamB: { name: 'Barcelona', logo: 'https://media.api-sports.io/football/teams/529.png' },
         date: new Date(new Date().setDate(new Date().getDate() + 1)),
         league: 'La Liga',
         prediction: {
@@ -26,9 +31,9 @@ export const matches: Match[] = [
         }
     },
     {
-        id: 'match-2',
-        teamA: { name: 'Man City', logo: 'https://picsum.photos/seed/mci/40/40' },
-        teamB: { name: 'Liverpool', logo: 'https://picsum.photos/seed/liv/40/40' },
+        id: '1144574', // Example ID
+        teamA: { name: 'Man City', logo: 'https://media.api-sports.io/football/teams/50.png' },
+        teamB: { name: 'Liverpool', logo: 'https://media.api-sports.io/football/teams/40.png' },
         date: new Date(new Date().setDate(new Date().getDate() + 1)),
         league: 'Premier League',
         prediction: {
@@ -39,20 +44,6 @@ export const matches: Match[] = [
             teamAAnalysis: "City's possession-based style will likely dominate the game. Expect them to control the tempo.",
             teamBAnalysis: "Liverpool's high press could disrupt City's rhythm, but they are susceptible to long balls over the top."
         }
-    },
-    {
-        id: 'match-3',
-        teamA: { name: 'Bayern Munich', logo: 'https://picsum.photos/seed/bay/40/40' },
-        teamB: { name: 'Dortmund', logo: 'https://picsum.photos/seed/dor/40/40' },
-        date: new Date(new Date().setDate(new Date().getDate() + 2)),
-        league: 'Bundesliga',
-    },
-    {
-        id: 'match-4',
-        teamA: { name: 'PSG', logo: 'https://picsum.photos/seed/psg/40/40' },
-        teamB: { name: 'Marseille', logo: 'https://picsum.photos/seed/mar/40/40' },
-        date: new Date(new Date().setDate(new Date().getDate() + 2)),
-        league: 'Ligue 1',
     },
 ];
 
@@ -113,3 +104,5 @@ export const adminCoupons: AdminCoupon[] = [
     { id: 'coupon-2', code: 'VIPNEW', discount: '$10 Off First Month', status: 'Active', uses: '312/2000', expires: '2024-12-31' },
     { id: 'coupon-3', code: 'SPRING2024', discount: '15% Off', status: 'Expired', uses: '500/500', expires: '2024-05-31' },
 ];
+
+    

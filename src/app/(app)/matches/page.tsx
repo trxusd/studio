@@ -1,4 +1,3 @@
-'use client';
 
 import * as React from 'react';
 import {
@@ -8,15 +7,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  CalendarIcon,
   Crown,
   Radio,
   Search,
@@ -25,43 +17,131 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
-import { matches } from '@/lib/data';
+import { MatchFilterControls } from '@/components/match-filter-controls';
 
-// Mock data grouped by country and league
-const groupedMatches = matches.reduce(
-  (acc, match) => {
-    const country = match.league.split(' - ')[0] || 'Unknown'; // Simple grouping logic
-    const league = match.league;
-    if (!acc[country]) {
-      acc[country] = {};
-    }
-    if (!acc[country][league]) {
-      acc[country][league] = [];
-    }
-    acc[country][league].push(match);
-    return acc;
-  },
-  {} as Record<string, Record<string, typeof matches>>
-);
+type Team = {
+  id: number;
+  name: string;
+  logo: string;
+};
 
-const countryFlags: Record<string, string> = {
-    'La Liga': 'https://picsum.photos/seed/spain-flag/32/20',
-    'Premier League': 'https://picsum.photos/seed/england-flag/32/20',
-    'Bundesliga': 'https://picsum.photos/seed/germany-flag/32/20',
-    'Ligue 1': 'https://picsum.photos/seed/france-flag/32/20'
+type League = {
+  id: number;
+  name: string;
+  country: string;
+  logo: string;
+  flag: string | null;
+  season: number;
+};
+
+type Fixture = {
+  id: number;
+  referee: string | null;
+  timezone: string;
+  date: string;
+  timestamp: number;
+  periods: {
+    first: number | null;
+    second: number | null;
+  };
+  venue: {
+    id: number | null;
+    name: string | null;
+    city: string | null;
+  };
+  status: {
+    long: string;
+    short: string;
+    elapsed: number | null;
+  };
+};
+
+type ApiMatch = {
+  fixture: Fixture;
+  league: League;
+  teams: {
+    home: Team;
+    away: Team;
+  };
+  goals: {
+    home: number | null;
+    away: number | null;
+  };
+  score: {
+    halftime: {
+      home: number | null;
+      away: number | null;
+    };
+    fulltime: {
+      home: number | null;
+      away: number | null;
+    };
+    extratime: {
+      home: number | null;
+      away: number | null;
+    };
+    penalty: {
+      home: number | null;
+      away: number | null;
+    };
+  };
+};
+
+type GroupedMatches = Record<string, Record<string, ApiMatch[]>>;
+
+
+async function getMatches(date: string) {
+  const apiKey = process.env.FOOTBALL_API_KEY;
+  const apiHost = process.env.NEXT_PUBLIC_RAPIDAPI_HOST;
+
+  if (!apiKey || !apiHost) {
+    console.error("API key or host is not configured.");
+    return [];
+  }
+
+  try {
+    const response = await fetch(`https://${apiHost}/v3/fixtures?date=${date}`, {
+      headers: {
+        'x-rapidapi-host': apiHost,
+        'x-rapidapi-key': apiKey,
+      },
+      next: { revalidate: 3600 } // Cache for 1 hour
+    });
+
+    if (!response.ok) {
+      console.error(`API request failed with status: ${response.status}`);
+      return [];
+    }
+
+    const data = await response.json();
+    return data.response as ApiMatch[];
+  } catch (error) {
+    console.error("Failed to fetch matches:", error);
+    return [];
+  }
 }
 
+export default async function MatchesPage({ searchParams }: { searchParams?: { date?: string } }) {
+  const isVip = false; // Mock vip status
+  const selectedDate = searchParams?.date || new Date().toISOString().split('T')[0];
+  const matches = await getMatches(selectedDate);
+  
+  const groupedMatches = matches.reduce(
+    (acc, match) => {
+      const country = match.league.country || 'Global';
+      const leagueName = match.league.name;
 
-export default function MatchesPage() {
-  const [date, setDate] = React.useState<Date | undefined>(new Date());
-  const [isVip] = React.useState(false); // Mock vip status
-
-  const handleDateSelect = (selectedDate: Date | undefined) => {
-    setDate(selectedDate);
-    // Close popover logic would be handled by Popover's internals
-  };
+      if (!acc[country]) {
+        acc[country] = {};
+      }
+      if (!acc[country][leagueName]) {
+        acc[country][leagueName] = [];
+      }
+      acc[country][leagueName].push(match);
+      return acc;
+    },
+    {} as GroupedMatches
+);
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -86,102 +166,86 @@ export default function MatchesPage() {
           <Input type="search" placeholder="Search for a team..." className="pl-10" />
           {/* Search results would pop up here */}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-            <Link href="/matches/live" passHref>
-                <Button variant="outline">
-                    <Radio className="mr-2 h-4 w-4 text-red-500" /> LIVE
-                </Button>
-            </Link>
-            <Popover>
-                <PopoverTrigger asChild>
-                <Button variant="outline" className={cn(!date && 'text-muted-foreground')}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(date, 'PPP') : <span>Pick a date</span>}
-                </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={handleDateSelect}
-                    initialFocus
-                />
-                </PopoverContent>
-            </Popover>
-            <Link href="/matches/favorites" passHref>
-                <Button variant="outline">
-                    <Star className="mr-2 h-4 w-4" /> Favorites
-                </Button>
-            </Link>
-            {!isVip && (
-                <Link href="/payments" passHref>
-                    <Button className="bg-yellow-500 hover:bg-yellow-600 text-primary-foreground">
-                        <Crown className="mr-2 h-4 w-4" /> Become a VIP Member
-                    </Button>
-                </Link>
-            )}
-        </div>
+        <MatchFilterControls selectedDate={selectedDate} isVip={isVip} />
       </div>
 
       {/* Matches List */}
-      <Accordion type="multiple" className="w-full">
-        {Object.entries(groupedMatches).map(([country, leagues]) => (
-          <AccordionItem value={country} key={country}>
-            <AccordionTrigger className="font-bold text-lg hover:no-underline">
-              <div className="flex items-center gap-3">
-                 <Image src={countryFlags[Object.keys(leagues)[0]] || "https://picsum.photos/seed/default-flag/32/20"} alt={`${country} flag`} width={32} height={20} className="rounded-sm" data-ai-hint="country flag" />
-                {country.includes('Liga') ? 'Spain' : country.includes('Premier') ? 'England' : country.includes('Bundesliga') ? 'Germany' : country.includes('Ligue 1') ? 'France' : 'Global'}
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <Accordion type="multiple" defaultValue={Object.keys(leagues)} className="w-full space-y-2">
-                {Object.entries(leagues).map(([league, leagueMatches]) => (
-                  <AccordionItem value={league} key={league} className="border-none">
-                    <AccordionTrigger className="bg-muted px-4 rounded-md hover:no-underline">
-                       <div className="flex items-center gap-3">
-                            <Image src={`https://picsum.photos/seed/${league.substring(0,4)}/32/32`} alt={`${league} logo`} width={24} height={24} className="rounded-full" data-ai-hint="league logo" />
-                            <span className="font-semibold">{league}</span>
-                       </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-2 space-y-1">
-                      {leagueMatches.map((match) => (
-                        <Link href={`/predictions/${match.id}`} key={match.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
-                          <div className="flex items-center gap-4">
-                            <div className="flex w-12 flex-col items-center justify-center text-xs text-muted-foreground">
-                                <span>{new Date(match.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                            </div>
-                            <div className="flex flex-col gap-2">
-                                <div className="flex items-center gap-2">
-                                    <Image src={match.teamA.logo} alt={match.teamA.name} width={20} height={20} data-ai-hint="sports logo" />
-                                    <span className="font-medium">{match.teamA.name}</span>
+      {matches.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+            <p>No matches found for this date.</p>
+        </div>
+      ) : (
+        <Accordion type="multiple" className="w-full">
+            {Object.entries(groupedMatches).sort(([a], [b]) => a.localeCompare(b)).map(([country, leagues]) => (
+            <AccordionItem value={country} key={country}>
+                <AccordionTrigger className="font-bold text-lg hover:no-underline">
+                <div className="flex items-center gap-3">
+                    {/* Use league flag as country flag is often the same */}
+                    {leagues[Object.keys(leagues)[0]][0].league.flag && (
+                        <Image src={leagues[Object.keys(leagues)[0]][0].league.flag!} alt={`${country} flag`} width={32} height={20} className="rounded-sm object-cover" data-ai-hint="country flag" />
+                    )}
+                    {country}
+                </div>
+                </AccordionTrigger>
+                <AccordionContent>
+                <Accordion type="multiple" defaultValue={Object.keys(leagues)} className="w-full space-y-2">
+                    {Object.entries(leagues).sort(([a], [b]) => a.localeCompare(b)).map(([league, leagueMatches]) => (
+                    <AccordionItem value={league} key={league} className="border-none">
+                        <AccordionTrigger className="bg-muted px-4 rounded-md hover:no-underline">
+                        <div className="flex items-center gap-3">
+                                <Image src={leagueMatches[0].league.logo} alt={`${league} logo`} width={24} height={24} className="rounded-full bg-white p-0.5" data-ai-hint="league logo" />
+                                <span className="font-semibold">{league}</span>
+                        </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pt-2 space-y-1">
+                        {leagueMatches.sort((a,b) => a.fixture.timestamp - b.fixture.timestamp).map((match) => (
+                            <Link href={`/predictions/${match.fixture.id}`} key={match.fixture.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
+                            <div className="flex items-center gap-4">
+                                <div className="flex w-12 flex-col items-center justify-center text-xs text-muted-foreground">
+                                    {match.fixture.status.short === 'NS' ? (
+                                        <span>{new Date(match.fixture.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
+                                    ) : (
+                                        <span className="font-bold text-primary">{match.fixture.status.short}</span>
+                                    )}
+                                    {match.fixture.status.elapsed && (
+                                        <span className='text-xs text-red-500 animate-pulse'>{match.fixture.status.elapsed}'</span>
+                                    )}
                                 </div>
-                                 <div className="flex items-center gap-2">
-                                    <Image src={match.teamB.logo} alt={match.teamB.name} width={20} height={20} data-ai-hint="sports logo" />
-                                    <span className="font-medium">{match.teamB.name}</span>
+                                <div className="flex flex-col gap-2">
+                                    <div className="flex items-center gap-2">
+                                        <Image src={match.teams.home.logo} alt={match.teams.home.name} width={20} height={20} data-ai-hint="sports logo" />
+                                        <span className="font-medium">{match.teams.home.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <Image src={match.teams.away.logo} alt={match.teams.away.name} width={20} height={20} data-ai-hint="sports logo" />
+                                        <span className="font-medium">{match.teams.away.name}</span>
+                                    </div>
                                 </div>
                             </div>
-                          </div>
-                          <div className="flex items-center gap-4">
-                             {match.prediction && (
-                               <div className="flex flex-col items-center font-mono text-sm">
-                                <span>{Math.round(match.prediction.teamAWinProbability*100)}%</span>
-                                <span>{Math.round(match.prediction.teamBWinProbability*100)}%</span>
-                               </div>
-                             )}
-                            <button onClick={(e) => { e.preventDefault(); /* Handle favorite logic */ }}>
-                              <Star className="h-5 w-5 text-muted-foreground/50 group-hover:text-yellow-400 transition-colors" />
-                            </button>
-                          </div>
-                        </Link>
-                      ))}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+                            <div className="flex items-center gap-4">
+                                {match.fixture.status.short !== 'NS' && (
+                                    <div className="flex flex-col items-center font-mono text-lg font-bold">
+                                        <span>{match.goals.home}</span>
+                                        <span>{match.goals.away}</span>
+                                    </div>
+                                )}
+                                <button onClick={(e) => { e.preventDefault(); /* Handle favorite logic */ }}>
+                                <Star className="h-5 w-5 text-muted-foreground/50 group-hover:text-yellow-400 transition-colors" />
+                                </button>
+                            </div>
+                            </Link>
+                        ))}
+                        </AccordionContent>
+                    </AccordionItem>
+                    ))}
+                </Accordion>
+                </AccordionContent>
+            </AccordionItem>
+            ))}
+        </Accordion>
+      )}
     </div>
   );
 }
+
+    
