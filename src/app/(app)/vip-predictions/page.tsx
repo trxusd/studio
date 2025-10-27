@@ -1,12 +1,35 @@
+
+'use client';
 import { MatchCard } from "@/components/match-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { matches } from "@/lib/data";
-import { Crown, Lock } from "lucide-react";
+import { Crown, Lock, Loader2 } from "lucide-react";
 import Link from 'next/link';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
 export default function VipPredictionsPage() {
-  const isVip = false; // Mock value
+  const { user, loading } = useUser();
+  const router = useRouter();
+  
+  // This is a mock. In a real app, this would come from the user's profile/subscription status in Firestore.
+  const isVip = user ? true : false; 
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+  
+  if (loading || !user) {
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">

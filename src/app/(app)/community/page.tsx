@@ -9,6 +9,7 @@ import { ThumbsUp, MessageSquare, Send, Loader2 } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { collection, addDoc, serverTimestamp, updateDoc, doc, query, orderBy } from "firebase/firestore";
 import { formatDistanceToNow } from 'date-fns';
+import { useRouter } from "next/navigation";
 
 type Post = {
     id: string;
@@ -25,6 +26,7 @@ export default function CommunityPage() {
     const [newMessage, setNewMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const router = useRouter();
 
     const postsQuery = firestore ? query(collection(firestore, "community-posts"), orderBy("timestamp", "asc")) : null;
     const { data: posts, loading: postsLoading } = useCollection<Post>(postsQuery);
@@ -35,6 +37,11 @@ export default function CommunityPage() {
         }
     }, [posts]);
 
+    useEffect(() => {
+        if (!userLoading && !user) {
+            router.push('/login');
+        }
+    }, [user, userLoading, router]);
 
     const handleSendMessage = async () => {
         if (!user || !firestore || !newMessage.trim()) return;
@@ -74,6 +81,14 @@ export default function CommunityPage() {
         return `${formatDistanceToNow(date)} ago`;
     }
 
+    if (userLoading || !user) {
+        return (
+            <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            </div>
+        );
+    }
+
   return (
     <div className="flex flex-col h-[calc(100vh-5rem)]">
         <div className="p-4 border-b">
@@ -85,7 +100,7 @@ export default function CommunityPage() {
 
       <div ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-6">
         <div className="mx-auto max-w-3xl">
-          {(postsLoading || userLoading) && (
+          {postsLoading && (
             <div className="flex justify-center items-center h-full">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
@@ -127,9 +142,6 @@ export default function CommunityPage() {
       
       <div className="mt-auto bg-background border-t p-4">
         <div className="mx-auto max-w-3xl">
-           {userLoading ? (
-             <div className="text-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-           ) : user ? (
             <div className="flex items-start gap-4">
               <Avatar>
                 <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/40/40`} alt="Your Avatar" />
@@ -152,9 +164,6 @@ export default function CommunityPage() {
                 {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
-           ): (
-            <p className="text-sm text-muted-foreground text-center">Tanpri <a href="/login" className="underline font-semibold text-primary">konekte w</a> pou w patisipe nan chat la.</p>
-           )}
         </div>
       </div>
     </div>

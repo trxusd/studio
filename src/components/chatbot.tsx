@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,8 @@ import { Loader2, MessageSquare, Send } from 'lucide-react';
 import { aiChatbotSupport } from '@/ai/flows/ai-chatbot-support';
 import { useToast } from '@/hooks/use-toast';
 import { AppLogo } from './icons';
+import { useUser } from '@/firebase';
+import Link from 'next/link';
 
 type Message = {
   role: 'user' | 'bot';
@@ -20,9 +23,12 @@ export function Chatbot() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { user, loading: userLoading } = useUser();
 
   const handleSendMessage = async (e: React.FormEvent, query?: string) => {
     e.preventDefault();
+    if (!user) return; // Prevent sending if not logged in
+
     const userQuery = query || input;
     if (!userQuery.trim()) return;
 
@@ -76,10 +82,10 @@ export function Chatbot() {
                     <div className={`max-w-xs rounded-lg p-3 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                         <p className="text-sm">{message.content}</p>
                     </div>
-                     {message.role === 'user' && (
+                     {message.role === 'user' && user && (
                          <Avatar className="h-8 w-8">
-                            <AvatarImage src="https://picsum.photos/seed/user-avatar/40/40" />
-                            <AvatarFallback>U</AvatarFallback>
+                            <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/40/40`} />
+                            <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
                         </Avatar>
                     )}
                     </div>
@@ -98,24 +104,33 @@ export function Chatbot() {
                 )}
                 </div>
             </ScrollArea>
-
-            <div className="mb-4 flex flex-wrap gap-2">
-                {quickReplies.map(reply => (
-                    <Button key={reply} variant="outline" size="sm" onClick={(e) => handleSendMessage(e, reply)} disabled={isLoading}>{reply}</Button>
-                ))}
-            </div>
-
-            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Ask a question..."
-                disabled={isLoading}
-                />
-                <Button type="submit" size="icon" disabled={isLoading}>
-                    <Send className="h-4 w-4" />
-                </Button>
-            </form>
+            
+            {userLoading ? (
+              <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
+            ) : user ? (
+              <>
+                <div className="mb-4 flex flex-wrap gap-2">
+                    {quickReplies.map(reply => (
+                        <Button key={reply} variant="outline" size="sm" onClick={(e) => handleSendMessage(e, reply)} disabled={isLoading}>{reply}</Button>
+                    ))}
+                </div>
+                <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                    <Input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    placeholder="Ask a question..."
+                    disabled={isLoading}
+                    />
+                    <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                        <Send className="h-4 w-4" />
+                    </Button>
+                </form>
+              </>
+            ) : (
+              <div className="text-center text-sm text-muted-foreground">
+                <p>Tanpri <Link href="/login" className="font-bold text-primary underline">konekte w</Link> pou w itilize sipò a.</p>
+              </div>
+            )}
             </SheetContent>
         </Sheet>
     </>

@@ -1,5 +1,6 @@
+
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,24 +8,36 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { automatedPaymentVerification } from "@/ai/flows/automated-payment-verification";
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { Crown, Loader2, Upload, Copy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 type PaymentMethod = 'MonCash' | 'NatCash' | 'Crypto';
 
 export default function PaymentsPage() {
   const { toast } = useToast();
+  const { user, loading: userLoading } = useUser();
+  const router = useRouter();
+
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('MonCash');
   const [email, setEmail] = useState('');
   const [transactionId, setTransactionId] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+
+  useEffect(() => {
+    if (!userLoading && !user) {
+      router.push('/login');
+    }
+    if (user) {
+      setEmail(user.email || '');
+    }
+  }, [user, userLoading, router]);
 
   const plans = {
     monthly: { name: '1 Month', price: 5, htg: '~660 HTG', id: 'monthly', popular: false, value:'' },
@@ -122,6 +135,14 @@ export default function PaymentsPage() {
     });
   };
 
+  if (userLoading || !user) {
+    return (
+        <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <h2 className="font-headline text-3xl font-bold tracking-tight">Payments & Subscriptions</h2>
@@ -214,7 +235,7 @@ export default function PaymentsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} required />
+                  <Input id="email" type="email" placeholder="your@email.com" value={email} onChange={e => setEmail(e.target.value)} required readOnly={!!user?.email} />
                 </div>
                  <div className="space-y-2">
                   <Label htmlFor="plan">Plan</Label>
