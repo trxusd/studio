@@ -1,14 +1,15 @@
+
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppLogo } from "@/components/icons";
-import { BarChart, Bell, Coupon, Home, LineChart, Package, Settings, ShoppingCart, Users } from "lucide-react";
+import { BarChart, Bell, Ticket, Home, LineChart, Package, Settings, ShoppingCart, Users } from "lucide-react";
 
 const navItems = [
     { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
     { href: "/admin/users", icon: Users, label: "Users" },
-    { href: "/admin/coupons", icon: Coupon, label: "Coupons" },
+    { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
     { href: "/admin/analytics", icon: LineChart, label: "Analytics" },
 ];
 
