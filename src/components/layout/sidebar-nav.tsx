@@ -29,7 +29,7 @@ import { UserNav } from './user-nav';
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/matches', icon: Footprints, label: 'Matches' },
-  { href: '/predictions', icon: BarChart2, label: 'Prédictions' },
+  { href: '/matches', icon: BarChart2, label: 'Prédictions' },
   { href: '/vip-predictions', icon: Crown, label: 'VIP' },
   { href: '/community', icon: MessageSquare, label: 'Community' },
   { href: '/payments', icon: CreditCard, label: 'Payments' },
@@ -56,10 +56,10 @@ export function SidebarNav() {
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
+            <SidebarMenuItem key={item.label}>
               <Link href={item.href}>
                 <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
+                  isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard') && (item.label !== 'Prédictions' || pathname.includes('matches'))}
                   tooltip={{ children: item.label, side: 'right' }}
                 >
                   <item.icon />
