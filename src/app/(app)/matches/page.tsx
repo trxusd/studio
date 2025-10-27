@@ -17,7 +17,6 @@ import {
 } from '@/components/ui/popover';
 import {
   CalendarIcon,
-  ChevronDown,
   Crown,
   Radio,
   Search,
@@ -125,7 +124,7 @@ export default function MatchesPage() {
       </div>
 
       {/* Matches List */}
-      <Accordion type="multiple" defaultValue={Object.keys(groupedMatches)} className="w-full">
+      <Accordion type="multiple" className="w-full">
         {Object.entries(groupedMatches).map(([country, leagues]) => (
           <AccordionItem value={country} key={country}>
             <AccordionTrigger className="font-bold text-lg hover:no-underline">
