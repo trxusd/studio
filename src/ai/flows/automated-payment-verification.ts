@@ -29,9 +29,17 @@ export async function automatedPaymentVerification(input: AutomatedPaymentVerifi
   return automatedPaymentVerificationFlow(input);
 }
 
+const verificationPromptInputSchema = z.object({
+    paymentMethod: z.string(),
+    expectedAmount: z.number(),
+    userId: z.string(),
+    confirmationDetails: z.string().optional(),
+    confirmationScreenshot: z.string().optional(),
+});
+
 const prompt = ai.definePrompt({
   name: 'automatedPaymentVerificationPrompt',
-  input: {schema: AutomatedPaymentVerificationInputSchema},
+  input: {schema: verificationPromptInputSchema},
   output: {schema: AutomatedPaymentVerificationOutputSchema},
   prompt: `You are an AI assistant specialized in automatically verifying payments for the FOOTBET-WIN platform.
 
@@ -42,10 +50,11 @@ const prompt = ai.definePrompt({
   Expected Amount: {{{expectedAmount}}}
   User ID (Email): {{{userId}}}
 
-  {{#if (startsWith paymentConfirmation "data:")}}
-  Payment Confirmation Screenshot: {{media url=paymentConfirmation}}
-  {{else}}
-  Payment Confirmation Details: {{{paymentConfirmation}}}
+  {{#if confirmationScreenshot}}
+  Payment Confirmation Screenshot: {{media url=confirmationScreenshot}}
+  {{/if}}
+  {{#if confirmationDetails}}
+  Payment Confirmation Details: {{{confirmationDetails}}}
   {{/if}}
 
   Your task is to analyze the provided information. If it's a screenshot, extract the transaction ID, amount, and date. If it's text, parse the details.
@@ -65,9 +74,17 @@ const automatedPaymentVerificationFlow = ai.defineFlow(
     outputSchema: AutomatedPaymentVerificationOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const isScreenshot = input.paymentConfirmation.startsWith('data:');
+    
+    const promptInput = {
+      paymentMethod: input.paymentMethod,
+      expectedAmount: input.expectedAmount,
+      userId: input.userId,
+      confirmationDetails: isScreenshot ? undefined : input.paymentConfirmation,
+      confirmationScreenshot: isScreenshot ? input.paymentConfirmation : undefined,
+    };
+
+    const {output} = await prompt(promptInput);
     return output!;
   }
 );
-
-    
