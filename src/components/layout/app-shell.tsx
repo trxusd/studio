@@ -13,16 +13,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="bg-background">
+      <div className="relative flex min-h-screen">
         <Sidebar>
           <SidebarNav />
         </Sidebar>
-        <SidebarInset>
-          <Header />
-          <main className="min-h-[calc(100vh_-_4rem)]">
-            {children}
-          </main>
-        </SidebarInset>
+        <div className="flex-1">
+            <Header />
+            <main className="min-h-[calc(100vh_-_4rem)]">
+                {children}
+            </main>
+        </div>
       </div>
     </SidebarProvider>
   );
