@@ -80,7 +80,7 @@ type ApiMatch = {
 };
 
 async function getMatchDetails(matchId: string) {
-  const apiKey = process.env.FOOTBALL_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_RAPIDAPI_KEY;
   const apiHost = process.env.NEXT_PUBLIC_RAPIDAPI_HOST;
 
   if (!apiKey || !apiHost) {
@@ -224,5 +224,3 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
     </div>
   );
 }
-
-  
