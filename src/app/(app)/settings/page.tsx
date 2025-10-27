@@ -12,20 +12,25 @@ import { updateProfile } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
   const { user, loading: userLoading } = useUser();
   const auth = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
   const [name, setName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    if (!userLoading && !user) {
+      router.push('/login');
+    }
     if (user) {
       setName(user.displayName || '');
     }
-  }, [user]);
+  }, [user, userLoading, router]);
 
   const handleProfileUpdate = async () => {
     if (!auth?.currentUser || !name.trim()) return;
@@ -48,7 +53,7 @@ export default function SettingsPage() {
     }
   };
 
-  if (userLoading) {
+  if (userLoading || !user) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />

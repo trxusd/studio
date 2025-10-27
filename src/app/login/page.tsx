@@ -26,6 +26,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState('signin');
+
 
   const auth = useAuth();
   const router = useRouter();
@@ -43,13 +45,38 @@ export default function LoginPage() {
         await signInWithEmailAndPassword(auth, email, password);
         toast({ title: "Welcome back!" });
       } else {
+        if (!fullName) {
+            setError("Please enter your full name.");
+            setIsLoading(false);
+            return;
+        }
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(userCredential.user, { displayName: fullName });
         toast({ title: "Account created successfully!" });
       }
       router.push('/dashboard');
     } catch (err: any) {
-      setError(err.message || "An unknown error occurred.");
+      let friendlyMessage = "An unknown error occurred.";
+      switch (err.code) {
+        case 'auth/user-not-found':
+          friendlyMessage = "No account found with this email. Please sign up.";
+          break;
+        case 'auth/wrong-password':
+          friendlyMessage = "Incorrect password. Please try again.";
+          break;
+        case 'auth/email-already-in-use':
+          friendlyMessage = "This email is already in use. Please sign in.";
+          break;
+        case 'auth/weak-password':
+          friendlyMessage = "The password is too weak. It must be at least 6 characters long.";
+          break;
+        case 'auth/invalid-email':
+            friendlyMessage = "Please enter a valid email address.";
+            break;
+        default:
+          friendlyMessage = err.message;
+      }
+      setError(friendlyMessage);
     } finally {
       setIsLoading(false);
     }
@@ -78,6 +105,13 @@ export default function LoginPage() {
       .finally(() => setIsLoading(false));
   };
 
+  const clearForm = () => {
+    setEmail('');
+    setPassword('');
+    setFullName('');
+    setError(null);
+  }
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -87,7 +121,10 @@ export default function LoginPage() {
           <span className="font-headline text-2xl font-bold">FOOTBET-WIN</span>
         </Link>
         <Card className="shadow-2xl">
-          <Tabs defaultValue="signin">
+          <Tabs value={activeTab} onValueChange={(value) => {
+            setActiveTab(value);
+            clearForm();
+          }}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
@@ -113,7 +150,7 @@ export default function LoginPage() {
                   <div className="relative">
                     <Input id="password-signin" type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} />
                     <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <EyeOff /> : <Eye />}
+                      {showPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
                     </Button>
                   </div>
                 </div>
@@ -156,7 +193,7 @@ export default function LoginPage() {
                    <div className="relative">
                     <Input id="password-signup" type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} />
                      <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <EyeOff /> : <Eye />}
+                      {showPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
                     </Button>
                   </div>
                 </div>

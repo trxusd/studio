@@ -23,7 +23,7 @@ export default function PaymentsPage() {
   const { user, loading: userLoading } = useUser();
   const router = useRouter();
 
-  const [selectedPlan, setSelectedPlan] = useState('monthly');
+  const [selectedPlan, setSelectedPlan] = useState('quarterly');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethod>('MonCash');
   const [email, setEmail] = useState('');
   const [transactionId, setTransactionId] = useState('');

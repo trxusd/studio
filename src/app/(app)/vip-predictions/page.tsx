@@ -8,22 +8,48 @@ import { Crown, Lock, Loader2 } from "lucide-react";
 import Link from 'next/link';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-export default function VipPredictionsPage() {
-  const { user, loading } = useUser();
-  const router = useRouter();
-  
-  // This is a mock. In a real app, this would come from the user's profile/subscription status in Firestore.
-  const isVip = user ? true : false; 
+// Mock subscription status. In a real app, this would come from your database.
+const useVipStatus = (user: any) => {
+  const [isVip, setIsVip] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!loading && !user) {
+    // Simulate fetching subscription status
+    if (user) {
+      // In a real app, you'd fetch this from Firestore:
+      // const userDoc = await getDoc(doc(firestore, "users", user.uid));
+      // setIsVip(userDoc.data()?.isVip || false);
+      
+      // For now, we'll just mock it.
+      // Let's say every other user is a VIP for demonstration.
+      // A simple mock logic:
+      const isUserVip = true; // you can change this to false to see the locked state
+      setIsVip(isUserVip);
+
+    } else {
+      setIsVip(false);
+    }
+    setLoading(false);
+  }, [user]);
+
+  return { isVip, loading: loading };
+};
+
+
+export default function VipPredictionsPage() {
+  const { user, loading: userLoading } = useUser();
+  const { isVip, loading: vipLoading } = useVipStatus(user);
+  const router = useRouter();
+  
+  useEffect(() => {
+    if (!userLoading && !user) {
       router.push('/login');
     }
-  }, [user, loading, router]);
+  }, [user, userLoading, router]);
   
-  if (loading || !user) {
+  if (userLoading || vipLoading || !user) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
