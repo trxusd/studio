@@ -12,10 +12,10 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const AutomatedPaymentVerificationInputSchema = z.object({
-  paymentConfirmation: z.string().describe("Payment confirmation details, which could be a transaction ID, email confirmation text, or a data URI of a screenshot of the payment confirmation.  If passing a screenshot, it should be as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  paymentMethod: z.enum(['MonCash', 'Crypto', 'Visa']).describe('The payment method used.'),
+  paymentConfirmation: z.string().describe("Payment confirmation details, which could be text-based details (Email, Plan, TXID) or a data URI of a screenshot of the payment confirmation. If passing a screenshot, it should be as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
+  paymentMethod: z.enum(['MonCash', 'NatCash', 'Crypto', 'Visa']).describe('The payment method used.'),
   expectedAmount: z.number().describe('The expected payment amount.'),
-  userId: z.string().describe('The ID of the user making the payment.'),
+  userId: z.string().describe('The email or ID of the user making the payment.'),
 });
 export type AutomatedPaymentVerificationInput = z.infer<typeof AutomatedPaymentVerificationInputSchema>;
 
@@ -35,11 +35,12 @@ const prompt = ai.definePrompt({
   output: {schema: AutomatedPaymentVerificationOutputSchema},
   prompt: `You are an AI assistant specialized in automatically verifying payments for the FOOTBET-WIN platform.
 
-  Based on the provided payment confirmation details, determine if the payment is valid and matches the expected amount.  The payment confirmation can be a transaction ID, email confirmation, or a screenshot.
+  Based on the provided payment confirmation details, determine if the payment is valid and matches the expected amount.
+  The payment confirmation can be text details (including Email, Plan, TXID) or a screenshot.
 
   Payment Method: {{{paymentMethod}}}
   Expected Amount: {{{expectedAmount}}}
-  User ID: {{{userId}}}
+  User ID (Email): {{{userId}}}
 
   {{#if (startsWith paymentConfirmation "data:")}}
   Payment Confirmation Screenshot: {{media url=paymentConfirmation}}
@@ -47,14 +48,14 @@ const prompt = ai.definePrompt({
   Payment Confirmation Details: {{{paymentConfirmation}}}
   {{/if}}
 
-  Respond with a JSON object indicating whether the payment is verified and providing details about the verification process.
-  Include as much detail as possible from the payment confirmation in verificationDetails.
+  Your task is to analyze the provided information. If it's a screenshot, extract the transaction ID, amount, and date. If it's text, parse the details.
+  Compare the found amount with the expected amount for the chosen plan.
+  
+  If the details are plausible and the amount seems correct, set isVerified to true and provide a summary in verificationDetails.
+  If there is a mismatch, if information is missing, or if it looks suspicious, set isVerified to false. In verificationDetails, clearly state the reason for the failure (e.g., "Amount mismatch", "Transaction ID not found", "Insufficient details provided").
 
-  Ensure that you respond in the following JSON format:
-  {
-  "isVerified": true/false,
-  "verificationDetails": "Details about the verification, including any discrepancies or confirmations."
-  }`,
+  Respond with a JSON object indicating whether the payment is verified and providing details about the verification process.
+  `,
 });
 
 const automatedPaymentVerificationFlow = ai.defineFlow(
@@ -68,3 +69,5 @@ const automatedPaymentVerificationFlow = ai.defineFlow(
     return output!;
   }
 );
+
+    
