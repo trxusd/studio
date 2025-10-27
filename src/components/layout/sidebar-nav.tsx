@@ -12,7 +12,6 @@ import {
   SidebarFooter,
   SidebarSeparator,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
 import { AppLogo } from '@/components/icons';
 import {
   LayoutDashboard,
@@ -25,6 +24,7 @@ import {
   LifeBuoy,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
+import { useUser } from '@/firebase';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -37,11 +37,13 @@ const navItems = [
 
 const secondaryNavItems = [
   { href: '/settings', icon: Settings, label: 'Settings' },
-  { href: '/admin/dashboard', icon: Shield, label: 'Admin' },
+  { href: '/admin/dashboard', icon: Shield, label: 'Admin', adminOnly: true },
 ];
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { user } = useUser();
+  const adminEmail = 'trxusdt87@gmail.com';
 
   return (
     <>
@@ -72,19 +74,24 @@ export function SidebarNav() {
       </SidebarContent>
       <SidebarFooter className="p-2">
         <SidebarMenu>
-          {secondaryNavItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <Link href={item.href}>
-                <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
-                  tooltip={{ children: item.label, side: 'right' }}
-                >
-                  <item.icon />
-                  <span>{item.label}</span>
-                </SidebarMenuButton>
-              </Link>
-            </SidebarMenuItem>
-          ))}
+          {secondaryNavItems.map((item) => {
+            if (item.adminOnly && user?.email !== adminEmail) {
+                return null;
+            }
+            return (
+                <SidebarMenuItem key={item.href}>
+                <Link href={item.href}>
+                    <SidebarMenuButton
+                    isActive={pathname.startsWith(item.href)}
+                    tooltip={{ children: item.label, side: 'right' }}
+                    >
+                    <item.icon />
+                    <span>{item.label}</span>
+                    </SidebarMenuButton>
+                </Link>
+                </SidebarMenuItem>
+            );
+          })}
           <SidebarSeparator />
           <div className="p-2 group-data-[collapsible=icon]:hidden">
               <UserNav />

@@ -1,10 +1,14 @@
 
+'use client';
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppLogo } from "@/components/icons";
-import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft, Bot } from "lucide-react";
+import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft, Bot, Loader2 } from "lucide-react";
+import { useUser } from "@/firebase";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const navItems = [
     { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
@@ -18,6 +22,26 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
+    const { user, loading } = useUser();
+    const router = useRouter();
+    const adminEmail = 'trxusdt87@gmail.com';
+
+    useEffect(() => {
+        if (!loading) {
+            if (!user || user.email !== adminEmail) {
+                router.replace('/dashboard');
+            }
+        }
+    }, [user, loading, router]);
+
+    if (loading || !user || user.email !== adminEmail) {
+        return (
+            <div className="flex h-screen w-full items-center justify-center">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            </div>
+        );
+    }
+
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-muted/40 md:block">
