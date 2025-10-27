@@ -1,3 +1,4 @@
+'use client';
 
 import * as React from 'react';
 import {
@@ -9,15 +10,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Crown,
-  Radio,
-  Search,
-  Star,
   ArrowLeft,
+  Search,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { MatchFilterControls } from '@/components/match-filter-controls';
+import { Star } from 'lucide-react';
 
 type Team = {
   id: number;
@@ -90,59 +89,60 @@ type ApiMatch = {
 type GroupedMatches = Record<string, Record<string, ApiMatch[]>>;
 
 
-async function getMatches(date: string) {
-  const apiKey = process.env.FOOTBALL_API_KEY;
-  const apiHost = process.env.NEXT_PUBLIC_RAPIDAPI_HOST;
+export default function MatchesPage() {
+  const [matches, setMatches] = React.useState<ApiMatch[]>([]);
+  const [groupedMatches, setGroupedMatches] = React.useState<GroupedMatches>({});
+  const [selectedDate, setSelectedDate] = React.useState(new Date().toISOString().split('T')[0]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const isVip = false; // Mock vip status
 
-  if (!apiKey || !apiHost) {
-    console.error("API key or host is not configured.");
-    return [];
-  }
+  React.useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateParam = urlParams.get('date');
+    const newDate = dateParam || new Date().toISOString().split('T')[0];
+    setSelectedDate(newDate);
 
-  try {
-    const response = await fetch(`https://${apiHost}/v3/fixtures?date=${date}`, {
-      headers: {
-        'x-rapidapi-host': apiHost,
-        'x-rapidapi-key': apiKey,
-      },
-      next: { revalidate: 3600 } // Cache for 1 hour
-    });
+    async function fetchMatches(date: string) {
+      setIsLoading(true);
+      try {
+        const response = await fetch(`/api/matches?date=${date}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch matches');
+        }
+        const data = await response.json();
+        setMatches(data.matches);
 
-    if (!response.ok) {
-      console.error(`API request failed with status: ${response.status}`);
-      return [];
+        const grouped = data.matches.reduce(
+            (acc: GroupedMatches, match: ApiMatch) => {
+              const country = match.league.country || 'Global';
+              const leagueName = match.league.name;
+
+              if (!acc[country]) {
+                acc[country] = {};
+              }
+              if (!acc[country][leagueName]) {
+                acc[country][leagueName] = [];
+              }
+              acc[country][leagueName].push(match);
+              return acc;
+            },
+            {} as GroupedMatches
+        );
+        setGroupedMatches(grouped);
+      } catch (error) {
+        console.error("Failed to fetch matches:", error);
+        setMatches([]);
+        setGroupedMatches({});
+      } finally {
+        setIsLoading(false);
+      }
     }
 
-    const data = await response.json();
-    return data.response as ApiMatch[];
-  } catch (error) {
-    console.error("Failed to fetch matches:", error);
-    return [];
-  }
-}
+    fetchMatches(newDate);
 
-export default async function MatchesPage({ searchParams }: { searchParams?: { date?: string } }) {
-  const isVip = false; // Mock vip status
-  const selectedDate = searchParams?.date || new Date().toISOString().split('T')[0];
-  const matches = await getMatches(selectedDate);
+  }, [typeof window !== 'undefined' ? window.location.search : '']);
+
   
-  const groupedMatches = matches.reduce(
-    (acc, match) => {
-      const country = match.league.country || 'Global';
-      const leagueName = match.league.name;
-
-      if (!acc[country]) {
-        acc[country] = {};
-      }
-      if (!acc[country][leagueName]) {
-        acc[country][leagueName] = [];
-      }
-      acc[country][leagueName].push(match);
-      return acc;
-    },
-    {} as GroupedMatches
-);
-
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       {/* Header */}
@@ -170,7 +170,11 @@ export default async function MatchesPage({ searchParams }: { searchParams?: { d
       </div>
 
       {/* Matches List */}
-      {matches.length === 0 ? (
+      {isLoading ? (
+        <div className="text-center py-12 text-muted-foreground">
+            <p>Loading matches...</p>
+        </div>
+      ) : matches.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
             <p>No matches found for this date.</p>
         </div>
