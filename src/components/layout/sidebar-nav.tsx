@@ -22,6 +22,7 @@ import {
   Settings,
   Shield,
   LifeBuoy,
+  Gift,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { useUser } from '@/firebase';
@@ -35,6 +36,7 @@ const navItems = [
   { href: '/vip-predictions', icon: Crown, label: 'VIP' },
   { href: '/community', icon: MessageSquare, label: 'Community' },
   { href: '/payments', icon: CreditCard, label: 'Payments' },
+  { href: '/referral', icon: Gift, label: 'Referral' },
 ];
 
 const secondaryNavItems = [
