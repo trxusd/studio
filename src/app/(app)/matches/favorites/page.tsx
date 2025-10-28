@@ -66,20 +66,20 @@ export default function FavoriteMatchesPage() {
     // or when the favorites themselves change.
     const fetchMatchDetails = async () => {
       // Exit if we are still loading favorites or have no favorites to fetch.
-      if (favoritesLoading) {
-        setIsLoading(true);
-        return;
-      }
-      
-      if (!favorites || favorites.length === 0) {
+      if (!favorites) {
+        setIsLoading(false);
         setGroupedMatches({});
         setTotalFavorites(0);
-        setIsLoading(false);
         return;
       }
       
-      setIsLoading(true);
       setTotalFavorites(favorites.length);
+      if(favorites.length === 0) {
+        setIsLoading(false);
+        setGroupedMatches({});
+        return;
+      }
+      
       const favoriteIds = favorites.map(f => f.id);
       
       try {
@@ -116,7 +116,9 @@ export default function FavoriteMatchesPage() {
       }
     };
     
-    fetchMatchDetails();
+    if (!favoritesLoading) {
+      fetchMatchDetails();
+    }
 
   }, [favorites, favoritesLoading]);
 
