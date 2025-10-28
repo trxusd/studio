@@ -7,13 +7,14 @@ import { PredictionChart } from '@/components/prediction-chart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, BarChart, FileText, Star, Users, List, Shield, Shirt, GanttChartSquare } from 'lucide-react';
+import { ArrowLeft, BarChart, FileText, Star, Users, List, Shield, Shirt, GanttChartSquare, MapPin, Flag, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
 
 // Types from API
 type Team = { id: number; name: string; logo: string; };
@@ -114,30 +115,35 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
                 <Link href="/matches"><ArrowLeft className="h-4 w-4" /></Link>
             </Button>
             <h2 className="font-headline text-3xl font-bold tracking-tight">
-                Détails du Match
+                Match
             </h2>
         </div>
         
-        <Card>
-            <CardHeader className="text-center">
-                <div className="flex justify-center items-center gap-8">
-                    <div className="flex flex-col items-center gap-2 w-40">
-                        <Image src={match.teams.home.logo} alt={match.teams.home.name} width={80} height={80} className="rounded-full bg-white p-1" data-ai-hint="sports logo" />
-                        <span className="font-bold text-lg text-center">{match.teams.home.name}</span>
+        <Card className="overflow-hidden">
+            <CardContent className="p-6 text-center bg-card/50">
+                 <div className="text-sm text-muted-foreground mb-4">
+                    {format(new Date(match.fixture.date), 'dd.MM.yyyy HH:mm')}
+                </div>
+                <div className="flex justify-around items-center">
+                    <div className="flex flex-col items-center gap-2 w-1/3">
+                        <Image src={match.teams.home.logo} alt={match.teams.home.name} width={80} height={80} className="rounded-full bg-white p-1 mb-2" data-ai-hint="sports logo" />
+                        <span className="font-bold text-base text-center">{match.teams.home.name}</span>
                     </div>
-                    <div className="flex flex-col items-center">
-                        <span className="font-headline text-5xl">
+
+                    <div className="flex flex-col items-center w-1/3">
+                        <span className="font-headline text-5xl font-bold tracking-tighter">
                            {match.fixture.status.short === 'NS' ? 'VS' : `${match.goals.home} - ${match.goals.away}`}
                         </span>
+                        <span className="text-sm text-muted-foreground mt-1">{match.fixture.status.long}</span>
                         {match.fixture.status.elapsed && <Badge variant="destructive" className="mt-2 animate-pulse">{match.fixture.status.elapsed}'</Badge>}
                     </div>
-                     <div className="flex flex-col items-center gap-2 w-40">
-                        <Image src={match.teams.away.logo} alt={match.teams.away.name} width={80} height={80} className="rounded-full bg-white p-1" data-ai-hint="sports logo" />
-                        <span className="font-bold text-lg text-center">{match.teams.away.name}</span>
+
+                     <div className="flex flex-col items-center gap-2 w-1/3">
+                        <Image src={match.teams.away.logo} alt={match.teams.away.name} width={80} height={80} className="rounded-full bg-white p-1 mb-2" data-ai-hint="sports logo" />
+                        <span className="font-bold text-base text-center">{match.teams.away.name}</span>
                     </div>
                 </div>
-                <CardDescription className="mt-4">{match.league.name} - {new Date(match.fixture.date).toLocaleString()}</CardDescription>
-            </CardHeader>
+            </CardContent>
         </Card>
 
         <Tabs defaultValue="details" className="w-full">
@@ -148,11 +154,22 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
                 <TabsTrigger value="standings">Classement</TabsTrigger>
             </TabsList>
             <TabsContent value="details" className="mt-4">
-                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2">Avant-match</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2"><List className="h-4 w-4 text-muted-foreground"/><strong>Ligue:</strong> {match.league.name}</div>
+                        <div className="flex items-center gap-2"><Flag className="h-4 w-4 text-muted-foreground"/><strong>Pays:</strong> {match.league.country}</div>
+                        <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground"/><strong>Stade:</strong> {match.fixture.venue.name || 'N/A'}</div>
+                        <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground"/><strong>Date:</strong> {format(new Date(match.fixture.date), 'dd MMMM yyyy, HH:mm')}</div>
+                    </CardContent>
+                </Card>
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-4">
                     <Card className="lg:col-span-3">
                         <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2"><BarChart className="text-primary"/>Win Probability</CardTitle>
-                            <CardDescription>AI-generated prediction based on historical data and team form.</CardDescription>
+                            <CardTitle className="font-headline flex items-center gap-2"><BarChart className="text-primary"/>Probabilité de Victoire</CardTitle>
+                            <CardDescription>Prédiction par IA basée sur les données historiques.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <PredictionChart data={predictionData} />
@@ -161,36 +178,13 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
 
                      <Card className="lg:col-span-4">
                         <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2"><Star className="text-primary"/>Key Statistics</CardTitle>
-                             <CardDescription>Critical data points influencing the match outcome.</CardDescription>
+                            <CardTitle className="font-headline flex items-center gap-2"><Star className="text-primary"/>Statistiques Clés</CardTitle>
+                             <CardDescription>Points de données critiques influençant le résultat du match.</CardDescription>
                         </CardHeader>
                         <CardContent>
                            <div className="prose prose-sm max-w-none text-card-foreground dark:prose-invert">
                             <p>{prediction.keyStatistics}</p>
                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 mt-4">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2">
-                                <FileText className="text-primary"/>{match.teams.home.name} Analysis
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="prose prose-sm max-w-none text-card-foreground dark:prose-invert">
-                            <p>{prediction.teamAAnalysis}</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="font-headline flex items-center gap-2">
-                                <FileText className="text-primary"/>{match.teams.away.name} Analysis
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="prose prose-sm max-w-none text-card-foreground dark:prose-invert">
-                            <p>{prediction.teamBAnalysis}</p>
                         </CardContent>
                     </Card>
                 </div>
@@ -412,5 +406,7 @@ function LeagueStandings({ standings }: { standings: ApiStandings | null }) {
     );
 }
 
+
+    
 
     
