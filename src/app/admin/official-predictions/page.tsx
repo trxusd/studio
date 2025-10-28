@@ -41,7 +41,11 @@ export default function OfficialPredictionsPage() {
         // Mock prediction result data
         const mockResult = {
             secure_trial: { coupon_1: [ { match: 'Man U vs Chelsea', prediction: '1' } ]},
-            exclusive_vip: { coupon_1: [ { match: 'Real Madrid vs Barca', prediction: 'X' } ], coupon_2: [], coupon_3: [] },
+            exclusive_vip: { 
+                coupon_1: [ { match: 'Real Madrid vs Barca', prediction: 'X' } ], 
+                coupon_2: [], 
+                coupon_3: [] 
+            },
             individual_vip: [ { match: 'Bayern vs Dortmund', prediction: 'Over 2.5' } ],
             free_coupon: { coupon_1: [ { match: 'PSG vs Monaco', prediction: '1' } ] },
             free_individual: [ { match: 'Liverpool vs Arsenal', prediction: 'BTTS' } ],
