@@ -21,20 +21,21 @@ const navItems = [
     { href: "/admin/analytics", icon: LineChart, label: "Analytics" },
 ];
 
+const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const { user, loading } = useUser();
     const router = useRouter();
-    const adminEmail = 'trxusdt87@gmail.com';
 
     useEffect(() => {
         if (!loading) {
-            if (!user || user.email !== adminEmail) {
+            if (!user || !user.email || !adminEmails.includes(user.email)) {
                 router.replace('/dashboard');
             }
         }
     }, [user, loading, router]);
 
-    if (loading || !user || user.email !== adminEmail) {
+    if (loading || !user || !user.email || !adminEmails.includes(user.email)) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
                 <Loader2 className="h-16 w-16 animate-spin text-primary" />

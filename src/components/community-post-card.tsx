@@ -87,8 +87,8 @@ export function CommunityPostCard({ post }: { post: Post }) {
     const { toast } = useToast();
     const [showComments, setShowComments] = useState(false);
 
-    const adminEmail = 'trxusdt87@gmail.com';
-    const isUserAdmin = user?.email === adminEmail;
+    const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
+    const isUserAdmin = user?.email ? adminEmails.includes(user.email) : false;
     const isOwner = user?.uid === post.user.uid;
 
     const handleLike = async () => {

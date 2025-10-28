@@ -42,12 +42,6 @@ export default function FavoriteMatchesPage() {
     React.useEffect(() => {
         const fetchMatchDetails = async () => {
             if (favoritesLoading || !favorites) {
-                // If still loading or no favorites data, do nothing yet.
-                // If not loading and favorites is empty array, it will be handled below.
-                if(!favoritesLoading && !favorites) {
-                    setFavoriteMatches([]);
-                    setDetailsLoading(false);
-                }
                 return;
             }
 
@@ -60,8 +54,8 @@ export default function FavoriteMatchesPage() {
             }
             
             setDetailsLoading(true);
-            const matchPromises = favoriteIds.map(async (id) => {
-                try {
+            try {
+                 const matchPromises = favoriteIds.map(async (id) => {
                     const response = await fetch(`/api/matches?id=${id}`);
                     if (response.ok) {
                         const data = await response.json();
@@ -80,15 +74,17 @@ export default function FavoriteMatchesPage() {
                             } as MatchPrediction;
                         }
                     }
-                } catch (error) {
-                    console.error(`Failed to fetch details for match ${id}`, error);
-                }
-                return null;
-            });
+                    return null;
+                });
 
-            const matches = await Promise.all(matchPromises);
-            setFavoriteMatches(matches.filter((m): m is MatchPrediction => m !== null));
-            setDetailsLoading(false);
+                const matches = await Promise.all(matchPromises);
+                setFavoriteMatches(matches.filter((m): m is MatchPrediction => m !== null));
+            } catch (error) {
+                console.error('Failed to fetch match details', error);
+                setFavoriteMatches([]);
+            } finally {
+                setDetailsLoading(false);
+            }
         };
 
         fetchMatchDetails();

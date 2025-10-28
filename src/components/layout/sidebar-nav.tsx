@@ -46,7 +46,7 @@ export function SidebarNav() {
   const pathname = usePathname();
   const { user } = useUser();
   const { setOpenMobile, isMobile } = useSidebar();
-  const adminEmail = 'trxusdt87@gmail.com';
+  const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
 
   const handleLinkClick = () => {
     if (isMobile) {
@@ -96,7 +96,7 @@ export function SidebarNav() {
       <SidebarFooter className="p-2">
         <SidebarMenu>
           {secondaryNavItems.map((item) => {
-            if (item.adminOnly && user?.email !== adminEmail) {
+            if (item.adminOnly && (!user?.email || !adminEmails.includes(user.email))) {
                 return null;
             }
             return (
