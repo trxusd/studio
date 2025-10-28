@@ -198,10 +198,10 @@ function MatchesPageContent() {
     }
   }, [debouncedSearchQuery]);
 
-  const getMatchStatus = (status: Fixture['status']) => {
+  const getMatchStatus = (status: Fixture['status'], date: string) => {
     switch (status.short) {
         case 'NS': // Not Started
-            return new Date(status.long).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+            return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
         case 'HT': // Halftime
             return '1H';
         case 'FT': // Full Time
@@ -261,6 +261,31 @@ function MatchesPageContent() {
         variant: "destructive"
       });
     }
+  };
+
+  const getTeamClasses = (team: 'home' | 'away', match: ApiMatch) => {
+    if (match.fixture.status.short !== 'FT') {
+        return "font-medium";
+    }
+
+    const homeScore = match.goals.home;
+    const awayScore = match.goals.away;
+
+    if (homeScore === null || awayScore === null) return "font-medium";
+
+    if (homeScore === awayScore) {
+        return "text-muted-foreground";
+    }
+
+    if (team === 'home') {
+        return homeScore > awayScore ? "font-bold" : "text-muted-foreground";
+    }
+
+    if (team === 'away') {
+        return awayScore > homeScore ? "font-bold" : "text-muted-foreground";
+    }
+
+    return "font-medium";
   };
 
 
@@ -345,7 +370,7 @@ function MatchesPageContent() {
                             <Link href={`/predictions/${match.fixture.id}`} key={match.fixture.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
                             <div className="flex items-center gap-4">
                                 <div className="flex w-12 flex-col items-center justify-center text-xs text-muted-foreground">
-                                    <span className="font-bold text-primary">{getMatchStatus(match.fixture)}</span>
+                                    <span className="font-bold text-primary">{getMatchStatus(match.fixture, match.fixture.date)}</span>
                                     {match.fixture.status.elapsed && (
                                         <span className='text-xs text-red-500 animate-pulse'>{match.fixture.status.elapsed}'</span>
                                     )}
@@ -353,11 +378,11 @@ function MatchesPageContent() {
                                 <div className="flex flex-col gap-2">
                                     <div className="flex items-center gap-2">
                                         <Image src={match.teams.home.logo} alt={match.teams.home.name} width={20} height={20} data-ai-hint="sports logo" />
-                                        <span className="font-medium">{match.teams.home.name}</span>
+                                        <span className={getTeamClasses('home', match)}>{match.teams.home.name}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Image src={match.teams.away.logo} alt={match.teams.away.name} width={20} height={20} data-ai-hint="sports logo" />
-                                        <span className="font-medium">{match.teams.away.name}</span>
+                                        <span className={getTeamClasses('away', match)}>{match.teams.away.name}</span>
                                     </div>
                                 </div>
                             </div>
