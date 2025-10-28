@@ -8,6 +8,7 @@ import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2 } from "lu
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Progress } from "@/components/ui/progress";
 
 export default function ReferralPage() {
     const { user, loading } = useUser();
@@ -31,12 +32,21 @@ export default function ReferralPage() {
         });
     };
 
+    // Mock data for counters. This would be fetched from Firestore in a real implementation.
+    const referralProgress = {
+        'VIP 1 (1 Month)': 0,
+        'VIP 2 (3 Months)': 0,
+        'VIP 3 (6 Months)': 0,
+        'VIP 4 (1 Year)': 0,
+        'VIP 5 (Lifetime)': 0,
+    };
+
     const referralTiers = [
-        { id: 1, invites: 10, sourcePlan: "VIP 1 (1 Month)", reward: "Plan VIP 2 Gratis", icon: <UserPlus className="text-primary"/> },
-        { id: 2, invites: 10, sourcePlan: "VIP 2 (3 Months)", reward: "Plan VIP 3 Gratis", icon: <Star className="text-primary"/> },
-        { id: 3, invites: 10, sourcePlan: "VIP 3 (6 Months)", reward: "Plan VIP 4 Gratis", icon: <Award className="text-primary"/> },
-        { id: 4, invites: 10, sourcePlan: "VIP 4 (1 Year)", reward: "Plan VIP 5 Gratis", icon: <Crown className="text-primary"/> },
-        { id: 5, invites: 10, sourcePlan: "VIP 5 (Lifetime)", reward: "$300 USD Kach", icon: <DollarSign className="text-primary"/> },
+        { id: 1, sourcePlan: "VIP 1 (1 Month)", reward: "Plan VIP 2 Gratis", icon: <UserPlus className="text-primary"/> },
+        { id: 2, sourcePlan: "VIP 2 (3 Months)", reward: "Plan VIP 3 Gratis", icon: <Star className="text-primary"/> },
+        { id: 3, sourcePlan: "VIP 3 (6 Months)", reward: "Plan VIP 4 Gratis", icon: <Award className="text-primary"/> },
+        { id: 4, sourcePlan: "VIP 4 (1 Year)", reward: "Plan VIP 5 Gratis", icon: <Crown className="text-primary"/> },
+        { id: 5, sourcePlan: "VIP 5 (Lifetime)", reward: "$300 USD Kach", icon: <DollarSign className="text-primary"/> },
     ];
 
     if (loading || !user) {
@@ -75,19 +85,32 @@ export default function ReferralPage() {
                 </CardHeader>
                 <CardContent>
                     <ul className="space-y-4">
-                        {referralTiers.map(tier => (
-                            <li key={tier.id} className="flex items-center gap-4 p-3 bg-muted/50 rounded-lg">
-                                <div className="p-2 bg-primary/10 rounded-full">{tier.icon}</div>
-                                <div className="flex-1">
-                                    <p className="font-semibold">
-                                        Envite {tier.invites} itilizatè nan <span className="text-primary">{tier.sourcePlan}</span>
-                                    </p>
-                                </div>
-                                <div className="text-right">
-                                    <p className="font-bold text-primary">Jwenn → {tier.reward}</p>
-                                </div>
-                            </li>
-                        ))}
+                        {referralTiers.map(tier => {
+                            const progress = referralProgress[tier.sourcePlan as keyof typeof referralProgress] || 0;
+                            const progressPercentage = (progress / 10) * 100;
+                            return (
+                                <li key={tier.id} className="flex flex-col gap-3 p-4 bg-muted/50 rounded-lg">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-2 bg-primary/10 rounded-full">{tier.icon}</div>
+                                        <div className="flex-1">
+                                            <p className="font-semibold">
+                                                Envite 10 itilizatè nan <span className="text-primary">{tier.sourcePlan}</span>
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-primary">Jwenn → {tier.reward}</p>
+                                        </div>
+                                    </div>
+                                    <div className="px-2">
+                                        <div className="flex justify-between items-center mb-1">
+                                            <span className="text-xs font-medium text-muted-foreground">Pwogrè</span>
+                                            <span className="text-xs font-bold">{progress}/10</span>
+                                        </div>
+                                        <Progress value={progressPercentage} className="h-2" />
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </CardContent>
                  <CardFooter className="text-muted-foreground text-sm">
