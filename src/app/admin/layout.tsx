@@ -28,13 +28,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
 
     useEffect(() => {
+        // This effect runs when the loading state or user object changes.
+        // It's crucial to NOT include `router` in the dependency array to prevent loops.
         if (!loading) {
             if (!user || !user.email || !adminEmails.includes(user.email)) {
+                // If not loading and not an admin, redirect once.
                 router.replace('/dashboard');
             }
         }
-    }, [user, loading, router]);
+    }, [user, loading]); // Intentionally omitting `router`
 
+    // While loading, or if the user is not determined to be an admin yet, show a loader.
+    // This prevents a flash of admin content for non-admin users.
     if (loading || !user || !user.email || !adminEmails.includes(user.email)) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
@@ -43,6 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         );
     }
 
+    // Only render the admin layout if the user is a verified admin.
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-muted/40 md:block">
@@ -78,8 +84,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         <DropdownMenuTrigger asChild>
                             <Button variant="secondary" size="icon" className="rounded-full">
                                 <Avatar>
-                                    <AvatarImage src="https://picsum.photos/seed/admin/40/40" />
-                                    <AvatarFallback>A</AvatarFallback>
+                                    <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/40/40`} />
+                                    <AvatarFallback>{user.displayName?.charAt(0) || 'A'}</AvatarFallback>
                                 </Avatar>
                                 <span className="sr-only">Toggle user menu</span>
                             </Button>
