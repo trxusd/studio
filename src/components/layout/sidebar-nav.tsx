@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -25,6 +24,7 @@ import {
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { useUser } from '@/firebase';
+import { useSidebar } from '@/components/ui/sidebar';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -43,7 +43,14 @@ const secondaryNavItems = [
 export function SidebarNav() {
   const pathname = usePathname();
   const { user } = useUser();
+  const { setOpenMobile, isMobile } = useSidebar();
   const adminEmail = 'trxusdt87@gmail.com';
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
 
   return (
     <>
@@ -59,7 +66,7 @@ export function SidebarNav() {
         <SidebarMenu>
           {navItems.map((item) => (
             <SidebarMenuItem key={item.label}>
-              <Link href={item.href}>
+              <Link href={item.href} onClick={handleLinkClick}>
                 <SidebarMenuButton
                   isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
                   tooltip={{ children: item.label, side: 'right' }}
@@ -80,7 +87,7 @@ export function SidebarNav() {
             }
             return (
                 <SidebarMenuItem key={item.href}>
-                <Link href={item.href}>
+                <Link href={item.href} onClick={handleLinkClick}>
                     <SidebarMenuButton
                     isActive={pathname.startsWith(item.href)}
                     tooltip={{ children: item.label, side: 'right' }}
