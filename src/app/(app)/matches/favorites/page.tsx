@@ -33,9 +33,6 @@ export default function FavoriteMatchesPage() {
     const favoritesQuery = firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null;
     const { data: favorites, loading: favoritesLoading } = useCollection<Favorite>(favoritesQuery);
     
-    // Memoize the list of favorite IDs to prevent re-running the effect unnecessarily.
-    const favoriteIds = React.useMemo(() => favorites?.map(f => f.id) || [], [favorites]);
-
     React.useEffect(() => {
         if (!userLoading && !user) {
             router.push('/login');
@@ -43,11 +40,12 @@ export default function FavoriteMatchesPage() {
     }, [user, userLoading, router]);
 
     React.useEffect(() => {
-        // This effect now reacts only when the memoized `favoriteIds` array changes.
         const fetchMatchDetails = async () => {
-            if (favoritesLoading) {
+            if (favoritesLoading || !favorites) {
                 return;
             }
+
+            const favoriteIds = favorites.map(f => f.id);
 
             if (favoriteIds.length === 0) {
                 setFavoriteMatches([]);
@@ -88,7 +86,7 @@ export default function FavoriteMatchesPage() {
         };
 
         fetchMatchDetails();
-    }, [favoriteIds, favoritesLoading]); // Dependency array is now stable
+    }, [favorites, favoritesLoading]);
     
     const isLoading = userLoading || detailsLoading;
 
