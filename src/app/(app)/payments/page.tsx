@@ -12,8 +12,9 @@ import { automatedPaymentVerification } from "@/ai/flows/automated-payment-verif
 import { Crown, Loader2, Upload, Copy, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 
 type PaymentMethod = 'MonCash' | 'NatCash' | 'Crypto';
 type Step = 'select-plan' | 'select-method' | 'verify-payment';
@@ -21,6 +22,7 @@ type Step = 'select-plan' | 'select-method' | 'verify-payment';
 export default function PaymentsPage() {
   const { toast } = useToast();
   const { user, loading: userLoading } = useUser();
+  const firestore = useFirestore();
   const router = useRouter();
 
   const [currentStep, setCurrentStep] = useState<Step>('select-plan');
@@ -78,7 +80,7 @@ export default function PaymentsPage() {
   };
   
   const handleVerification = async () => {
-    if (!email || !selectedPlan || !transactionId) {
+    if (!email || !selectedPlan || !transactionId || !user) {
       showErrorToast('Please fill out all required fields: Email, Plan, and Transaction ID.');
       return;
     }
@@ -104,6 +106,8 @@ export default function PaymentsPage() {
 
   const verify = async (details: string, screenshotDataUri?: string) => {
      try {
+      if (!firestore || !user) throw new Error("Database or user not available.");
+
       const result = await automatedPaymentVerification({
         paymentConfirmation: screenshotDataUri || details,
         paymentMethod: selectedPaymentMethod,
@@ -111,19 +115,40 @@ export default function PaymentsPage() {
         userId: email, // Using email as user identifier
       });
 
+      // Save to Firestore for manual admin verification
+      await addDoc(collection(firestore, 'paymentVerifications'), {
+        userId: user.uid,
+        userEmail: email,
+        plan: plans[selectedPlan as keyof typeof plans].name,
+        amount: plans[selectedPlan as keyof typeof plans].price,
+        method: selectedPaymentMethod,
+        transactionId: transactionId,
+        status: 'Pending',
+        timestamp: serverTimestamp(),
+        aiVerificationResult: result,
+        hasScreenshot: !!screenshotDataUri,
+      });
+
       if (result.isVerified) {
         toast({
           title: "Payment Verification Submitted!",
-          description: "We have received your confirmation and will verify it shortly.",
+          description: "We have received your confirmation and will verify it shortly. AI has pre-approved your request.",
           variant: 'default',
         });
-        setCurrentStep('select-plan');
-        setSelectedPlan('quarterly');
-        setTransactionId('');
-        setFile(null);
       } else {
-        showErrorToast(result.verificationDetails || 'Verification failed. Please check the details and try again.');
+        toast({
+          title: "Payment Verification Submitted!",
+          description: "We have received your confirmation. It requires manual review. We will process it shortly.",
+          variant: 'default'
+        });
       }
+      
+      // Reset form
+      setCurrentStep('select-plan');
+      setSelectedPlan('quarterly');
+      setTransactionId('');
+      setFile(null);
+
     } catch (error) {
       console.error(error);
       showErrorToast('An error occurred during verification.');
@@ -314,3 +339,5 @@ export default function PaymentsPage() {
     </div>
   );
 }
+
+    

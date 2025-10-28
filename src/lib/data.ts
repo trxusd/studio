@@ -105,24 +105,9 @@ export const adminCoupons: AdminCoupon[] = [
     { id: 'coupon-3', code: 'SPRING2024', discount: '15% Off', status: 'Expired', uses: '500/500', expires: '2024-05-31' },
 ];
 
-export type AdminPaymentVerification = {
-    id: string;
-    userId: string; // email
-    plan: string;
-    amount: number;
-    method: 'MonCash' | 'NatCash' | 'Crypto';
-    transactionId: string;
-    status: 'Pending' | 'Approved' | 'Rejected';
-    timestamp: string;
-    screenshotUrl?: string;
-};
+// This static data is no longer used and can be removed.
+export const adminPaymentVerifications: any[] = [];
 
-export const adminPaymentVerifications: AdminPaymentVerification[] = [
-    { id: 'verif-1', userId: 'user1@example.com', plan: 'Quarterly', amount: 10, method: 'MonCash', transactionId: 'MC-12345ABC', status: 'Pending', timestamp: '2024-07-29 10:30' },
-    { id: 'verif-2', userId: 'user2@example.com', plan: 'Lifetime', amount: 100, method: 'Crypto', transactionId: '0xabc...def', status: 'Pending', timestamp: '2024-07-29 09:45' },
-    { id: 'verif-3', userId: 'user3@example.com', plan: 'Monthly', amount: 5, method: 'NatCash', transactionId: 'NAT-98765XYZ', status: 'Pending', timestamp: '2024-07-28 18:00' },
-    { id: 'verif-4', userId: 'user4@example.com', plan: 'Yearly', amount: 50, method: 'Crypto', transactionId: '0x123...456', status: 'Approved', timestamp: '2024-07-28 15:20' },
-];
 
 export type PastPrediction = {
     id: string;
@@ -141,4 +126,6 @@ export const pastPredictions: PastPrediction[] = [
     { id: 'res-5', teamA: { name: 'PSG' }, teamB: { name: 'Marseille' }, league: 'Ligue 1', prediction: 'PSG to win', finalScore: '2-0', },
     { id: 'res-6', teamA: { name: 'Chelsea' }, teamB: { name: 'Arsenal' }, league: 'Premier League', prediction: 'Draw', finalScore: '2-2', },
 ];
+    
+
     
