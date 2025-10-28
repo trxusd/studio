@@ -26,6 +26,7 @@ import { cn } from '@/lib/utils';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useDebounce } from 'use-debounce';
 import { Card } from '@/components/ui/card';
+import { format } from 'date-fns';
 
 
 type Team = {
@@ -199,15 +200,39 @@ function MatchesPageContent() {
   }, [debouncedSearchQuery]);
 
   const getMatchStatus = (status: Fixture['status'], date: string) => {
+    const time = new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+    
     switch (status.short) {
-        case 'NS': // Not Started
-            return new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-        case 'HT': // Halftime
-            return '1H';
-        case 'FT': // Full Time
-            return 'FT';
+        case 'NS': return time; // Not Started
+        case 'FT': return 'FT'; // Full Time
+        case 'HT': return 'HT'; // Halftime
         default:
-            return status.short;
+            return status.elapsed ? `${status.elapsed}'` : status.short;
+    }
+  };
+
+  const getStatusContent = (match: ApiMatch) => {
+    const status = match.fixture.status;
+    const date = match.fixture.date;
+    const time = new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    switch (status.short) {
+        case 'FT':
+        case 'AET': // After Extra Time
+        case 'PEN': // Penalty shootout
+            return <span className='font-normal text-xs'>{format(new Date(date), 'HH:mm')}</span>;
+        
+        case 'NS':
+            return <span className="font-bold text-primary">{time}</span>;
+
+        case 'HT':
+             return <span className='font-bold text-red-500'>HT</span>;
+        
+        default:
+             if (status.elapsed) {
+                return <span className='text-xs text-red-500 animate-pulse font-bold'>{status.elapsed}'</span>;
+            }
+            return <span className="font-bold text-primary">{status.short}</span>;
     }
   };
 
@@ -264,7 +289,8 @@ function MatchesPageContent() {
   };
 
   const getTeamClasses = (team: 'home' | 'away', match: ApiMatch) => {
-    if (match.fixture.status.short !== 'FT') {
+    const finishedStatuses = ['FT', 'AET', 'PEN'];
+    if (!finishedStatuses.includes(match.fixture.status.short)) {
         return "font-medium";
     }
 
@@ -370,10 +396,7 @@ function MatchesPageContent() {
                             <Link href={`/predictions/${match.fixture.id}`} key={match.fixture.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
                             <div className="flex items-center gap-4">
                                 <div className="flex w-12 flex-col items-center justify-center text-xs text-muted-foreground">
-                                    <span className="font-bold text-primary">{getMatchStatus(match.fixture, match.fixture.date)}</span>
-                                    {match.fixture.status.elapsed && (
-                                        <span className='text-xs text-red-500 animate-pulse'>{match.fixture.status.elapsed}'</span>
-                                    )}
+                                    {getStatusContent(match)}
                                 </div>
                                 <div className="flex flex-col gap-2">
                                     <div className="flex items-center gap-2">
@@ -427,5 +450,3 @@ export default function MatchesPage() {
         </React.Suspense>
     )
 }
-
-    
