@@ -360,12 +360,12 @@ export default function MatchesPage() {
                                         <span>{match.goals.away ?? '-'}</span>
                                     </div>
                                 )}
-                                <button onClick={(e) => handleFavoriteToggle(e, match.fixture.id)}>
-                                <Star className={cn(
-                                    "h-5 w-5 text-muted-foreground/50 group-hover:text-yellow-400 transition-colors",
-                                    favoriteIds.has(String(match.fixture.id)) && "text-yellow-400 fill-yellow-400"
-                                )} />
-                                </button>
+                                <Button variant="ghost" size="icon" onClick={(e) => handleFavoriteToggle(e, match.fixture.id)} className="h-8 w-8">
+                                    <Star className={cn(
+                                        "h-5 w-5 text-muted-foreground/50 group-hover:text-yellow-400 transition-colors",
+                                        favoriteIds.has(String(match.fixture.id)) && "text-yellow-400 fill-yellow-400"
+                                    )} />
+                                </Button>
                             </div>
                             </Link>
                         ))}
