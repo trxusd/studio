@@ -1,10 +1,69 @@
 
+'use client';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { DollarSign, Users, BarChart, Activity, Bot, Trophy, CheckCheck, ArrowRight } from "lucide-react";
+import { DollarSign, Users, BarChart, Activity, Bot, Trophy, CheckCheck, ArrowRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useFirestore, useCollection } from "@/firebase";
+import { collection, query, where } from 'firebase/firestore';
+import { useMemo } from 'react';
+
+// Define the types for our documents
+type UserProfile = {
+    id: string;
+    isVip?: boolean;
+};
+
+type PaymentVerification = {
+    id: string;
+    status: 'Approved' | 'Pending' | 'Rejected';
+    amount: number;
+};
+
+type PredictionCategory = {
+    id: string;
+    predictions: any[];
+};
 
 export default function AdminDashboardPage() {
+    const firestore = useFirestore();
+    const today = new Date().toISOString().split('T')[0];
+
+    // Queries for our data
+    const usersQuery = firestore ? query(collection(firestore, 'users')) : null;
+    const paymentsQuery = firestore ? query(collection(firestore, 'paymentVerifications'), where('status', '==', 'Approved')) : null;
+    const predictionsQuery = firestore ? query(collection(firestore, `predictions/${today}/categories`), where('status', '==', 'published')) : null;
+    
+    // Fetch collections
+    const { data: users, loading: usersLoading } = useCollection<UserProfile>(usersQuery);
+    const { data: approvedPayments, loading: paymentsLoading } = useCollection<PaymentVerification>(paymentsQuery);
+    const { data: publishedPredictions, loading: predictionsLoading } = useCollection<PredictionCategory>(predictionsQuery);
+
+    // Calculate stats with useMemo for performance
+    const stats = useMemo(() => {
+        const totalUsers = users ? users.length : 0;
+        const vipUsers = users ? users.filter(u => u.isVip).length : 0;
+        const totalRevenue = approvedPayments ? approvedPayments.reduce((sum, p) => sum + p.amount, 0) : 0;
+        const activePredictions = publishedPredictions ? publishedPredictions.reduce((sum, cat) => sum + cat.predictions.length, 0) : 0;
+
+        return {
+            totalUsers,
+            vipUsers,
+            totalRevenue,
+            activePredictions
+        };
+    }, [users, approvedPayments, publishedPredictions]);
+
+    const isLoading = usersLoading || paymentsLoading || predictionsLoading;
+
+    if (isLoading) {
+        return (
+             <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            </div>
+        )
+    }
+
     return (
         <div>
             <h1 className="text-2xl font-bold tracking-tight font-headline">Admin Dashboard</h1>
@@ -18,9 +77,9 @@ export default function AdminDashboardPage() {
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">$45,231.89</div>
+                        <div className="text-2xl font-bold">${stats.totalRevenue.toFixed(2)}</div>
                         <p className="text-xs text-muted-foreground">
-                            +20.1% from last month
+                            Based on all approved payments.
                         </p>
                     </CardContent>
                 </Card>
@@ -32,9 +91,9 @@ export default function AdminDashboardPage() {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+2350</div>
+                        <div className="text-2xl font-bold">{stats.vipUsers}</div>
                         <p className="text-xs text-muted-foreground">
-                            +180.1% from last month
+                            Currently active VIP members.
                         </p>
                     </CardContent>
                 </Card>
@@ -44,9 +103,9 @@ export default function AdminDashboardPage() {
                         <BarChart className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+12,234</div>
+                        <div className="text-2xl font-bold">{stats.totalUsers}</div>
                         <p className="text-xs text-muted-foreground">
-                            +19% from last month
+                            Total registered users.
                         </p>
                     </CardContent>
                 </Card>
@@ -56,9 +115,9 @@ export default function AdminDashboardPage() {
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">+573</div>
+                        <div className="text-2xl font-bold">{stats.activePredictions}</div>
                         <p className="text-xs text-muted-foreground">
-                            +201 since last hour
+                            Total predictions published today.
                         </p>
                     </CardContent>
                 </Card>
