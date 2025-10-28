@@ -10,6 +10,8 @@ const MatchPredictionSchema = z.object({
     prediction: z.string().describe("The betting prediction, e.g., '1 (Home Win)', 'Over 2.5'."),
     odds: z.number().describe("The decimal odds for the prediction."),
     confidence: z.number().min(70).max(95).describe("The confidence level of the prediction, from 70 to 95."),
+    status: z.enum(['Win', 'Loss', 'Pending']).optional().describe("The outcome of the prediction. Default is 'Pending'."),
+    finalScore: z.string().optional().describe("The final score of the match, e.g., '2-1'.")
 });
 
 const CouponSchema = z.array(MatchPredictionSchema);

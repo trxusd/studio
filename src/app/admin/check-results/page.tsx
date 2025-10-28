@@ -5,10 +5,12 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2 } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { useFirestore, useCollection } from '@/firebase';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, doc, writeBatch } from 'firebase/firestore';
 import type { MatchPrediction } from '@/ai/schemas/prediction-schemas';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 type PredictionCategoryDoc = {
     id: string;
@@ -18,33 +20,37 @@ type PredictionCategoryDoc = {
 type ProcessedPrediction = MatchPrediction & {
     status: 'Win' | 'Loss' | 'Pending';
     finalScore: string;
+    categoryId: string;
 };
 
 // This function checks a prediction against a final score.
 function checkPredictionStatus(prediction: MatchPrediction, finalScore: string | null): 'Win' | 'Loss' | 'Pending' {
-    if (!finalScore) return 'Pending';
+    if (!finalScore || ['NS', 'PST', 'CANC'].includes(finalScore)) return 'Pending';
     
-    const [homeScore, awayScore] = finalScore.split('-').map(Number);
-    const predictionText = prediction.prediction;
+    const parts = finalScore.split('-').map(s => parseInt(s.trim(), 10));
+    if (parts.some(isNaN)) return 'Pending';
+    const [homeScore, awayScore] = parts;
 
-    if (predictionText.toLowerCase().includes('home win') || predictionText.includes('1') ) {
+    const predictionText = prediction.prediction.toLowerCase();
+
+    if (predictionText.includes('home win') || predictionText === '1' ) {
         return homeScore > awayScore ? 'Win' : 'Loss';
     }
-    if (predictionText.toLowerCase().includes('away win') || predictionText.includes('2')) {
+    if (predictionText.includes('away win') || predictionText === '2') {
         return awayScore > homeScore ? 'Win' : 'Loss';
     }
-    if (predictionText.toLowerCase().includes('draw') || predictionText.includes('X')) {
+    if (predictionText.includes('draw') || predictionText.toLowerCase() === 'x') {
         return homeScore === awayScore ? 'Win' : 'Loss';
     }
-    if (predictionText.toLowerCase().includes('over')) {
+    if (predictionText.includes('over')) {
         const value = parseFloat(predictionText.split(' ')[1]);
         return (homeScore + awayScore) > value ? 'Win' : 'Loss';
     }
-    if (predictionText.toLowerCase().includes('under')) {
+    if (predictionText.includes('under')) {
         const value = parseFloat(predictionText.split(' ')[1]);
         return (homeScore + awayScore) < value ? 'Win' : 'Loss';
     }
-     if (predictionText.toLowerCase().includes('btts') || predictionText.toLowerCase().includes('gg')) {
+    if (predictionText.includes('btts') || predictionText.includes('gg')) {
         return homeScore > 0 && awayScore > 0 ? 'Win' : 'Loss';
     }
 
@@ -52,52 +58,127 @@ function checkPredictionStatus(prediction: MatchPrediction, finalScore: string |
 }
 
 async function fetchMatchResult(fixtureId: number): Promise<string | null> {
-    // This function now fetches from our internal API route
     try {
         const response = await fetch(`/api/matches?id=${fixtureId}`);
-        if (!response.ok) return null;
+        if (!response.ok) return 'Error';
         const data = await response.json();
         
         const match = data.matches?.[0];
-        if (!match || match.fixture.status.short === 'NS') return null; // Not Started
+        if (!match) return 'N/A';
+        
+        // Return status for matches not started or finished
+        const notFinishedStatus = ['TBD', 'NS', 'PST', 'CANC', 'ABD'];
+        if (notFinishedStatus.includes(match.fixture.status.short)) {
+            return match.fixture.status.short;
+        }
 
         return `${match.goals.home}-${match.goals.away}`;
-
     } catch (e) {
-        return null;
+        console.error(`Failed to fetch result for ${fixtureId}`, e);
+        return 'Error';
     }
 }
 
 export default function CheckResultsPage() {
     const firestore = useFirestore();
+    const { toast } = useToast();
     const [results, setResults] = React.useState<ProcessedPrediction[]>([]);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [isSaving, setIsSaving] = React.useState(false);
 
     const today = new Date().toISOString().split('T')[0];
     const categoriesQuery = firestore ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
     const { data: publishedCategories, loading: categoriesLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
 
-    React.useEffect(() => {
-        if (categoriesLoading || !publishedCategories) return;
-
-        const processAllPredictions = async () => {
-            setIsLoading(true);
-            const allPredictions = publishedCategories.flatMap(cat => cat.predictions);
-            
-            const processedResults = await Promise.all(
-                allPredictions.map(async (p) => {
-                    const finalScore = await fetchMatchResult(p.fixture_id);
-                    const status = checkPredictionStatus(p, finalScore);
-                    return { ...p, finalScore: finalScore || 'N/A', status };
-                })
-            );
-            
-            setResults(processedResults);
+    const processAllPredictions = React.useCallback(async (categories: PredictionCategoryDoc[]) => {
+        setIsLoading(true);
+        if (!categories || categories.length === 0) {
+            setResults([]);
             setIsLoading(false);
-        };
+            return;
+        }
+        
+        const allPredictions = categories.flatMap(cat => cat.predictions.map(p => ({...p, categoryId: cat.id})));
+        
+        const processedResults = await Promise.all(
+            allPredictions.map(async (p) => {
+                const finalScore = await fetchMatchResult(p.fixture_id);
+                const status = checkPredictionStatus(p, finalScore);
+                return { ...p, finalScore: finalScore || 'N/A', status };
+            })
+        );
+        
+        setResults(processedResults);
+        setIsLoading(false);
+    }, []);
 
-        processAllPredictions();
-    }, [publishedCategories, categoriesLoading]);
+    React.useEffect(() => {
+        if (!categoriesLoading && publishedCategories) {
+            processAllPredictions(publishedCategories);
+        }
+    }, [publishedCategories, categoriesLoading, processAllPredictions]);
+
+    const handleSaveChanges = async () => {
+        if (!firestore || results.length === 0) return;
+        
+        setIsSaving(true);
+        const batch = writeBatch(firestore);
+
+        // Group results by category
+        const updatesByCategory = results.reduce((acc, current) => {
+            if (current.status !== 'Pending') { // Only update resolved matches
+                if (!acc[current.categoryId]) {
+                    acc[current.categoryId] = [];
+                }
+                acc[current.categoryId].push(current);
+            }
+            return acc;
+        }, {} as Record<string, ProcessedPrediction[]>);
+
+        if (Object.keys(updatesByCategory).length === 0) {
+            toast({ title: "No changes to save", description: "All resolved predictions seem to be up to date."});
+            setIsSaving(false);
+            return;
+        }
+
+        try {
+             for (const categoryId in updatesByCategory) {
+                const categoryDocRef = doc(firestore, `predictions/${today}/categories/${categoryId}`);
+                const categoryPredictions = publishedCategories?.find(c => c.id === categoryId)?.predictions || [];
+                
+                // Create a map of the updated predictions
+                const updatedPredictionsMap = new Map(updatesByCategory[categoryId].map(p => [p.fixture_id, p]));
+
+                // Create the new predictions array
+                const newPredictionsArray = categoryPredictions.map(p => {
+                    if (updatedPredictionsMap.has(p.fixture_id)) {
+                        const updatedPrediction = updatedPredictionsMap.get(p.fixture_id)!;
+                        return { ...p, status: updatedPrediction.status, finalScore: updatedPrediction.finalScore };
+                    }
+                    return p;
+                });
+                
+                batch.update(categoryDocRef, { predictions: newPredictionsArray });
+            }
+
+            await batch.commit();
+            toast({
+                title: "Results Saved!",
+                description: "The results for all resolved matches have been saved to the database.",
+            });
+
+        } catch (error) {
+            console.error("Error saving results:", error);
+            toast({
+                title: "Error",
+                description: "Failed to save results.",
+                variant: "destructive"
+            });
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
 
     const winCount = results.filter(r => r.status === 'Win').length;
     const resolvedCount = results.filter(r => r.status === 'Win' || r.status === 'Loss').length;
@@ -107,8 +188,22 @@ export default function CheckResultsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Check Match Results</CardTitle>
-        <CardDescription>Automatically comparing final scores with predictions to determine Win/Loss status.</CardDescription>
+        <div className="flex justify-between items-center">
+            <div>
+                <CardTitle>Check Match Results</CardTitle>
+                <CardDescription>Automatically comparing final scores with predictions to determine Win/Loss status.</CardDescription>
+            </div>
+             <div className='flex gap-2'>
+                <Button variant="outline" size="sm" onClick={() => publishedCategories && processAllPredictions(publishedCategories)} disabled={isLoading}>
+                    <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                    Refresh
+                </Button>
+                <Button onClick={handleSaveChanges} disabled={isSaving || isLoading || resolvedCount === 0}>
+                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save Results
+                </Button>
+            </div>
+        </div>
          { !isLoading && resolvedCount > 0 && (
             <div className="pt-4">
                 <p className="text-lg">Win Rate: <span className="font-bold text-primary">{winRate}%</span> ({winCount}/{resolvedCount} won)</p>
@@ -116,7 +211,7 @@ export default function CheckResultsPage() {
          )}
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isLoading || categoriesLoading ? (
             <div className="flex justify-center items-center h-48">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="ml-4 text-muted-foreground">Fetching live scores and checking results...</p>
@@ -137,8 +232,8 @@ export default function CheckResultsPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {results.map((result) => (
-                        <TableRow key={result.fixture_id + result.prediction}>
+                    {results.map((result, index) => (
+                        <TableRow key={`${result.fixture_id}-${index}`}>
                             <TableCell className="font-medium">{result.match}</TableCell>
                             <TableCell className="text-muted-foreground">{result.league}</TableCell>
                             <TableCell><Badge variant="secondary">{result.prediction}</Badge></TableCell>

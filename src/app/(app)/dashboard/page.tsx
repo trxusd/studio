@@ -9,17 +9,26 @@ import { ArrowUpRight, Award, Crown, LifeBuoy, Loader2, ShieldCheck, Ticket } fr
 import Link from 'next/link';
 import { MatchCard } from "@/components/match-card";
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { collection, query, where, Timestamp, collectionGroup, getDocs } from 'firebase/firestore';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
+import { useState, useEffect } from 'react';
 
 type PredictionCategoryDoc = {
     id: string;
     predictions: MatchPrediction[];
+    status: 'published' | 'unpublished';
 };
+
+type PredictionResult = MatchPrediction & {
+  status: 'Win' | 'Loss' | 'Pending';
+}
 
 export default function DashboardPage() {
   const { user, loading: userLoading } = useUser();
   const firestore = useFirestore();
+
+  const [stats, setStats] = useState({ wins: 0, accuracy: 0 });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Fetch user's VIP status
   const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
@@ -31,6 +40,50 @@ export default function DashboardPage() {
   const categoriesQuery = firestore ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
+  useEffect(() => {
+    if (!firestore) return;
+
+    const fetchStats = async () => {
+        setStatsLoading(true);
+        try {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            const q = query(collectionGroup(firestore, 'categories'), where('generated_at', '>=', sevenDaysAgo.toISOString()));
+            const querySnapshot = await getDocs(q);
+            
+            let totalWins = 0;
+            let totalResolved = 0;
+
+            querySnapshot.forEach(doc => {
+                const category = doc.data() as PredictionCategoryDoc;
+                if (category.predictions) {
+                    category.predictions.forEach(p => {
+                        const pred = p as PredictionResult;
+                        if (pred.status === 'Win') {
+                            totalWins++;
+                            totalResolved++;
+                        } else if (pred.status === 'Loss') {
+                            totalResolved++;
+                        }
+                    });
+                }
+            });
+
+            const accuracy = totalResolved > 0 ? (totalWins / totalResolved) * 100 : 0;
+            setStats({ wins: totalWins, accuracy: parseFloat(accuracy.toFixed(1)) });
+
+        } catch (error) {
+            console.error("Error fetching stats:", error);
+        } finally {
+            setStatsLoading(false);
+        }
+    };
+
+    fetchStats();
+  }, [firestore]);
+
+
   const { activePredictionsCount, freePredictions } = useMemo(() => {
     if (!publishedCategories) return { activePredictionsCount: 0, freePredictions: [] };
 
@@ -49,7 +102,7 @@ export default function DashboardPage() {
 
   }, [publishedCategories]);
 
-  const isLoading = userLoading || userDataLoading || predictionsLoading;
+  const isLoading = userLoading || userDataLoading || predictionsLoading || statsLoading;
 
   if (isLoading) {
     return (
@@ -72,8 +125,8 @@ export default function DashboardPage() {
             <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">128</div>
-            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+            <div className="text-2xl font-bold">{stats.wins}</div>
+            <p className="text-xs text-muted-foreground">In the last 7 days</p>
           </CardContent>
         </Card>
         <Card>
@@ -93,8 +146,8 @@ export default function DashboardPage() {
             </svg>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">82.5%</div>
-            <p className="text-xs text-muted-foreground">This week</p>
+            <div className="text-2xl font-bold">{stats.accuracy}%</div>
+            <p className="text-xs text-muted-foreground">In the last 7 days</p>
           </CardContent>
         </Card>
         <Card>
