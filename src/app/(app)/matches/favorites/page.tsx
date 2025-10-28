@@ -40,16 +40,27 @@ export default function FavoriteMatchesPage() {
     }, [user, userLoading, router]);
 
     React.useEffect(() => {
-        if (favorites) {
-            const fetchMatchDetails = async () => {
-                if (favorites.length === 0) {
+        // This effect runs whenever 'favorites' data changes.
+        const fetchMatchDetails = async () => {
+            if (!favorites) {
+                 // If favorites is null (still loading from initial hook state), do nothing yet.
+                 // Only act when it's an empty array or has content.
+                if(!favoritesLoading) {
                     setFavoriteMatches([]);
                     setDetailsLoading(false);
-                    return;
                 }
-                
-                setDetailsLoading(true);
-                const matchPromises = favorites.map(async (fav) => {
+                return;
+            }
+            
+            if (favorites.length === 0) {
+                setFavoriteMatches([]);
+                setDetailsLoading(false);
+                return;
+            }
+            
+            setDetailsLoading(true);
+            const matchPromises = favorites.map(async (fav) => {
+                try {
                     const response = await fetch(`/api/matches?id=${fav.id}`);
                     if (response.ok) {
                         const data = await response.json();
@@ -68,17 +79,19 @@ export default function FavoriteMatchesPage() {
                             } as MatchPrediction;
                         }
                     }
-                    return null;
-                });
+                } catch (error) {
+                    console.error(`Failed to fetch details for match ${fav.id}`, error);
+                }
+                return null;
+            });
 
-                const matches = await Promise.all(matchPromises);
-                setFavoriteMatches(matches.filter((m): m is MatchPrediction => m !== null));
-                setDetailsLoading(false);
-            };
+            const matches = await Promise.all(matchPromises);
+            setFavoriteMatches(matches.filter((m): m is MatchPrediction => m !== null));
+            setDetailsLoading(false);
+        };
 
-            fetchMatchDetails();
-        }
-    }, [favorites]);
+        fetchMatchDetails();
+    }, [favorites, favoritesLoading]);
     
     const isLoading = userLoading || favoritesLoading || detailsLoading;
 

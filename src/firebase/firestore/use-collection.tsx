@@ -10,6 +10,15 @@ import type {
 } from 'firebase/firestore';
 import { onSnapshot } from 'firebase/firestore';
 
+// Helper to compare queries
+function areQueriesEqual(q1: Query | null, q2: Query | null): boolean {
+    if (!q1 || !q2) return q1 === q2;
+    // This is a simplified comparison. For more complex scenarios, you might need a more robust check.
+    // However, for most cases, checking the path and stringified filters/orderBy should work.
+    return q1.path === q2.path && JSON.stringify(q1) === JSON.stringify(q2);
+}
+
+
 export function useCollection<T extends DocumentData>(
   query: Query<T> | null
 ) {
@@ -17,27 +26,26 @@ export function useCollection<T extends DocumentData>(
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | null>(null);
   
-  // Using a ref to hold the query object. This helps prevent re-subscribing on every render.
-  const queryRef = useRef(query);
-  
-  // This effect ensures that our ref is always up-to-date if the query prop changes.
-  useEffect(() => {
-    queryRef.current = query;
-  }, [query]);
+  const queryRef = useRef<Query<T> | null>(query);
 
   useEffect(() => {
-    // If the query is null, we should not proceed.
-    if (!queryRef.current) {
+    // Only re-run the effect if the query has actually changed.
+    if (areQueriesEqual(query, queryRef.current)) {
+        return;
+    }
+    queryRef.current = query;
+
+    if (!query) {
       setData(null);
       setLoading(false);
+      setError(null);
       return;
     }
 
     setLoading(true);
     
-    // Set up the real-time listener.
     const unsubscribe = onSnapshot(
-      queryRef.current,
+      query,
       (snapshot: QuerySnapshot<T>) => {
         const docs = snapshot.docs.map((doc) => ({
           ...doc.data(),
@@ -54,9 +62,8 @@ export function useCollection<T extends DocumentData>(
       }
     );
 
-    // The cleanup function will be called when the component unmounts.
     return () => unsubscribe();
-  }, []); // Empty dependency array means this effect runs only once on mount.
+  }, [query]); // This effect now correctly depends on the query object.
 
   return { data, loading, error };
 }
