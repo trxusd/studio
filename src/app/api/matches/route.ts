@@ -5,6 +5,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get('date');
   const fixtureId = searchParams.get('id');
+  const live = searchParams.get('live');
 
   const apiKey = process.env.FOOTBALL_API_KEY;
   const apiHost = "api-football.p.rapidapi.com";
@@ -16,7 +17,10 @@ export async function GET(request: Request) {
   let apiUrl;
   if (fixtureId) {
     apiUrl = `https://v3.football.api-sports.io/fixtures?id=${fixtureId}`;
-  } else {
+  } else if (live) {
+    apiUrl = `https://v3.football.api-sports.io/fixtures?live=${live}`;
+  }
+  else {
     const requestDate = date || new Date().toISOString().split('T')[0];
     apiUrl = `https://v3.football.api-sports.io/fixtures?date=${requestDate}`;
   }
@@ -27,7 +31,7 @@ export async function GET(request: Request) {
         'x-rapidapi-host': apiHost,
         'x-rapidapi-key': apiKey,
       },
-      next: { revalidate: 3600 } // Cache for 1 hour for date-based, less for ID-based if needed
+      next: { revalidate: live ? 0 : 3600 } // No cache for live, 1 hour for others
     });
 
     if (!response.ok) {

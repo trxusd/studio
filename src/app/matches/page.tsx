@@ -19,6 +19,11 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { MatchFilterControls } from '@/components/match-filter-controls';
 import { Star } from 'lucide-react';
+import { useUser, useFirestore, useCollection } from '@/firebase';
+import { collection, doc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
+
 
 type Team = {
   id: number;
@@ -89,6 +94,7 @@ type ApiMatch = {
 };
 
 type GroupedMatches = Record<string, Record<string, ApiMatch[]>>;
+type Favorite = { id: string };
 
 const priorityCountries = ['World', 'England', 'Spain', 'Germany', 'Italy', 'France', 'Brazil', 'Argentina', 'Portugal', 'Netherlands'];
 
@@ -100,6 +106,15 @@ export default function MatchesPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const isVip = false; // Mock vip status
   const [searchQuery, setSearchQuery] = React.useState('');
+  
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const favoritesQuery = firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null;
+  const { data: favorites } = useCollection<Favorite>(favoritesQuery);
+  const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
+
 
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -178,6 +193,42 @@ export default function MatchesPage() {
     return a.localeCompare(b); // Neither is priority, sort alphabetically
   });
   
+  const handleFavoriteToggle = async (e: React.MouseEvent, fixtureId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user || !firestore) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to add favorites.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const fixtureIdStr = String(fixtureId);
+    const isFavorite = favoriteIds.has(fixtureIdStr);
+    const favoriteRef = doc(firestore, `users/${user.uid}/favorites/${fixtureIdStr}`);
+
+    try {
+      if (isFavorite) {
+        await deleteDoc(favoriteRef);
+        toast({ title: "Removed from favorites." });
+      } else {
+        await setDoc(favoriteRef, { addedAt: new Date() });
+        toast({ title: "Added to favorites!" });
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast({
+        title: "Error",
+        description: "Could not update your favorites.",
+        variant: "destructive"
+      });
+    }
+  };
+
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       {/* Header */}
@@ -205,12 +256,10 @@ export default function MatchesPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-          {/* Search results would pop up here */}
         </div>
         <MatchFilterControls selectedDate={selectedDate} isVip={isVip} />
       </div>
 
-      {/* Matches List */}
       {isLoading ? (
         <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -225,7 +274,6 @@ export default function MatchesPage() {
             <AccordionItem value={country} key={country}>
                 <AccordionTrigger className="font-bold text-lg hover:no-underline">
                 <div className="flex items-center gap-3">
-                    {/* Use league flag as country flag is often the same */}
                     {leagues[Object.keys(leagues)[0]][0].league.flag && (
                         <Image src={leagues[Object.keys(leagues)[0]][0].league.flag!} alt={`${country} flag`} width={32} height={20} className="rounded-sm object-cover" data-ai-hint="country flag" />
                     )}
@@ -274,8 +322,11 @@ export default function MatchesPage() {
                                         <span>{match.goals.away ?? '-'}</span>
                                     </div>
                                 )}
-                                <button onClick={(e) => { e.preventDefault(); /* Handle favorite logic */ }}>
-                                <Star className="h-5 w-5 text-muted-foreground/50 group-hover:text-yellow-400 transition-colors" />
+                                <button onClick={(e) => handleFavoriteToggle(e, match.fixture.id)}>
+                                <Star className={cn(
+                                    "h-5 w-5 text-muted-foreground/50 group-hover:text-yellow-400 transition-colors",
+                                    favoriteIds.has(String(match.fixture.id)) && "text-yellow-400 fill-yellow-400"
+                                )} />
                                 </button>
                             </div>
                             </Link>
