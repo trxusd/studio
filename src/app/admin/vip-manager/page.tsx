@@ -7,36 +7,74 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { adminUsers, type AdminUser } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
+import { useFirestore, useCollection } from '@/firebase';
+import { collection, doc, updateDoc } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
 
-type UserWithVip = AdminUser & { isVip: boolean };
+type UserProfile = {
+    id: string;
+    uid: string;
+    displayName: string;
+    email: string;
+    isVip?: boolean;
+    vipPlan?: string;
+};
 
 export default function VipManagerPage() {
     const { toast } = useToast();
-    const [users, setUsers] = React.useState<UserWithVip[]>(() => 
-        adminUsers.map(u => ({ ...u, isVip: u.status === 'Active' }))
+    const firestore = useFirestore();
+    
+    const usersQuery = firestore ? collection(firestore, 'users') : null;
+    const { data: users, loading, error } = useCollection<UserProfile>(usersQuery);
+
+    const handleVipToggle = async (userId: string, isVip: boolean) => {
+        if (!firestore) return;
+        const userDocRef = doc(firestore, 'users', userId);
+        try {
+            await updateDoc(userDocRef, { isVip });
+            toast({
+                title: "User Status Updated",
+                description: `User's VIP status has been ${isVip ? 'activated' : 'deactivated'}.`,
+            });
+        } catch (err) {
+            toast({
+                title: "Error",
+                description: "Failed to update user status.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handlePlanChange = async (userId: string, newPlan: string) => {
+        if (!firestore) return;
+        const userDocRef = doc(firestore, 'users', userId);
+        try {
+            await updateDoc(userDocRef, { vipPlan: newPlan });
+            toast({
+                title: "User Plan Updated",
+                description: `User's plan has been changed to ${newPlan}.`,
+            });
+        } catch (err) {
+             toast({
+                title: "Error",
+                description: "Failed to update user plan.",
+                variant: "destructive",
+            });
+        }
+    };
+
+  if (loading) {
+    return (
+        <div className="flex justify-center items-center h-48">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
     );
+  }
 
-    const handleVipToggle = (userId: string, isVip: boolean) => {
-        setUsers(currentUsers => 
-            currentUsers.map(u => u.id === userId ? { ...u, isVip, status: isVip ? 'Active' : 'Inactive' } : u)
-        );
-        toast({
-            title: "User Status Updated",
-            description: `User ${userId} has been ${isVip ? 'activated' : 'deactivated'}.`,
-        });
-    };
-
-    const handlePlanChange = (userId: string, newPlan: string) => {
-        setUsers(currentUsers => 
-            currentUsers.map(u => u.id === userId ? { ...u, plan: newPlan } : u)
-        );
-        toast({
-            title: "User Plan Updated",
-            description: `User ${userId}'s plan has been changed to ${newPlan}.`,
-        });
-    };
+  if (error) {
+    return <p className='text-destructive'>Error loading users: {error.message}</p>
+  }
 
   return (
     <Card>
@@ -55,27 +93,27 @@ export default function VipManagerPage() {
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {users.map(user => (
+                {users && users.map(user => (
                     <TableRow key={user.id}>
                         <TableCell>
-                            <div className="font-medium">{user.name}</div>
+                            <div className="font-medium">{user.displayName || 'N/A'}</div>
                             <div className="text-sm text-muted-foreground">{user.email}</div>
                         </TableCell>
                         <TableCell>
                              <Badge variant={user.isVip ? "default" : "outline"} className={user.isVip ? "bg-green-600" : ""}>
-                                {user.isVip ? user.plan : 'None'}
+                                {user.isVip ? user.vipPlan || 'Active' : 'None'}
                             </Badge>
                         </TableCell>
                         <TableCell>
                            <Switch
-                                checked={user.isVip}
+                                checked={!!user.isVip}
                                 onCheckedChange={(checked) => handleVipToggle(user.id, checked)}
                                 aria-label="Toggle VIP status"
                            />
                         </TableCell>
                          <TableCell>
                             <Select 
-                                defaultValue={user.plan} 
+                                value={user.vipPlan || ''} 
                                 onValueChange={(value) => handlePlanChange(user.id, value)}
                                 disabled={!user.isVip}
                             >
@@ -95,6 +133,11 @@ export default function VipManagerPage() {
                 ))}
             </TableBody>
         </Table>
+        {users && users.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+                <p>No users found in the database.</p>
+            </div>
+        )}
       </CardContent>
     </Card>
   );
