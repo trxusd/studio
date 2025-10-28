@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2 } from "lucide-react";
+import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
