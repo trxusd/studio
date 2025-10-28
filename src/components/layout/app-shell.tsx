@@ -1,13 +1,15 @@
+
 'use client';
-import { Sidebar, SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { Header } from "@/components/layout/header";
 import { usePathname } from "next/navigation";
+import { Chatbot } from "../chatbot";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  // Don't show app shell on login page
-  if (pathname.startsWith('/login')) {
+  
+  if (pathname.startsWith('/login') || pathname.startsWith('/admin')) {
     return <>{children}</>;
   }
 
@@ -17,13 +19,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sidebar>
           <SidebarNav />
         </Sidebar>
-        <div className="flex-1">
+        <div className="flex-1 flex flex-col">
             <Header />
-            <main className="min-h-[calc(100vh_-_4rem)]">
+            <main className="flex-1">
                 {children}
             </main>
+            <Chatbot />
         </div>
       </div>
     </SidebarProvider>
   );
 }
+
+    
