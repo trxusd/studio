@@ -12,7 +12,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { doc, setDoc, writeBatch } from 'firebase/firestore';
+import { doc, writeBatch } from 'firebase/firestore';
 import { getFirestoreInstance } from '@/firebase';
 import { OfficialPredictionsOutputSchema, type OfficialPredictionsOutput } from '@/ai/schemas/prediction-schemas';
 
@@ -44,13 +44,15 @@ export async function generateOfficialPredictions(): Promise<OfficialPredictions
   };
 
   for (const [key, value] of Object.entries(categories)) {
-      const docRef = doc(firestore, `predictions/${today}/${key}`);
-      batch.set(docRef, {
-          predictions: value,
-          status: 'unpublished',
-          category: key,
-          generated_at: new Date().toISOString(),
-      });
+      if (value.length > 0) {
+        const docRef = doc(firestore, `predictions/${today}/categories/${key}`);
+        batch.set(docRef, {
+            predictions: value,
+            status: 'unpublished',
+            category: key,
+            generated_at: new Date().toISOString(),
+        });
+      }
   }
 
   // Also save a master document for overview if needed
@@ -62,7 +64,7 @@ export async function generateOfficialPredictions(): Promise<OfficialPredictions
       status: 'generated',
       api_version: 'v2.1'
     }
-  });
+  }, { merge: true });
   
   await batch.commit();
   

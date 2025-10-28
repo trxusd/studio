@@ -65,7 +65,7 @@ export default function PredictionsPage() {
 
   const today = new Date().toISOString().split('T')[0];
   const categoriesQuery = firestore 
-    ? query(collection(firestore, `predictions/${today}`), where("status", "==", "published"))
+    ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
     : null;
     
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);

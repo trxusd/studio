@@ -85,14 +85,13 @@ const ResultsDisplay = ({ categories }: { categories: PredictionCategoryDoc[] })
 
         try {
             const today = new Date().toISOString().split('T')[0];
-            const docRef = doc(firestore, `predictions/${today}/${categoryId}`);
+            const docRef = doc(firestore, `predictions/${today}/categories/${categoryId}`);
             await updateDoc(docRef, { status: newStatus });
             toast({
                 title: 'Status Updated',
                 description: `Category ${categoryTitles[categoryId]} has been ${newStatus}.`,
             });
         } catch (error) {
-            console.error("Failed to update status: ", error);
             toast({
                 title: 'Error',
                 description: 'Failed to update publication status.',
@@ -154,7 +153,7 @@ export default function OfficialPredictionsPage() {
     const firestore = useFirestore();
     const today = new Date().toISOString().split('T')[0];
 
-    const categoriesQuery = firestore ? collection(firestore, `predictions/${today}`) : null;
+    const categoriesQuery = firestore ? collection(firestore, `predictions/${today}/categories`) : null;
     const { data: predictionCategories, loading: categoriesLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
 
 
