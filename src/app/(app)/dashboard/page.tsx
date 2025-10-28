@@ -41,7 +41,10 @@ export default function DashboardPage() {
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
   useEffect(() => {
-    if (!firestore) return;
+    if (!firestore) {
+      setStatsLoading(false);
+      return;
+    }
 
     const fetchStats = async () => {
         setStatsLoading(true);
