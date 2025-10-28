@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -97,7 +98,6 @@ async function fetchMatchesForAI() {
     return filteredMatches;
 
   } catch (error) {
-    console.error("Error fetching matches from API-Football:", error);
     throw new Error("Failed to fetch matches for AI analysis.");
   }
 }
@@ -153,18 +153,14 @@ const generateOfficialPredictionsFlow = ai.defineFlow(
     outputSchema: OfficialPredictionsOutputSchema,
   },
   async () => {
-    console.log('🚀 Starting Football Predictions Generation...');
-    
     // Step 1: Fetch matches from API-Football
     const matches = await fetchMatchesForAI();
-    console.log(`✅ Fetched ${matches.length} matches`);
     if (matches.length === 0) {
         throw new Error("No matches fetched, cannot generate predictions.");
     }
 
     // Step 2: Analyze with AI and generate predictions
     const { output } = await prompt({ matches });
-    console.log('✅ AI Analysis completed');
 
     if (!output) {
       throw new Error("AI analysis did not return any output.");
@@ -183,9 +179,7 @@ const generateOfficialPredictionsFlow = ai.defineFlow(
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
     if (total < 45 || total > 55) { // Allow some flexibility
-        console.warn(`Validation Warning: Generated ${total} predictions instead of 50. Distribution: ${JSON.stringify(counts)}`);
-    } else {
-        console.log('✅ Predictions count is within the acceptable range.');
+        // Instead of just warning, this could be an error in a stricter setup.
     }
     
     return output;
