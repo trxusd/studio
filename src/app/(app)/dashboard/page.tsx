@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -40,61 +40,61 @@ export default function DashboardPage() {
   const categoriesQuery = firestore ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
-  useEffect(() => {
+  const fetchStats = useCallback(async () => {
     // Only run if firestore is available
     if (!firestore) {
       setStatsLoading(false);
       return;
     }
+    setStatsLoading(true);
+    try {
+        let allPredictions: PredictionResult[] = [];
 
-    const fetchStats = async () => {
-        setStatsLoading(true);
-        try {
-            let allPredictions: PredictionResult[] = [];
+        // Fetch predictions for the last 7 days, one day at a time
+        for (let i = 0; i < 7; i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateString = date.toISOString().split('T')[0];
 
-            // Fetch predictions for the last 7 days, one day at a time
-            for (let i = 0; i < 7; i++) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                const dateString = date.toISOString().split('T')[0];
+            const categoriesColRef = collection(firestore, `predictions/${dateString}/categories`);
+            const querySnapshot = await getDocs(categoriesColRef);
 
-                const categoriesColRef = collection(firestore, `predictions/${dateString}/categories`);
-                const querySnapshot = await getDocs(categoriesColRef);
-
-                querySnapshot.forEach(doc => {
-                    const category = doc.data() as PredictionCategoryDoc;
-                    if (category.predictions) {
-                        allPredictions.push(...category.predictions as PredictionResult[]);
-                    }
-                });
-            }
-            
-            let totalWins = 0;
-            let totalResolved = 0;
-
-            allPredictions.forEach(pred => {
-                if (pred.status === 'Win') {
-                    totalWins++;
-                    totalResolved++;
-                } else if (pred.status === 'Loss') {
-                    totalResolved++;
+            querySnapshot.forEach(doc => {
+                const category = doc.data() as PredictionCategoryDoc;
+                if (category.predictions) {
+                    allPredictions.push(...category.predictions as PredictionResult[]);
                 }
             });
-
-            const accuracy = totalResolved > 0 ? (totalWins / totalResolved) * 100 : 0;
-            setStats({ wins: totalWins, accuracy: parseFloat(accuracy.toFixed(1)) });
-
-        } catch (error) {
-            console.error("Error fetching stats:", error);
-            // In case of error, still set stats to default and stop loading
-            setStats({ wins: 0, accuracy: 0 });
-        } finally {
-            setStatsLoading(false);
         }
-    };
+        
+        let totalWins = 0;
+        let totalResolved = 0;
 
+        allPredictions.forEach(pred => {
+            if (pred.status === 'Win') {
+                totalWins++;
+                totalResolved++;
+            } else if (pred.status === 'Loss') {
+                totalResolved++;
+            }
+        });
+
+        const accuracy = totalResolved > 0 ? (totalWins / totalResolved) * 100 : 0;
+        setStats({ wins: totalWins, accuracy: parseFloat(accuracy.toFixed(1)) });
+
+    } catch (error) {
+        console.error("Error fetching stats:", error);
+        // In case of error, still set stats to default and stop loading
+        setStats({ wins: 0, accuracy: 0 });
+    } finally {
+        setStatsLoading(false);
+    }
+  }, [firestore]); // The function now correctly depends only on firestore
+
+  useEffect(() => {
+    // This effect will run once when firestore is initialized.
     fetchStats();
-  }, [firestore]); // This effect will only re-run if the firestore instance changes.
+  }, [fetchStats]);
 
 
   const { activePredictionsCount, freePredictions } = useMemo(() => {
@@ -266,5 +266,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
