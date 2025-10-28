@@ -11,7 +11,8 @@ import {
 import { Button } from '@/components/ui/button';
 import {
   Loader2,
-  Radio
+  Radio,
+  ArrowLeft
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -76,7 +77,7 @@ export default function LiveMatchesPage() {
                 <Radio className="text-red-500 animate-pulse" /> Live Matches
             </h2>
             <Button variant="outline" asChild>
-                <Link href="/matches">Back to All Matches</Link>
+                <Link href="/matches"><ArrowLeft className='h-4 w-4 mr-2' />Back to All Matches</Link>
             </Button>
         </div>
 

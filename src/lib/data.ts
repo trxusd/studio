@@ -1,4 +1,6 @@
 
+
+import type { MatchPrediction } from "@/ai/schemas/prediction-schemas";
 import type { AiPoweredMatchPredictionsOutput } from "@/ai/flows/ai-powered-match-predictions";
 
 // This type is now mainly for the static fallback data and can be removed
@@ -14,36 +16,28 @@ export type Match = {
 
 // This static data is no longer used by the main matches page,
 // but can be kept for other parts of the app or as a fallback.
-export const matches: Match[] = [
+export const matches: MatchPrediction[] = [
     {
-        id: '1144573', // Example ID, align with API if possible
-        teamA: { name: 'Real Madrid', logo: 'https://media.api-sports.io/football/teams/541.png' },
-        teamB: { name: 'Barcelona', logo: 'https://media.api-sports.io/football/teams/529.png' },
-        date: new Date(new Date().setDate(new Date().getDate() + 1)),
+        fixture_id: 1144573, // Example ID, align with API if possible
+        home_team: 'Real Madrid',
+        away_team: 'Barcelona',
+        time: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(),
         league: 'La Liga',
-        prediction: {
-            teamAWinProbability: 0.45,
-            teamBWinProbability: 0.30,
-            drawProbability: 0.25,
-            keyStatistics: "Real Madrid has won 4 of the last 5 encounters. Barcelona is missing a key defender.",
-            teamAAnalysis: "Real Madrid's offense is in top form, scoring an average of 2.5 goals in the last 5 games. Their midfield control will be crucial.",
-            teamBAnalysis: "Barcelona's new formation shows promise but has defensive vulnerabilities. Their counter-attack is their main threat."
-        }
+        prediction: "Real Madrid to Win",
+        odds: 2.1,
+        confidence: 85,
+        match: 'Real Madrid vs Barcelona'
     },
     {
-        id: '1144574', // Example ID
-        teamA: { name: 'Man City', logo: 'https://media.api-sports.io/football/teams/50.png' },
-        teamB: { name: 'Liverpool', logo: 'https://media.api-sports.io/football/teams/40.png' },
-        date: new Date(new Date().setDate(new Date().getDate() + 1)),
+        fixture_id: 1144574, // Example ID
+        home_team: 'Man City',
+        away_team: 'Liverpool',
+        time: new Date(new Date().setDate(new Date().getDate() + 1)).toISOString(),
         league: 'Premier League',
-        prediction: {
-            teamAWinProbability: 0.55,
-            teamBWinProbability: 0.25,
-            drawProbability: 0.20,
-            keyStatistics: "Man City is undefeated at home this season. Liverpool's top scorer is returning from injury.",
-            teamAAnalysis: "City's possession-based style will likely dominate the game. Expect them to control the tempo.",
-            teamBAnalysis: "Liverpool's high press could disrupt City's rhythm, but they are susceptible to long balls over the top."
-        }
+        prediction: "Over 2.5 Goals",
+        odds: 1.8,
+        confidence: 90,
+        match: 'Man City vs Liverpool'
     },
 ];
 

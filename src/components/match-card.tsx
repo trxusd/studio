@@ -7,6 +7,7 @@ import type { MatchPrediction } from '@/ai/schemas/prediction-schemas';
 import { ArrowRight, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
+import { format } from 'date-fns';
 
 type MatchCardProps = {
   match: MatchPrediction;
@@ -14,6 +15,11 @@ type MatchCardProps = {
 };
 
 export function MatchCard({ match, isVip = false }: MatchCardProps) {
+    
+    const matchDate = new Date(match.time);
+    const formattedDate = format(matchDate, 'MMM dd, yyyy');
+    const formattedTime = format(matchDate, 'HH:mm');
+
   return (
     <Card className={cn("flex flex-col", isVip && "border-yellow-500 bg-yellow-500/10")}>
       <CardHeader className="pb-2">
@@ -22,9 +28,7 @@ export function MatchCard({ match, isVip = false }: MatchCardProps) {
             {isVip && <Crown className="h-4 w-4 text-yellow-500" />}
         </div>
         <CardTitle className="text-sm font-medium pt-2">
-          {new Date(match.time).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-          {' - '}
-          {new Date(match.time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+          {formattedDate} - {formattedTime}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
@@ -34,7 +38,7 @@ export function MatchCard({ match, isVip = false }: MatchCardProps) {
           </div>
           <div className='flex items-center justify-between'>
             <Badge variant="secondary">{match.prediction}</Badge>
-            <span className='font-bold text-lg'>{match.odds}</span>
+            {match.odds && match.odds > 1 && <span className='font-bold text-lg'>{match.odds}</span>}
           </div>
         </div>
       </CardContent>

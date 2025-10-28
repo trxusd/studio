@@ -1,48 +1,84 @@
 import { NextResponse } from 'next/server';
 
-// This function now handles both fetching by date and by a specific fixture ID.
+const API_KEY = process.env.FOOTBALL_API_KEY;
+const API_HOST = "api-football.p.rapidapi.com";
+
+async function fetchFromApi(endpoint: string, revalidate: number = 3600) {
+  if (!API_KEY || !API_HOST) {
+    throw new Error('API key or host is not configured.');
+  }
+
+  const response = await fetch(`https://v3.football.api-sports.io/${endpoint}`, {
+    headers: {
+      'x-rapidapi-host': API_HOST,
+      'x-rapidapi-key': API_KEY,
+    },
+    next: { revalidate }
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`API Error for ${endpoint}:`, errorText);
+    throw new Error(`API request failed with status: ${response.status}`);
+  }
+  return response.json();
+}
+
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get('date');
   const fixtureId = searchParams.get('id');
   const live = searchParams.get('live');
-
-  const apiKey = process.env.FOOTBALL_API_KEY;
-  const apiHost = "api-football.p.rapidapi.com";
-
-  if (!apiKey || !apiHost) {
-    return NextResponse.json({ message: 'API key or host is not configured.' }, { status: 500 });
-  }
-
-  let apiUrl;
-  if (fixtureId) {
-    apiUrl = `https://v3.football.api-sports.io/fixtures?id=${fixtureId}`;
-  } else if (live) {
-    apiUrl = `https://v3.football.api-sports.io/fixtures?live=${live}`;
-  }
-  else {
-    const requestDate = date || new Date().toISOString().split('T')[0];
-    apiUrl = `https://v3.football.api-sports.io/fixtures?date=${requestDate}`;
-  }
+  const teamSearch = searchParams.get('teamSearch');
+  const teamId = searchParams.get('team');
+  const teamFixtures = searchParams.get('teamFixtures');
+  const squad = searchParams.get('squad');
+  const standings = searchParams.get('standings'); // league&season
 
   try {
-    const response = await fetch(apiUrl, {
-      headers: {
-        'x-rapidapi-host': apiHost,
-        'x-rapidapi-key': apiKey,
-      },
-      next: { revalidate: live ? 0 : 3600 } // No cache for live, 1 hour for others
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      return NextResponse.json({ message: `API request failed with status: ${response.status}`, error: errorText }, { status: response.status });
+    if (teamSearch) {
+      const data = await fetchFromApi(`teams?search=${teamSearch}`, 3600);
+      return NextResponse.json({ teams: data.response });
+    }
+    
+    if (teamId) {
+        const data = await fetchFromApi(`teams?id=${teamId}`);
+        return NextResponse.json({ team: data.response[0] });
     }
 
-    const data = await response.json();
+    if (teamFixtures) {
+        const data = await fetchFromApi(`fixtures?team=${teamFixtures}&last=10&status=FT`);
+        return NextResponse.json({ fixtures: data.response });
+    }
+
+    if (squad) {
+        const data = await fetchFromApi(`players/squads?team=${squad}`);
+        return NextResponse.json({ squad: data.response[0] });
+    }
+    
+    if (standings) {
+        const [league, season] = standings.split('&');
+        const data = await fetchFromApi(`standings?league=${league}&season=${season}`);
+        return NextResponse.json({ standings: data.response });
+    }
+    
+    if (fixtureId) {
+      const data = await fetchFromApi(`fixtures?id=${fixtureId}`);
+      return NextResponse.json({ matches: data.response });
+    }
+
+    if (live) {
+      const data = await fetchFromApi(`fixtures?live=${live}`, 0);
+      return NextResponse.json({ matches: data.response });
+    }
+
+    // Default to fetching matches by date
+    const requestDate = date || new Date().toISOString().split('T')[0];
+    const data = await fetchFromApi(`fixtures?date=${requestDate}`);
     return NextResponse.json({ matches: data.response });
 
   } catch (error) {
-    return NextResponse.json({ message: 'Failed to fetch matches', error: (error as Error).message }, { status: 500 });
+    return NextResponse.json({ message: 'Failed to fetch data', error: (error as Error).message }, { status: 500 });
   }
 }

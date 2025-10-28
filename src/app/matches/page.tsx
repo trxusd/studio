@@ -20,9 +20,12 @@ import Link from 'next/link';
 import { MatchFilterControls } from '@/components/match-filter-controls';
 import { Star } from 'lucide-react';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useDebounce } from 'use-debounce';
+import { Card } from '@/components/ui/card';
 
 
 type Team = {
@@ -93,6 +96,10 @@ type ApiMatch = {
   };
 };
 
+type ApiTeam = {
+  team: Team;
+}
+
 type GroupedMatches = Record<string, Record<string, ApiMatch[]>>;
 type Favorite = { id: string };
 
@@ -102,10 +109,16 @@ const priorityCountries = ['World', 'England', 'Spain', 'Germany', 'Italy', 'Fra
 export default function MatchesPage() {
   const [matches, setMatches] = React.useState<ApiMatch[]>([]);
   const [groupedMatches, setGroupedMatches] = React.useState<GroupedMatches>({});
-  const [selectedDate, setSelectedDate] = React.useState(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = React.useState(true);
   const isVip = false; // Mock vip status
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
+  const [searchResults, setSearchResults] = React.useState<ApiTeam[]>([]);
+  const [isSearching, setIsSearching] = React.useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const selectedDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
   
   const { user } = useUser();
   const firestore = useFirestore();
@@ -115,38 +128,33 @@ export default function MatchesPage() {
   const { data: favorites } = useCollection<Favorite>(favoritesQuery);
   const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
 
-
   React.useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const dateParam = urlParams.get('date');
-    const newDate = dateParam || new Date().toISOString().split('T')[0];
-    
-    // Only update and fetch if the date has changed
-    if (newDate !== selectedDate || matches.length === 0) {
-      setSelectedDate(newDate);
-      fetchMatches(newDate);
-    }
-  }, [typeof window !== 'undefined' ? window.location.search : '', selectedDate]);
-
-  async function fetchMatches(date: string) {
-    setIsLoading(true);
-    try {
-      const response = await fetch(`/api/matches?date=${date}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch matches');
+    // This effect now solely reacts to the selectedDate changing.
+    // The component re-renders when searchParams change.
+    async function fetchMatches(date: string) {
+      setIsLoading(true);
+      setSearchQuery('');
+      setSearchResults([]);
+      try {
+        const response = await fetch(`/api/matches?date=${date}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch matches');
+        }
+        const data = await response.json();
+        const allMatches = data.matches || [];
+        setMatches(allMatches);
+        groupMatches(allMatches);
+      } catch (error) {
+        console.error("Failed to fetch matches:", error);
+        setMatches([]);
+        setGroupedMatches({});
+      } finally {
+        setIsLoading(false);
       }
-      const data = await response.json();
-      const allMatches = data.matches || [];
-      setMatches(allMatches);
-      groupMatches(allMatches);
-    } catch (error) {
-      console.error("Failed to fetch matches:", error);
-      setMatches([]);
-      setGroupedMatches({});
-    } finally {
-      setIsLoading(false);
     }
-  }
+    
+    fetchMatches(selectedDate);
+  }, [selectedDate]);
   
   const groupMatches = (matchesToGroup: ApiMatch[]) => {
       const grouped = matchesToGroup.reduce(
@@ -167,14 +175,29 @@ export default function MatchesPage() {
       );
       setGroupedMatches(grouped);
   }
-
+  
+  // Effect for live searching teams
   React.useEffect(() => {
-    const filtered = matches.filter(match => 
-        match.teams.home.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        match.teams.away.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    groupMatches(filtered);
-  }, [searchQuery, matches]);
+    if (debouncedSearchQuery.length > 2) {
+      const searchTeams = async () => {
+        setIsSearching(true);
+        try {
+          const response = await fetch(`/api/matches?teamSearch=${debouncedSearchQuery}`);
+          if (response.ok) {
+            const data = await response.json();
+            setSearchResults(data.teams || []);
+          }
+        } catch (error) {
+          console.error("Failed to search teams:", error);
+        } finally {
+          setIsSearching(false);
+        }
+      };
+      searchTeams();
+    } else {
+      setSearchResults([]);
+    }
+  }, [debouncedSearchQuery]);
 
 
   const sortedCountries = Object.entries(groupedMatches).sort(([a], [b]) => {
@@ -256,6 +279,21 @@ export default function MatchesPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+           {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 animate-spin" />}
+           {searchResults.length > 0 && (
+             <Card className='absolute top-full mt-1 w-full z-20'>
+                <ul className='py-2'>
+                  {searchResults.map(({ team }) => (
+                    <li key={team.id}>
+                       <Link href={`/team/${team.id}`} className='flex items-center gap-3 p-2 mx-2 rounded-md hover:bg-muted'>
+                         <Image src={team.logo} alt={team.name} width={24} height={24} />
+                         <span>{team.name}</span>
+                       </Link>
+                    </li>
+                  ))}
+                </ul>
+             </Card>
+           )}
         </div>
         <MatchFilterControls selectedDate={selectedDate} isVip={isVip} />
       </div>
@@ -343,5 +381,3 @@ export default function MatchesPage() {
     </div>
   );
 }
-
-    
