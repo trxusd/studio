@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -88,6 +89,8 @@ type ApiMatch = {
 
 type GroupedMatches = Record<string, Record<string, ApiMatch[]>>;
 
+const priorityCountries = ['World', 'England', 'Spain', 'Germany', 'Italy', 'France', 'Brazil', 'Argentina', 'Portugal', 'Netherlands'];
+
 
 export default function MatchesPage() {
   const [matches, setMatches] = React.useState<ApiMatch[]>([]);
@@ -142,6 +145,21 @@ export default function MatchesPage() {
 
   }, [typeof window !== 'undefined' ? window.location.search : '']);
 
+  const sortedCountries = Object.entries(groupedMatches).sort(([a], [b]) => {
+    const indexA = priorityCountries.indexOf(a);
+    const indexB = priorityCountries.indexOf(b);
+
+    if (indexA !== -1 && indexB !== -1) {
+      return indexA - indexB; // Both are in priority, sort by priority order
+    }
+    if (indexA !== -1) {
+      return -1; // A is priority, B is not
+    }
+    if (indexB !== -1) {
+      return 1; // B is priority, A is not
+    }
+    return a.localeCompare(b); // Neither is priority, sort alphabetically
+  });
   
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -160,7 +178,7 @@ export default function MatchesPage() {
       </div>
 
       {/* Control Bar */}
-      <div className="sticky top-14 z-10 bg-background/80 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-2 border-b">
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-2 border-b">
          <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input type="search" placeholder="Search for a team..." className="pl-10" />
@@ -180,7 +198,7 @@ export default function MatchesPage() {
         </div>
       ) : (
         <Accordion type="multiple" className="w-full">
-            {Object.entries(groupedMatches).sort(([a], [b]) => a.localeCompare(b)).map(([country, leagues]) => (
+            {sortedCountries.map(([country, leagues]) => (
             <AccordionItem value={country} key={country}>
                 <AccordionTrigger className="font-bold text-lg hover:no-underline">
                 <div className="flex items-center gap-3">
@@ -251,3 +269,4 @@ export default function MatchesPage() {
     </div>
   );
 }
+
