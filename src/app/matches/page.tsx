@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import {
   ArrowLeft,
   Search,
+  Loader2,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -98,52 +99,68 @@ export default function MatchesPage() {
   const [selectedDate, setSelectedDate] = React.useState(new Date().toISOString().split('T')[0]);
   const [isLoading, setIsLoading] = React.useState(true);
   const isVip = false; // Mock vip status
+  const [searchQuery, setSearchQuery] = React.useState('');
 
   React.useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const dateParam = urlParams.get('date');
     const newDate = dateParam || new Date().toISOString().split('T')[0];
-    setSelectedDate(newDate);
-
-    async function fetchMatches(date: string) {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/matches?date=${date}`);
-        if (!response.ok) {
-          throw new Error('Failed to fetch matches');
-        }
-        const data = await response.json();
-        setMatches(data.matches);
-
-        const grouped = data.matches.reduce(
-            (acc: GroupedMatches, match: ApiMatch) => {
-              const country = match.league.country || 'Global';
-              const leagueName = match.league.name;
-
-              if (!acc[country]) {
-                acc[country] = {};
-              }
-              if (!acc[country][leagueName]) {
-                acc[country][leagueName] = [];
-              }
-              acc[country][leagueName].push(match);
-              return acc;
-            },
-            {} as GroupedMatches
-        );
-        setGroupedMatches(grouped);
-      } catch (error) {
-        console.error("Failed to fetch matches:", error);
-        setMatches([]);
-        setGroupedMatches({});
-      } finally {
-        setIsLoading(false);
-      }
+    
+    // Only update and fetch if the date has changed
+    if (newDate !== selectedDate || matches.length === 0) {
+      setSelectedDate(newDate);
+      fetchMatches(newDate);
     }
+  }, [typeof window !== 'undefined' ? window.location.search : '', selectedDate]);
 
-    fetchMatches(newDate);
+  async function fetchMatches(date: string) {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/matches?date=${date}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch matches');
+      }
+      const data = await response.json();
+      const allMatches = data.matches || [];
+      setMatches(allMatches);
+      groupMatches(allMatches);
+    } catch (error) {
+      console.error("Failed to fetch matches:", error);
+      setMatches([]);
+      setGroupedMatches({});
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  
+  const groupMatches = (matchesToGroup: ApiMatch[]) => {
+      const grouped = matchesToGroup.reduce(
+          (acc: GroupedMatches, match: ApiMatch) => {
+            const country = match.league.country || 'Global';
+            const leagueName = match.league.name;
 
-  }, [typeof window !== 'undefined' ? window.location.search : '']);
+            if (!acc[country]) {
+              acc[country] = {};
+            }
+            if (!acc[country][leagueName]) {
+              acc[country][leagueName] = [];
+            }
+            acc[country][leagueName].push(match);
+            return acc;
+          },
+          {} as GroupedMatches
+      );
+      setGroupedMatches(grouped);
+  }
+
+  React.useEffect(() => {
+    const filtered = matches.filter(match => 
+        match.teams.home.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        match.teams.away.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    groupMatches(filtered);
+  }, [searchQuery, matches]);
+
 
   const sortedCountries = Object.entries(groupedMatches).sort(([a], [b]) => {
     const indexA = priorityCountries.indexOf(a);
@@ -181,7 +198,13 @@ export default function MatchesPage() {
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-2 border-b">
          <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input type="search" placeholder="Search for a team..." className="pl-10" />
+          <Input 
+            type="search" 
+            placeholder="Search for a team..." 
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
           {/* Search results would pop up here */}
         </div>
         <MatchFilterControls selectedDate={selectedDate} isVip={isVip} />
@@ -189,15 +212,15 @@ export default function MatchesPage() {
 
       {/* Matches List */}
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">
-            <p>Loading matches...</p>
+        <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
       ) : matches.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
             <p>No matches found for this date.</p>
         </div>
       ) : (
-        <Accordion type="multiple" className="w-full">
+        <Accordion type="multiple" className="w-full" defaultValue={sortedCountries.map(([country]) => country)}>
             {sortedCountries.map(([country, leagues]) => (
             <AccordionItem value={country} key={country}>
                 <AccordionTrigger className="font-bold text-lg hover:no-underline">
@@ -247,8 +270,8 @@ export default function MatchesPage() {
                             <div className="flex items-center gap-4">
                                 {match.fixture.status.short !== 'NS' && (
                                     <div className="flex flex-col items-center font-mono text-lg font-bold">
-                                        <span>{match.goals.home}</span>
-                                        <span>{match.goals.away}</span>
+                                        <span>{match.goals.home ?? '-'}</span>
+                                        <span>{match.goals.away ?? '-'}</span>
                                     </div>
                                 )}
                                 <button onClick={(e) => { e.preventDefault(); /* Handle favorite logic */ }}>
@@ -269,4 +292,3 @@ export default function MatchesPage() {
     </div>
   );
 }
-
