@@ -28,18 +28,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
 
     useEffect(() => {
-        // This effect runs when the loading state or user object changes.
-        // It's crucial to NOT include `router` in the dependency array to prevent loops.
         if (!loading) {
             if (!user || !user.email || !adminEmails.includes(user.email)) {
-                // If not loading and not an admin, redirect once.
                 router.replace('/dashboard');
             }
         }
-    }, [user, loading]); // Intentionally omitting `router`
+    }, [user, loading, router]);
 
-    // While loading, or if the user is not determined to be an admin yet, show a loader.
-    // This prevents a flash of admin content for non-admin users.
     if (loading || !user || !user.email || !adminEmails.includes(user.email)) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
@@ -48,7 +43,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         );
     }
 
-    // Only render the admin layout if the user is a verified admin.
     return (
         <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
             <div className="hidden border-r bg-muted/40 md:block">
