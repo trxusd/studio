@@ -69,58 +69,55 @@ export default function FavoriteMatchesPage() {
 
   const favoritesQuery = firestore && user ? query(collection(firestore, `users/${user.uid}/favorites`)) : null;
   const { data: favorites, loading: favoritesLoading } = useCollection<Favorite>(favoritesQuery);
-  const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
 
   React.useEffect(() => {
     async function fetchAndGroupMatches() {
-        // Only run when the initial favorites list has been loaded
-        if (favoritesLoading) {
-            setIsLoading(true);
-            return;
-        }
-
-        if (!favorites || favorites.length === 0) {
-            setGroupedMatches({});
-            setIsLoading(false);
-            return;
-        }
-
+      if (favoritesLoading) {
         setIsLoading(true);
-        const idsToFetch = favorites.map(f => f.id);
+        return;
+      }
+
+      if (!favorites || favorites.length === 0) {
+        setGroupedMatches({});
+        setIsLoading(false);
+        return;
+      }
+
+      setIsLoading(true);
+      const idsToFetch = favorites.map(f => f.id);
+      
+      try {
+        const matchPromises = idsToFetch.map(async (id) => {
+          const response = await fetch(`/api/matches?id=${id}`);
+          if (response.ok) {
+            const data = await response.json();
+            return data.matches?.[0] ? mapApiMatchToFavoriteMatch(data.matches[0]) : null;
+          }
+          return null;
+        });
+
+        const matches = (await Promise.all(matchPromises)).filter(Boolean) as FavoriteMatch[];
         
-        try {
-            const matchPromises = idsToFetch.map(async (id) => {
-                const response = await fetch(`/api/matches?id=${id}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.matches?.[0] ? mapApiMatchToFavoriteMatch(data.matches[0]) : null;
-                }
-                return null;
-            });
+        const grouped = matches.reduce((acc: GroupedMatches, match: FavoriteMatch) => {
+          const country = match.country || 'Global';
+          const leagueName = match.league;
+          if (!acc[country]) acc[country] = {};
+          if (!acc[country][leagueName]) acc[country][leagueName] = [];
+          acc[country][leagueName].push(match);
+          return acc;
+        }, {} as GroupedMatches);
+        setGroupedMatches(grouped);
 
-            const matches = (await Promise.all(matchPromises)).filter(Boolean) as FavoriteMatch[];
-            
-            const grouped = matches.reduce((acc: GroupedMatches, match: FavoriteMatch) => {
-                const country = match.country || 'Global';
-                const leagueName = match.league;
-                if (!acc[country]) acc[country] = {};
-                if (!acc[country][leagueName]) acc[country][leagueName] = [];
-                acc[country][leagueName].push(match);
-                return acc;
-            }, {} as GroupedMatches);
-            setGroupedMatches(grouped);
-
-        } catch (error) {
-            console.error("Failed to fetch favorite matches:", error);
-            toast({ title: "Error", description: "Failed to load favorite matches.", variant: "destructive"});
-            setGroupedMatches({});
-        } finally {
-            setIsLoading(false);
-        }
+      } catch (error) {
+        console.error("Failed to fetch favorite matches:", error);
+        setGroupedMatches({});
+      } finally {
+        setIsLoading(false);
+      }
     }
     
     fetchAndGroupMatches();
-  }, [favorites, favoritesLoading, toast]);
+  }, [favorites, favoritesLoading]);
 
   const handleFavoriteToggle = async (e: React.MouseEvent, fixtureId: number) => {
     e.preventDefault();
@@ -134,8 +131,6 @@ export default function FavoriteMatchesPage() {
     try {
         await deleteDoc(favoriteRef);
         toast({ title: "Removed from favorites." });
-        // The useCollection hook will automatically update the `favorites` data,
-        // which will trigger the useEffect to re-fetch and re-group matches.
     } catch (error) {
       console.error("Error removing favorite:", error);
       toast({
