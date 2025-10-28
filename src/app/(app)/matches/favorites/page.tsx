@@ -1,8 +1,9 @@
+
 'use client';
 
 import * as React from 'react';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { collection, query } from 'firebase/firestore';
 import { Loader2, ArrowLeft, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -39,20 +40,20 @@ export default function FavoriteMatchesPage() {
   const [favoriteMatches, setFavoriteMatches] = React.useState<MatchPrediction[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
-  const favoritesQuery = firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null;
+  // 1. Fetch the list of favorite IDs
+  const favoritesQuery = firestore && user ? query(collection(firestore, `users/${user.uid}/favorites`)) : null;
   const { data: favorites, loading: favoritesLoading } = useCollection<Favorite>(favoritesQuery);
 
+  // 2. This effect runs ONLY when the list of favorites is loaded or changes.
   React.useEffect(() => {
-    // This effect will run when the favorites list is loaded or changed.
     const fetchMatchDetails = async () => {
+      // If we are still loading the list of IDs, or if there are no favorites, do nothing yet.
       if (favoritesLoading) {
-        // Still waiting for the list of IDs
         setIsLoading(true);
         return;
       }
-
+      
       if (!favorites || favorites.length === 0) {
-        // No favorites, so nothing to fetch
         setFavoriteMatches([]);
         setIsLoading(false);
         return;
@@ -67,14 +68,16 @@ export default function FavoriteMatchesPage() {
           const response = await fetch(`/api/matches?id=${id}`);
           if (response.ok) {
             const data = await response.json();
-            const matchData: ApiMatchResponse = data.matches?.[0];
+            const matchData: ApiMatchResponse | undefined = data.matches?.[0];
             if (matchData) {
               return mapApiMatchToPrediction(matchData);
             }
           }
-          return null; // Return null for failed fetches
+          console.warn(`Could not fetch details for favorite match ID: ${id}`);
+          return null; // Return null for failed fetches or missing data
         });
 
+        // Wait for all promises and filter out any nulls
         const matches = (await Promise.all(matchPromises)).filter(Boolean) as MatchPrediction[];
         setFavoriteMatches(matches);
 
@@ -88,6 +91,7 @@ export default function FavoriteMatchesPage() {
     
     fetchMatchDetails();
 
+  // This dependency array is key: the effect only re-runs if `favorites` (the data itself) changes.
   }, [favorites, favoritesLoading]);
 
   return (
