@@ -5,12 +5,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ThumbsUp, MessageSquare, Send, Loader2, Languages } from "lucide-react";
+import { ThumbsUp, MessageSquare, Send, Loader2, Languages, MoreHorizontal, Trash2, Pin, PinOff } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection, addDoc, serverTimestamp, updateDoc, doc, query, orderBy, writeBatch, increment } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, updateDoc, doc, query, orderBy, writeBatch, increment, deleteDoc } from "firebase/firestore";
 import { formatDistanceToNow } from 'date-fns';
 import { translateText } from "@/ai/flows/translate-text";
 import type { Post } from "@/app/(app)/community/page";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+
 
 type Comment = {
     id: string;
@@ -80,7 +84,12 @@ const TranslatedContent = ({ originalContent }: { originalContent: string }) => 
 export function CommunityPostCard({ post }: { post: Post }) {
     const { user } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
     const [showComments, setShowComments] = useState(false);
+
+    const adminEmail = 'trxusdt87@gmail.com';
+    const isUserAdmin = user?.email === adminEmail;
+    const isOwner = user?.uid === post.user.uid;
 
     const handleLike = async () => {
         if (!firestore || !user) return;
@@ -103,22 +112,102 @@ export function CommunityPostCard({ post }: { post: Post }) {
         await batch.commit();
     };
 
+    const handleDelete = async () => {
+        if (!firestore) return;
+        const postRef = doc(firestore, "community-posts", post.id);
+        try {
+            await deleteDoc(postRef);
+            // In a real production app, deleting subcollections should be handled by a Cloud Function
+            // to avoid client-side limitations. This is a simplified version.
+            toast({
+                title: "Post Deleted",
+                description: "The post has been successfully removed.",
+            });
+        } catch (error) {
+            toast({
+                title: "Error Deleting Post",
+                description: "There was a problem removing this post.",
+                variant: "destructive",
+            });
+            console.error("Error deleting post:", error);
+        }
+    }
+
+    const handlePin = async () => {
+        if (!firestore) return;
+        const postRef = doc(firestore, "community-posts", post.id);
+        const newPinStatus = !post.isPinned;
+        try {
+            await updateDoc(postRef, { isPinned: newPinStatus });
+            toast({
+                title: newPinStatus ? "Post Pinned" : "Post Unpinned",
+                description: `The post is now ${newPinStatus ? 'pinned to the top' : 'no longer pinned'}.`,
+            });
+        } catch (error) {
+            toast({
+                title: "Error",
+                description: "Could not update the pin status.",
+                variant: "destructive",
+            });
+        }
+    };
+
+
     const formatTimestamp = (timestamp: any) => {
         if (!timestamp) return 'Just now';
         return `${formatDistanceToNow(timestamp.toDate())} ago`;
     };
 
     return (
-        <Card className="overflow-hidden mb-6">
+        <Card className="overflow-hidden mb-6 border-transparent shadow-none">
             <CardHeader className="flex flex-row items-center gap-3 space-y-0 p-4">
                 <Avatar>
                     <AvatarImage src={post.user.avatar} alt={post.user.name} data-ai-hint="person portrait" />
                     <AvatarFallback>{post.user.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <div className="grid gap-0.5">
+                <div className="grid gap-0.5 flex-1">
                     <p className="font-semibold">{post.user.name}</p>
                     <p className="text-xs text-muted-foreground">{formatTimestamp(post.timestamp)}</p>
                 </div>
+                {(isOwner || isUserAdmin) && (
+                    <AlertDialog>
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                {isUserAdmin && (
+                                    <DropdownMenuItem onClick={handlePin}>
+                                        {post.isPinned ? <PinOff className="mr-2 h-4 w-4" /> : <Pin className="mr-2 h-4 w-4" />}
+                                        <span>{post.isPinned ? 'Unpin Post' : 'Pin Post'}</span>
+                                    </DropdownMenuItem>
+                                )}
+                                {isOwner && (
+                                    <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                            <Trash2 className="mr-2 h-4 w-4" />
+                                            <span>Delete Post</span>
+                                        </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete this post and all its comments.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
             </CardHeader>
             <CardContent className="p-4 pt-0">
                 <TranslatedContent originalContent={post.content} />

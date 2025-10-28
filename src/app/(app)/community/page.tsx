@@ -4,12 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, ArrowLeft } from "lucide-react";
+import { Send, Loader2, ArrowLeft, Pin } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
 import { collection, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CommunityPostCard } from "@/components/community-post-card";
+import { Badge } from "@/components/ui/badge";
 
 export type Post = {
     id: string;
@@ -19,6 +20,7 @@ export type Post = {
     likes: number;
     comments: number;
     likedBy: string[];
+    isPinned?: boolean;
 };
 
 export default function CommunityPage() {
@@ -29,7 +31,7 @@ export default function CommunityPage() {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
-    const postsQuery = firestore ? query(collection(firestore, "community-posts"), orderBy("timestamp", "asc")) : null;
+    const postsQuery = firestore ? query(collection(firestore, "community-posts"), orderBy("isPinned", "desc"), orderBy("timestamp", "desc")) : null;
     const { data: posts, loading: postsLoading } = useCollection<Post>(postsQuery);
 
     useEffect(() => {
@@ -59,7 +61,8 @@ export default function CommunityPage() {
                 timestamp: serverTimestamp(),
                 likes: 0,
                 comments: 0,
-                likedBy: []
+                likedBy: [],
+                isPinned: false,
             });
             setNewMessage("");
         } catch (error) {
@@ -101,7 +104,15 @@ export default function CommunityPage() {
             </div>
           )}
           {!postsLoading && posts && posts.map((post) => (
-            <CommunityPostCard key={post.id} post={post} />
+             <div key={post.id} className="relative">
+                <CommunityPostCard post={post} />
+                {post.isPinned && (
+                    <Badge variant="secondary" className="absolute -top-3 left-4 text-xs font-semibold bg-primary/20 text-primary-foreground border-primary/30">
+                        <Pin className="h-3 w-3 mr-1" />
+                        Pinned
+                    </Badge>
+                )}
+            </div>
           ))}
            {!postsLoading && (!posts || posts.length === 0) && (
             <div className="text-center text-muted-foreground py-12">
