@@ -41,6 +41,7 @@ export default function DashboardPage() {
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
   useEffect(() => {
+    // Only run if firestore is available
     if (!firestore) {
       setStatsLoading(false);
       return;
@@ -85,13 +86,15 @@ export default function DashboardPage() {
 
         } catch (error) {
             console.error("Error fetching stats:", error);
+            // In case of error, still set stats to default and stop loading
+            setStats({ wins: 0, accuracy: 0 });
         } finally {
             setStatsLoading(false);
         }
     };
 
     fetchStats();
-  }, [firestore]);
+  }, [firestore]); // This effect will only re-run if the firestore instance changes.
 
 
   const { activePredictionsCount, freePredictions } = useMemo(() => {
@@ -263,7 +266,5 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
 
     
