@@ -25,7 +25,8 @@ export function useDoc<T extends DocumentData>(
     }
     
     // Deep compare ref to prevent re-running on every render
-    if(JSON.stringify(refRef.current) === JSON.stringify(ref)) {
+    if(refRef.current && JSON.stringify(refRef.current) === JSON.stringify(ref)) {
+        if (!loading) setLoading(false);
         return;
     }
     refRef.current = ref;
@@ -50,7 +51,7 @@ export function useDoc<T extends DocumentData>(
     );
 
     return () => unsubscribe();
-  }, [ref]);
+  }, [ref, loading]);
 
   return { data, loading, error };
 }

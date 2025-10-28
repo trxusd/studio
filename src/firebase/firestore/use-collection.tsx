@@ -26,7 +26,8 @@ export function useCollection<T extends DocumentData>(
     }
     
     // Deep compare query to prevent re-running on every render
-    if (JSON.stringify(queryRef.current) === JSON.stringify(query)) {
+    if (queryRef.current && JSON.stringify(queryRef.current) === JSON.stringify(query)) {
+        if (!loading) setLoading(false);
         return;
     }
     queryRef.current = query;
@@ -51,7 +52,7 @@ export function useCollection<T extends DocumentData>(
     );
 
     return () => unsubscribe();
-  }, [query]);
+  }, [query, loading]);
 
   return { data, loading, error };
 }
