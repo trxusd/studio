@@ -7,7 +7,6 @@ import { collection, query } from 'firebase/firestore';
 import { Loader2, ArrowLeft, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import type { MatchPrediction } from '@/ai/schemas/prediction-schemas';
 import Image from 'next/image';
 import {
   Accordion,
@@ -28,8 +27,18 @@ type ApiMatchResponse = {
   goals: { home: number | null; away: number | null; };
 };
 
-// We need to add league and country to the prediction type for grouping
-type FavoriteMatch = MatchPrediction & { country: string; leagueLogo: string; };
+// We add league and country to the prediction type for grouping
+type FavoriteMatch = {
+    fixture_id: number;
+    match: string;
+    home_team: string;
+    away_team: string;
+    league: string;
+    time: string;
+    country: string;
+    leagueLogo: string;
+};
+
 
 type GroupedMatches = Record<string, Record<string, FavoriteMatch[]>>;
 
@@ -41,9 +50,6 @@ function mapApiMatchToFavoriteMatch(apiMatch: ApiMatchResponse): FavoriteMatch {
         away_team: apiMatch.teams.away.name,
         league: apiMatch.league.name,
         time: apiMatch.fixture.date,
-        prediction: 'N/A',
-        odds: 0,
-        confidence: 0,
         country: apiMatch.league.country,
         leagueLogo: apiMatch.league.logo,
     };
@@ -62,10 +68,7 @@ export default function FavoriteMatchesPage() {
   const { data: favorites, loading: favoritesLoading } = useCollection<Favorite>(favoritesQuery);
 
   React.useEffect(() => {
-    // This effect will run whenever the loading state of favorites changes,
-    // or when the favorites themselves change.
     const fetchMatchDetails = async () => {
-      // Exit if we are still loading favorites or have no favorites to fetch.
       if (!favorites) {
         setIsLoading(false);
         setGroupedMatches({});
@@ -97,7 +100,6 @@ export default function FavoriteMatchesPage() {
 
         const matches = (await Promise.all(matchPromises)).filter(Boolean) as FavoriteMatch[];
         
-        // Group matches logic
         const grouped = matches.reduce((acc: GroupedMatches, match: FavoriteMatch) => {
             const country = match.country || 'Global';
             const leagueName = match.league;
