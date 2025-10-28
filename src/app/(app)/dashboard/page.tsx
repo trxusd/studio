@@ -36,7 +36,7 @@ export default function DashboardPage() {
 
     const freeCats = ['secure_trial', 'free_coupon'];
     let count = 0;
-    const free = [];
+    const free: MatchPrediction[] = [];
 
     for (const cat of publishedCategories) {
         count += cat.predictions.length;
@@ -129,8 +129,8 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {freePredictions.length > 0 ? (
-                freePredictions.map((match) => (
-                  <MatchCard key={match.fixture_id} match={match} />
+                freePredictions.map((match, index) => (
+                  <MatchCard key={`${match.fixture_id}-${index}`} match={match} />
                 ))
             ) : (
                 <p className="text-center text-muted-foreground py-8">No free predictions available today. Check back later!</p>
