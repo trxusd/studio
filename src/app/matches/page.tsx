@@ -105,8 +105,7 @@ type Favorite = { id: string };
 
 const priorityCountries = ['World', 'England', 'Spain', 'Germany', 'Italy', 'France', 'Brazil', 'Argentina', 'Portugal', 'Netherlands'];
 
-
-export default function MatchesPage() {
+function MatchesPageContent() {
   const [matches, setMatches] = React.useState<ApiMatch[]>([]);
   const [groupedMatches, setGroupedMatches] = React.useState<GroupedMatches>({});
   const [isLoading, setIsLoading] = React.useState(true);
@@ -381,3 +380,18 @@ export default function MatchesPage() {
     </div>
   );
 }
+
+
+export default function MatchesPage() {
+    return (
+        <React.Suspense fallback={
+            <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            </div>
+        }>
+            <MatchesPageContent />
+        </React.Suspense>
+    )
+}
+
+    
