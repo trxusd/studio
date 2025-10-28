@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 
 const API_KEY = process.env.FOOTBALL_API_KEY;
@@ -34,9 +35,14 @@ export async function GET(request: Request) {
   const teamId = searchParams.get('team');
   const teamFixtures = searchParams.get('teamFixtures');
   const squad = searchParams.get('squad');
-  const standings = searchParams.get('standings'); // league&season
+  const standingsParam = searchParams.get('standings');
 
   try {
+    if (fixtureId) {
+      const data = await fetchFromApi(`fixtures?id=${fixtureId}`);
+      return NextResponse.json({ matches: data.response });
+    }
+    
     if (teamSearch) {
       const data = await fetchFromApi(`teams?search=${teamSearch}`, 3600);
       return NextResponse.json({ teams: data.response });
@@ -57,17 +63,12 @@ export async function GET(request: Request) {
         return NextResponse.json({ squad: data.response[0] });
     }
     
-    if (standings) {
-        const [league, season] = standings.split('&');
+    if (standingsParam) {
+        const [league, season] = standingsParam.split('&');
         const data = await fetchFromApi(`standings?league=${league}&season=${season}`);
         return NextResponse.json({ standings: data.response });
     }
     
-    if (fixtureId) {
-      const data = await fetchFromApi(`fixtures?id=${fixtureId}`);
-      return NextResponse.json({ matches: data.response });
-    }
-
     if (live) {
       const data = await fetchFromApi(`fixtures?live=${live}`, 0);
       return NextResponse.json({ matches: data.response });
