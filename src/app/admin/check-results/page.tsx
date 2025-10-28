@@ -31,41 +31,56 @@ function checkPredictionStatus(prediction: MatchPrediction, finalScore: string |
     if (parts.some(isNaN) || parts.length < 2) return 'Pending';
     const [homeScore, awayScore] = parts;
 
-    const predictionText = prediction.prediction.toLowerCase();
+    const predictionText = prediction.prediction.toLowerCase().replace(/\s+/g, '');
 
-    if (predictionText.includes('home win') || predictionText === '1' ) {
+    // 1X2 Predictions
+    if (predictionText.includes('homewin') || predictionText === '1') {
         return homeScore > awayScore ? 'Win' : 'Loss';
     }
-    if (predictionText.includes('away win') || predictionText === '2') {
+    if (predictionText.includes('awaywin') || predictionText === '2') {
         return awayScore > homeScore ? 'Win' : 'Loss';
     }
-    if (predictionText.includes('draw') || predictionText.toLowerCase() === 'x') {
+    if (predictionText.includes('draw') || predictionText === 'x') {
         return homeScore === awayScore ? 'Win' : 'Loss';
     }
-    if (predictionText.includes('over')) {
-        const value = parseFloat(predictionText.split(' ')[1]);
+
+    // Over/Under Predictions
+    if (predictionText.startsWith('over')) {
+        const value = parseFloat(predictionText.replace('over', ''));
         return (homeScore + awayScore) > value ? 'Win' : 'Loss';
     }
-    if (predictionText.includes('under')) {
-        const value = parseFloat(predictionText.split(' ')[1]);
+    if (predictionText.startsWith('under')) {
+        const value = parseFloat(predictionText.replace('under', ''));
         return (homeScore + awayScore) < value ? 'Win' : 'Loss';
     }
+
+    // Both Teams to Score (BTTS)
     if (predictionText.includes('btts') || predictionText.includes('gg')) {
         return homeScore > 0 && awayScore > 0 ? 'Win' : 'Loss';
     }
-     if (predictionText.includes('1x') || predictionText.includes('home or draw')) {
+
+    // Double Chance Predictions
+    if (predictionText.includes('1x') || predictionText.includes('homeordraw')) {
         return homeScore >= awayScore ? 'Win' : 'Loss';
     }
-    if (predictionText.includes('x2') || predictionText.includes('away or draw')) {
+    if (predictionText.includes('x2') || predictionText.includes('awayordraw')) {
         return awayScore >= homeScore ? 'Win' : 'Loss';
     }
-     if (predictionText.includes('12') || predictionText.includes('home or away')) {
+    if (predictionText.includes('12') || predictionText.includes('homeoraway')) {
         return homeScore !== awayScore ? 'Win' : 'Loss';
     }
+    
+    // Correct Score (assuming format '1-0', '2-1', etc.)
+    const scoreMatch = prediction.prediction.match(/^(\d+)-(\d+)$/);
+    if (scoreMatch) {
+        const predHome = parseInt(scoreMatch[1], 10);
+        const predAway = parseInt(scoreMatch[2], 10);
+        return homeScore === predHome && awayScore === predAway ? 'Win' : 'Loss';
+    }
 
-
-    return 'Pending';
+    return 'Pending'; // Default to Pending if no match
 }
+
 
 async function fetchMatchResult(fixtureId: number): Promise<string | null> {
     try {
