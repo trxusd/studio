@@ -77,15 +77,15 @@ const ResultsDisplay = ({ results }: { results: OfficialPredictionsOutput }) => 
                 <Accordion type="multiple" defaultValue={categories.map(c => c.title)}>
                     {categories.map(category => (
                          <AccordionItem value={category.title} key={category.title}>
-                            <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                                <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center w-full">
+                                <AccordionTrigger className="text-lg font-semibold hover:no-underline flex-1">
                                     <span>{category.title} ({(category.data || []).length} matches)</span>
-                                    <Button size="sm" variant="outline" className="mr-2" onClick={(e) => e.stopPropagation()} disabled>
-                                        <UploadCloud className="mr-2 h-4 w-4" />
-                                        Publish
-                                    </Button>
-                                </div>
-                            </AccordionTrigger>
+                                </AccordionTrigger>
+                                <Button size="sm" variant="outline" className="mr-4" onClick={(e) => e.stopPropagation()} disabled>
+                                    <UploadCloud className="mr-2 h-4 w-4" />
+                                    Publish
+                                </Button>
+                            </div>
                             <AccordionContent>
                                 <PredictionTable matches={category.data || []} />
                             </AccordionContent>
