@@ -12,9 +12,9 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { doc, writeBatch } from 'firebase/firestore';
-import { getFirestoreInstance } from '@/firebase';
+import { doc, writeBatch, getFirestore } from 'firebase/firestore';
 import { OfficialPredictionsOutputSchema, type OfficialPredictionsOutput } from '@/ai/schemas/prediction-schemas';
+import { getFirebaseApp } from '@/firebase';
 
 
 const API_HOST = "api-football.p.rapidapi.com";
@@ -26,8 +26,12 @@ const API_KEY = process.env.FOOTBALL_API_KEY;
  * It fetches matches, runs AI analysis, validates, and saves the result.
  */
 export async function generateOfficialPredictions(): Promise<OfficialPredictionsOutput> {
-  const firestore = getFirestoreInstance();
+  const firestore = getFirestore(getFirebaseApp());
   const predictions = await generateOfficialPredictionsFlow();
+
+  if (!predictions) {
+    throw new Error("AI analysis did not return any output.");
+  }
 
   // Save each category to a separate document in Firestore
   const today = new Date().toISOString().split('T')[0];
@@ -153,6 +157,7 @@ RÈGLES IMPÉRATIVES:
 ✅ Sélectionne un MAXIMUM de 50 matchs. Ne dépasse JAMAIS ce nombre.
 ✅ Si moins de 50 matchs de qualité sont disponibles, PRIORISE le remplissage des catégories payantes (Exclusive VIP, Individual VIP) avant les catégories gratuites.
 ✅ Distribution IDÉALE (si 50 matchs trouvés): Secure Trial (4), Exclusive VIP (12, split 4-4-4), Individual VIP (15), Free Coupon (4), Free Individual (15).
+✅ Si le nombre de matchs de qualité est faible, voici la distribution prioritaire pour les sections payantes: Exclusive VIP (9 matchs, répartis en 3-3-3), Individual VIP (5 matchs).
 ✅ Varie les types de paris.
 ✅ Retourne UNIQUEMENT du JSON valide. Ne retourne aucun texte en dehors de l'objet JSON.`;
 
