@@ -19,15 +19,21 @@ function initialize() {
   if (getApps().length === 0) {
     if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "REPLACE_WITH_YOUR_API_KEY") {
       console.error("Firebase config is not set. Please update src/firebase/config.ts");
+       // Return dummy objects or throw an error to prevent the app from crashing
+       return {
+         firebaseApp: {} as FirebaseApp,
+         auth: {} as Auth,
+         firestore: {} as Firestore
+       };
     }
     firebaseApp = initializeApp(firebaseConfig);
-    auth = getAuth(firebaseApp);
-    firestore = getFirestore(firebaseApp);
   } else {
     firebaseApp = getApps()[0];
-    auth = getAuth(firebaseApp);
-    firestore = getFirestore(firebaseApp);
   }
+
+  auth = getAuth(firebaseApp);
+  firestore = getFirestore(firebaseApp);
+  
   return { firebaseApp, auth, firestore };
 }
 
