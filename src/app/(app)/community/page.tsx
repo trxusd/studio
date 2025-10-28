@@ -1,12 +1,12 @@
 
 'use client';
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, ArrowLeft, Pin } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, query, orderBy, where } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { CommunityPostCard } from "@/components/community-post-card";
@@ -31,8 +31,19 @@ export default function CommunityPage() {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
-    const postsQuery = firestore ? query(collection(firestore, "community-posts"), orderBy("isPinned", "desc"), orderBy("timestamp", "desc")) : null;
-    const { data: posts, loading: postsLoading } = useCollection<Post>(postsQuery);
+    const pinnedPostsQuery = firestore ? query(collection(firestore, "community-posts"), where("isPinned", "==", true), orderBy("timestamp", "desc")) : null;
+    const unpinnedPostsQuery = firestore ? query(collection(firestore, "community-posts"), where("isPinned", "==", false), orderBy("timestamp", "desc")) : null;
+
+    const { data: pinnedPosts, loading: pinnedLoading } = useCollection<Post>(pinnedPostsQuery);
+    const { data: unpinnedPosts, loading: unpinnedLoading } = useCollection<Post>(unpinnedPostsQuery);
+
+    const posts = useMemo(() => {
+        const p = pinnedPosts || [];
+        const u = unpinnedPosts || [];
+        return [...p, ...u];
+    }, [pinnedPosts, unpinnedPosts]);
+    
+    const postsLoading = pinnedLoading || unpinnedLoading;
 
     useEffect(() => {
         if (scrollAreaRef.current) {
@@ -151,4 +162,3 @@ export default function CommunityPage() {
     </div>
   );
 }
-
