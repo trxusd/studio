@@ -6,7 +6,8 @@ import {
 import { PredictionChart } from '@/components/prediction-chart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, BarChart, FileText, Star } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, BarChart, FileText, Star, Users, List, Shield } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -154,7 +155,7 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
                 <Link href="/matches"><ArrowLeft className="h-4 w-4" /></Link>
             </Button>
             <h2 className="font-headline text-3xl font-bold tracking-tight">
-                Match Prediction
+                Détails du Match
             </h2>
         </div>
         
@@ -175,52 +176,93 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
             </CardHeader>
         </Card>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-            <Card className="lg:col-span-3">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><BarChart className="text-primary"/>Win Probability</CardTitle>
-                    <CardDescription>AI-generated prediction based on historical data and team form.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <PredictionChart data={predictionData} />
-                </CardContent>
-            </Card>
+        <Tabs defaultValue="details" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="details">Détails</TabsTrigger>
+                <TabsTrigger value="composition">Composition</TabsTrigger>
+                <TabsTrigger value="odds">Odds</TabsTrigger>
+                <TabsTrigger value="standings">Classement</TabsTrigger>
+            </TabsList>
+            <TabsContent value="details" className="mt-4">
+                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                    <Card className="lg:col-span-3">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><BarChart className="text-primary"/>Win Probability</CardTitle>
+                            <CardDescription>AI-generated prediction based on historical data and team form.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <PredictionChart data={predictionData} />
+                        </CardContent>
+                    </Card>
 
-             <Card className="lg:col-span-4">
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2"><Star className="text-primary"/>Key Statistics</CardTitle>
-                     <CardDescription>Critical data points influencing the match outcome.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <div className="prose prose-sm max-w-none text-card-foreground">
-                    <p>{prediction.keyStatistics}</p>
-                   </div>
-                </CardContent>
-            </Card>
-        </div>
+                     <Card className="lg:col-span-4">
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2"><Star className="text-primary"/>Key Statistics</CardTitle>
+                             <CardDescription>Critical data points influencing the match outcome.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <div className="prose prose-sm max-w-none text-card-foreground">
+                            <p>{prediction.keyStatistics}</p>
+                           </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
-         <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2">
-                        <FileText className="text-primary"/>{match.teams.home.name} Analysis
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="prose prose-sm max-w-none text-card-foreground">
-                    <p>{prediction.teamAAnalysis}</p>
-                </CardContent>
-            </Card>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2">
-                        <FileText className="text-primary"/>{match.teams.away.name} Analysis
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="prose prose-sm max-w-none text-card-foreground">
-                    <p>{prediction.teamBAnalysis}</p>
-                </CardContent>
-            </Card>
-        </div>
+                 <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2 mt-4">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2">
+                                <FileText className="text-primary"/>{match.teams.home.name} Analysis
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="prose prose-sm max-w-none text-card-foreground">
+                            <p>{prediction.teamAAnalysis}</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline flex items-center gap-2">
+                                <FileText className="text-primary"/>{match.teams.away.name} Analysis
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="prose prose-sm max-w-none text-card-foreground">
+                            <p>{prediction.teamBAnalysis}</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            </TabsContent>
+            <TabsContent value="composition" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><Users className="text-primary"/>Composition des Équipes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">La composition des équipes n'est pas encore disponible.</p>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="odds" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><Shield className="text-primary"/>Odds</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">Les odds pour ce match ne sont pas encore disponibles.</p>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="standings" className="mt-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline flex items-center gap-2"><List className="text-primary"/>Classement</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">Le classement pour cette ligue n'est pas encore disponible.</p>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
+
     </div>
   );
 }
