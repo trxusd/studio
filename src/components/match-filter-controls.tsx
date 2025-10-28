@@ -62,11 +62,6 @@ export function MatchFilterControls({ selectedDate, isVip }: MatchFilterControls
                 />
                 </PopoverContent>
             </Popover>
-            <Link href="/matches/favorites" passHref>
-                <Button variant="outline">
-                    <Star className="mr-2 h-4 w-4" /> Favorites
-                </Button>
-            </Link>
             {!isVip && (
                 <Link href="/payments" passHref>
                     <Button className="bg-yellow-500 hover:bg-yellow-600 text-primary-foreground">
