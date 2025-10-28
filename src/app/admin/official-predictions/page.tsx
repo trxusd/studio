@@ -6,7 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Loader2, PlayCircle, Terminal, FileJson } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { generateOfficialPredictions, type OfficialPredictionsOutput } from "@/ai/flows/generate-official-predictions";
+import { generateOfficialPredictions } from "@/ai/flows/generate-official-predictions";
+import type { OfficialPredictionsOutput } from "@/ai/schemas/prediction-schemas";
+
 
 export default function OfficialPredictionsPage() {
     const [isLoading, setIsLoading] = useState(false);

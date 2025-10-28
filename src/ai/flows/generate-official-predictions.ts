@@ -5,49 +5,20 @@
  *
  * It includes:
  * - `generateOfficialPredictions`: The main function to trigger the flow.
- * - `OfficialPredictionsOutput`: The Zod schema and type for the structured prediction data.
  * The flow fetches live football matches, uses an AI prompt to analyze them,
  * validates the output, and is intended to be saved to Firestore.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import { doc, setDoc } from 'firebase/firestore';
 import { getFirestoreInstance } from '@/firebase';
+import { OfficialPredictionsOutputSchema, type OfficialPredictionsOutput } from '@/ai/schemas/prediction-schemas';
+
 
 const API_HOST = "api-football.p.rapidapi.com";
 const API_KEY = process.env.FOOTBALL_API_KEY;
 
-const MatchPredictionSchema = z.object({
-    match: z.string().describe("The full match description, e.g., 'Team A vs Team B'."),
-    home_team: z.string().describe("The name of the home team."),
-    away_team: z.string().describe("The name of the away team."),
-    league: z.string().describe("The name of the league."),
-    time: z.string().describe("The start time of the match."),
-    prediction: z.string().describe("The betting prediction, e.g., '1 (Home Win)', 'Over 2.5'."),
-    odds: z.number().describe("The decimal odds for the prediction."),
-    confidence: z.number().min(70).max(95).describe("The confidence level of the prediction, from 70 to 95."),
-});
-
-const CouponSchema = z.array(MatchPredictionSchema);
-
-export const OfficialPredictionsOutputSchema = z.object({
-  secure_trial: z.object({
-    coupon_1: CouponSchema,
-  }),
-  exclusive_vip: z.object({
-    coupon_1: CouponSchema,
-    coupon_2: CouponSchema,
-    coupon_3: CouponSchema,
-  }),
-  individual_vip: CouponSchema,
-  free_coupon: z.object({
-    coupon_1: CouponSchema,
-  }),
-  free_individual: CouponSchema,
-});
-
-export type OfficialPredictionsOutput = z.infer<typeof OfficialPredictionsOutputSchema>;
 
 /**
  * Main exported function to run the prediction generation flow.
