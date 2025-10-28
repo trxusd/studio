@@ -53,6 +53,7 @@ function mapApiMatchToFavoriteMatch(apiMatch: ApiMatchResponse): FavoriteMatch {
 export default function FavoriteMatchesPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  
   const [groupedMatches, setGroupedMatches] = React.useState<GroupedMatches>({});
   const [isLoading, setIsLoading] = React.useState(true);
   const [totalFavorites, setTotalFavorites] = React.useState(0);
@@ -62,8 +63,8 @@ export default function FavoriteMatchesPage() {
 
   React.useEffect(() => {
     const fetchMatchDetails = async () => {
+      // Exit if we are still loading favorites or have no favorites to fetch.
       if (favoritesLoading) {
-        setIsLoading(true);
         return;
       }
       
@@ -112,6 +113,8 @@ export default function FavoriteMatchesPage() {
       }
     };
     
+    // This effect will run whenever the loading state of favorites changes,
+    // or when the favorites themselves change.
     fetchMatchDetails();
 
   }, [favorites, favoritesLoading]);
@@ -132,7 +135,7 @@ export default function FavoriteMatchesPage() {
         </Button>
       </div>
 
-      {isLoading ? (
+      {(isLoading || favoritesLoading) ? (
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -150,7 +153,9 @@ export default function FavoriteMatchesPage() {
                 {Object.entries(leagues).map(([leagueName, leagueMatches]) => (
                   <div key={leagueName} className="mb-4">
                     <h4 className='font-semibold text-md mb-2 flex items-center gap-2 px-4'>
-                      <Image src={leagueMatches[0].leagueLogo} alt={`${leagueName} logo`} width={24} height={24} className="rounded-full bg-white p-0.5" data-ai-hint="league logo" />
+                      {leagueMatches[0]?.leagueLogo && 
+                        <Image src={leagueMatches[0].leagueLogo} alt={`${leagueName} logo`} width={24} height={24} className="rounded-full bg-white p-0.5" data-ai-hint="league logo" />
+                      }
                       {leagueName}
                     </h4>
                     <div className='space-y-1'>
