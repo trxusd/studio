@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 type Team = { id: number; name: string; code: string; country: string; founded: number; national: boolean; logo: string; };
 type Venue = { id: number; name: string; address: string; city: string; capacity: number; surface: string; image: string; };
