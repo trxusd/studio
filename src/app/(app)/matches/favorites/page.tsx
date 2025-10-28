@@ -27,7 +27,6 @@ type ApiMatchResponse = {
   goals: { home: number | null; away: number | null; };
 };
 
-// We add league and country to the prediction type for grouping
 type FavoriteMatch = {
     fixture_id: number;
     match: string;
@@ -69,15 +68,11 @@ export default function FavoriteMatchesPage() {
 
   React.useEffect(() => {
     const fetchMatchDetails = async () => {
-      if (!favorites) {
-        setIsLoading(false);
-        setGroupedMatches({});
-        setTotalFavorites(0);
-        return;
-      }
+      if (favoritesLoading || !favorites) return;
       
       setTotalFavorites(favorites.length);
-      if(favorites.length === 0) {
+      
+      if (favorites.length === 0) {
         setIsLoading(false);
         setGroupedMatches({});
         return;
@@ -118,9 +113,9 @@ export default function FavoriteMatchesPage() {
       }
     };
     
-    if (!favoritesLoading) {
-      fetchMatchDetails();
-    }
+    // This effect runs only when the loading state of favorites changes.
+    // When favoritesLoading becomes false, we know if we have favorites to fetch.
+    fetchMatchDetails();
 
   }, [favorites, favoritesLoading]);
 
@@ -140,7 +135,7 @@ export default function FavoriteMatchesPage() {
         </Button>
       </div>
 
-      {(isLoading || favoritesLoading) ? (
+      {isLoading ? (
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
