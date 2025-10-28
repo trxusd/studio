@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -25,6 +26,7 @@ import {
 import { UserNav } from './user-nav';
 import { useUser } from '@/firebase';
 import { useSidebar } from '@/components/ui/sidebar';
+import { SheetTrigger } from '../ui/sheet';
 
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -77,6 +79,17 @@ export function SidebarNav() {
               </Link>
             </SidebarMenuItem>
           ))}
+            <SidebarMenuItem>
+                 <SheetTrigger asChild>
+                    <SidebarMenuButton
+                      tooltip={{ children: 'Support', side: 'right' }}
+                      className="w-full"
+                    >
+                      <MessageSquare />
+                      <span>Support</span>
+                    </SidebarMenuButton>
+                 </SheetTrigger>
+            </SidebarMenuItem>
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter className="p-2">

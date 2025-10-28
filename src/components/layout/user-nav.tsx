@@ -16,8 +16,7 @@ import { CreditCard, LifeBuoy, LogOut, Settings, User as UserIcon, Loader2 } fro
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { Chatbot } from "../chatbot";
-import { Sheet, SheetTrigger } from "../ui/sheet";
+import { SheetTrigger } from "../ui/sheet";
 
 export function UserNav() {
   const { user, loading } = useUser();
@@ -47,7 +46,6 @@ export function UserNav() {
   }
 
   return (
-    <Sheet>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
@@ -91,7 +89,5 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Chatbot />
-    </Sheet>
   )
 }
