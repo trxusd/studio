@@ -110,10 +110,7 @@ async function fetchMatchesForAI() {
       .map((match: any) => ({
         fixture_id: match.fixture.id,
         date: match.fixture.date,
-        time: new Date(match.fixture.date).toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit' 
-        }),
+        time: match.fixture.date, // Use the full ISO string for time
         home_team: match.teams.home.name,
         away_team: match.teams.away.name,
         league: match.league.name,

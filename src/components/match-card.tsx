@@ -7,7 +7,7 @@ import type { MatchPrediction } from '@/ai/schemas/prediction-schemas';
 import { ArrowRight, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from './ui/badge';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 
 type MatchCardProps = {
   match: MatchPrediction;
@@ -17,8 +17,10 @@ type MatchCardProps = {
 export function MatchCard({ match, isVip = false }: MatchCardProps) {
     
     const matchDate = new Date(match.time);
-    const formattedDate = format(matchDate, 'MMM dd, yyyy');
-    const formattedTime = format(matchDate, 'HH:mm');
+    const isDateValid = isValid(matchDate);
+
+    const formattedDate = isDateValid ? format(matchDate, 'MMM dd, yyyy') : "Invalid Date";
+    const formattedTime = isDateValid ? format(matchDate, 'HH:mm') : "";
 
   return (
     <Card className={cn("flex flex-col", isVip && "border-yellow-500 bg-yellow-500/10")}>
@@ -28,7 +30,7 @@ export function MatchCard({ match, isVip = false }: MatchCardProps) {
             {isVip && <Crown className="h-4 w-4 text-yellow-500" />}
         </div>
         <CardTitle className="text-sm font-medium pt-2">
-          {formattedDate} - {formattedTime}
+          {formattedDate} {formattedTime ? `- ${formattedTime}` : ''}
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-grow">
