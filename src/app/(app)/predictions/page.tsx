@@ -140,16 +140,16 @@ export default function PredictionsPage() {
     <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
       <div>
         <h2 className="font-headline text-3xl font-bold tracking-tight">
-          Kategori Prédictions
+          Prediction Categories
         </h2>
         <p className="text-muted-foreground">
-          Chwazi yon kategori pou wè prediksyon ki disponib yo pou jodi a.
+          Choose a category to see the available predictions for today.
         </p>
       </div>
 
        {noPredictionsAvailable && !isLoading && (
         <Card className='text-center p-12'>
-            <p className='text-muted-foreground'>Pa gen prediksyon ki disponib pou jodi a. Tounen pita.</p>
+            <p className='text-muted-foreground'>No predictions available for today. Check back later.</p>
         </Card>
       )}
 
@@ -160,7 +160,7 @@ export default function PredictionsPage() {
             {(predictions.secure_trial.coupon_1.length > 0 || predictions.free_coupon.coupon_1.length > 0 || predictions.free_individual.length > 0) && (
               <section className="space-y-4">
                 <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
-                  Seksyon Gratis
+                  Free Section
                 </h3>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {predictions.secure_trial.coupon_1.length > 0 && (
@@ -168,10 +168,10 @@ export default function PredictionsPage() {
                       <CardHeader>
                           <CardTitle className="flex items-center gap-3">
                               <ShieldCheck className="h-6 w-6 text-primary" />
-                              <span>Trial Secure</span>
+                              <span>Secure Trial</span>
                           </CardTitle>
                         <CardDescription>
-                          Eseye prediksyon nou yo san risk ak òf sekirize nou an.
+                          Try our predictions risk-free with our secure offer.
                         </CardDescription>
                       </CardHeader>
                       <CardContent className='flex-grow'>
@@ -187,7 +187,7 @@ export default function PredictionsPage() {
                               <span>Free Coupon</span>
                           </CardTitle>
                         <CardDescription>
-                          Aksede a koupon gratis pou prediksyon espesyal.
+                          Access free coupons for special predictions.
                         </CardDescription>
                       </CardHeader>
                       <CardContent className='flex-grow'>
@@ -201,7 +201,7 @@ export default function PredictionsPage() {
                         <div className="flex items-center justify-between">
                               <CardTitle className="flex items-center gap-3">
                                   <List className="h-6 w-6 text-primary" />
-                                  <span>Free List Individual</span>
+                                  <span>Free Individual List</span>
                               </CardTitle>
                               <Link href="/matches" passHref>
                                   <Button variant="ghost" size="icon">
@@ -210,7 +210,7 @@ export default function PredictionsPage() {
                               </Link>
                           </div>
                         <CardDescription>
-                          Gade lis match endividyèl gratis nou yo pou jounen an.
+                          See our list of free individual matches for the day.
                         </CardDescription>
                       </CardHeader>
                       <CardContent className='flex-grow space-y-1'>
@@ -231,10 +231,10 @@ export default function PredictionsPage() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
                         <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2 text-yellow-500">
-                            <Crown /> Seksyon Peyan
+                            <Crown /> Paid Section
                         </h3>
                         <p className="text-muted-foreground max-w-2xl">
-                            Debloke aksè a prediksyon VIP nou yo pou pi bon chans genyen.
+                            Unlock access to our VIP predictions for the best chance to win.
                         </p>
                     </div>
                     {!isVip && (
@@ -255,7 +255,7 @@ export default function PredictionsPage() {
                             Exclusive VIP Predictions: Coupons
                         </CardTitle>
                         <CardDescription>
-                            Sèvi ak koupon VIP ou yo pou debloke prediksyon prim sa yo.
+                            Use your VIP coupons to unlock these premium predictions.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-3">
@@ -285,7 +285,7 @@ export default function PredictionsPage() {
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-3">
                                 <Star className="h-6 w-6 text-yellow-600"/>
-                                VIP List Individual
+                                VIP Individual List
                             </CardTitle>
                             <Link href="/vip-predictions" passHref>
                                 <Button variant="ghost" size="icon">
@@ -294,7 +294,7 @@ export default function PredictionsPage() {
                             </Link>
                         </div>
                         <CardDescription>
-                            Aksede a lis konplè prediksyon VIP endividyèl nou yo.
+                            Access the complete list of our individual VIP predictions.
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
