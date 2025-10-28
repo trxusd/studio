@@ -9,7 +9,7 @@ import { ArrowUpRight, Award, Crown, LifeBuoy, Loader2, ShieldCheck, Ticket } fr
 import Link from 'next/link';
 import { MatchCard } from "@/components/match-card";
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, query, where, Timestamp, collectionGroup, getDocs } from 'firebase/firestore';
+import { collection, query, where, Timestamp, getDocs, doc } from 'firebase/firestore';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
 import { useState, useEffect } from 'react';
 
@@ -46,27 +46,34 @@ export default function DashboardPage() {
     const fetchStats = async () => {
         setStatsLoading(true);
         try {
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            let allPredictions: PredictionResult[] = [];
 
-            const q = query(collectionGroup(firestore, 'categories'), where('generated_at', '>=', sevenDaysAgo.toISOString()));
-            const querySnapshot = await getDocs(q);
+            // Fetch predictions for the last 7 days, one day at a time
+            for (let i = 0; i < 7; i++) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                const dateString = date.toISOString().split('T')[0];
+
+                const categoriesColRef = collection(firestore, `predictions/${dateString}/categories`);
+                const querySnapshot = await getDocs(categoriesColRef);
+
+                querySnapshot.forEach(doc => {
+                    const category = doc.data() as PredictionCategoryDoc;
+                    if (category.predictions) {
+                        allPredictions.push(...category.predictions as PredictionResult[]);
+                    }
+                });
+            }
             
             let totalWins = 0;
             let totalResolved = 0;
 
-            querySnapshot.forEach(doc => {
-                const category = doc.data() as PredictionCategoryDoc;
-                if (category.predictions) {
-                    category.predictions.forEach(p => {
-                        const pred = p as PredictionResult;
-                        if (pred.status === 'Win') {
-                            totalWins++;
-                            totalResolved++;
-                        } else if (pred.status === 'Loss') {
-                            totalResolved++;
-                        }
-                    });
+            allPredictions.forEach(pred => {
+                if (pred.status === 'Win') {
+                    totalWins++;
+                    totalResolved++;
+                } else if (pred.status === 'Loss') {
+                    totalResolved++;
                 }
             });
 
@@ -253,3 +260,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
