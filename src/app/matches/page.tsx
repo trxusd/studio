@@ -234,7 +234,7 @@ export default function MatchesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button asChild variant="outline" size="icon" className="md:hidden">
+          <Button asChild variant="outline" size="icon">
             <Link href="/dashboard">
               <ArrowLeft className="h-4 w-4" />
             </Link>
@@ -343,3 +343,5 @@ export default function MatchesPage() {
     </div>
   );
 }
+
+    
