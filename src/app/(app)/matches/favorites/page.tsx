@@ -62,9 +62,12 @@ export default function FavoriteMatchesPage() {
   const { data: favorites, loading: favoritesLoading } = useCollection<Favorite>(favoritesQuery);
 
   React.useEffect(() => {
+    // This effect will run whenever the loading state of favorites changes,
+    // or when the favorites themselves change.
     const fetchMatchDetails = async () => {
       // Exit if we are still loading favorites or have no favorites to fetch.
       if (favoritesLoading) {
+        setIsLoading(true);
         return;
       }
       
@@ -113,8 +116,6 @@ export default function FavoriteMatchesPage() {
       }
     };
     
-    // This effect will run whenever the loading state of favorites changes,
-    // or when the favorites themselves change.
     fetchMatchDetails();
 
   }, [favorites, favoritesLoading]);
