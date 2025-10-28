@@ -4,12 +4,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2, Crown } from "lucide-react";
+import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2, Crown, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
 import { collection, query, where } from 'firebase/firestore';
+import Link from "next/link";
 
 type Referral = {
     id: string;
@@ -93,9 +94,17 @@ export default function ReferralPage() {
 
     return (
         <div className="flex-1 space-y-6 p-4 pt-6 md:p-8">
-            <h2 className="font-headline text-3xl font-bold tracking-tight flex items-center gap-3">
-                <Gift className="text-primary" /> FOOTBETWIN Referral Program
-            </h2>
+            <div className="flex items-center justify-between">
+                <h2 className="font-headline text-3xl font-bold tracking-tight flex items-center gap-3">
+                    <Gift className="text-primary" /> FOOTBETWIN Referral Program
+                </h2>
+                <Button variant="outline" asChild>
+                    <Link href="/dashboard">
+                        <ArrowLeft className="h-4 w-4 mr-2" />
+                        Back to Dashboard
+                    </Link>
+                </Button>
+            </div>
             
             <Card>
                 <CardHeader>
