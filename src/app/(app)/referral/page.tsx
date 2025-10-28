@@ -43,21 +43,22 @@ export default function ReferralPage() {
         };
         if (referrals) {
             referrals.forEach(ref => {
-                // This logic might need adjustment based on exact plan names from payments page
-                if (ref.referredUserPlan.includes('Month') && !ref.referredUserPlan.includes('3') && !ref.referredUserPlan.includes('6')) {
-                    progress['VIP 1 (1 Month)']++;
-                }
-                if (ref.referredUserPlan.includes('3 Months')) {
-                    progress['VIP 2 (3 Months)']++;
-                }
-                 if (ref.referredUserPlan.includes('6 Months')) {
-                    progress['VIP 3 (6 Months)']++;
-                }
-                if (ref.referredUserPlan.includes('1 Year')) {
-                    progress['VIP 4 (1 Year)']++;
-                }
-                if (ref.referredUserPlan.includes('Lifetime')) {
-                    progress['VIP 5 (Lifetime)']++;
+                if (ref && ref.referredUserPlan) { // Check if ref and referredUserPlan exist
+                    if (ref.referredUserPlan.includes('Month') && !ref.referredUserPlan.includes('3') && !ref.referredUserPlan.includes('6')) {
+                        progress['VIP 1 (1 Month)']++;
+                    }
+                    if (ref.referredUserPlan.includes('3 Months')) {
+                        progress['VIP 2 (3 Months)']++;
+                    }
+                    if (ref.referredUserPlan.includes('6 Months')) {
+                        progress['VIP 3 (6 Months)']++;
+                    }
+                    if (ref.referredUserPlan.includes('1 Year')) {
+                        progress['VIP 4 (1 Year)']++;
+                    }
+                    if (ref.referredUserPlan.includes('Lifetime')) {
+                        progress['VIP 5 (Lifetime)']++;
+                    }
                 }
             });
         }
