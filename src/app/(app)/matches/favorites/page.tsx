@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, query, doc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, query, doc, deleteDoc } from 'firebase/firestore';
 import { Loader2, ArrowLeft, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -42,7 +42,6 @@ type FavoriteMatch = {
     leagueLogo: string;
 };
 
-
 type GroupedMatches = Record<string, Record<string, FavoriteMatch[]>>;
 
 function mapApiMatchToFavoriteMatch(apiMatch: ApiMatchResponse): FavoriteMatch {
@@ -60,7 +59,6 @@ function mapApiMatchToFavoriteMatch(apiMatch: ApiMatchResponse): FavoriteMatch {
     };
 }
 
-
 export default function FavoriteMatchesPage() {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -68,99 +66,81 @@ export default function FavoriteMatchesPage() {
   
   const [groupedMatches, setGroupedMatches] = React.useState<GroupedMatches>({});
   const [isLoading, setIsLoading] = React.useState(true);
-  const [totalFavorites, setTotalFavorites] = React.useState(0);
 
   const favoritesQuery = firestore && user ? query(collection(firestore, `users/${user.uid}/favorites`)) : null;
   const { data: favorites, loading: favoritesLoading } = useCollection<Favorite>(favoritesQuery);
   const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
 
-
   React.useEffect(() => {
-    const fetchMatchDetails = async () => {
-      if (favoritesLoading) return; // Wait until favorites are loaded
-      
-      setIsLoading(true);
-      
-      if (!favorites || favorites.length === 0) {
-        setTotalFavorites(0);
-        setGroupedMatches({});
-        setIsLoading(false);
-        return;
-      }
-      
-      setTotalFavorites(favorites.length);
-      const favoriteIds = favorites.map(f => f.id);
-      
-      try {
-        const matchPromises = favoriteIds.map(async (id) => {
-          // Note: This makes one fetch per favorite. For very large lists,
-          // a single backend endpoint that takes all IDs would be more performant.
-          const response = await fetch(`/api/matches?id=${id}`);
-          if (response.ok) {
-            const data = await response.json();
-            const matchData: ApiMatchResponse | undefined = data.matches?.[0];
-            if (matchData) {
-              return mapApiMatchToFavoriteMatch(matchData);
-            }
-          }
-          return null;
-        });
+    async function fetchAndGroupMatches() {
+        // Only run when the initial favorites list has been loaded
+        if (favoritesLoading) {
+            setIsLoading(true);
+            return;
+        }
 
-        const matches = (await Promise.all(matchPromises)).filter(Boolean) as FavoriteMatch[];
+        if (!favorites || favorites.length === 0) {
+            setGroupedMatches({});
+            setIsLoading(false);
+            return;
+        }
+
+        setIsLoading(true);
+        const idsToFetch = favorites.map(f => f.id);
         
-        const grouped = matches.reduce((acc: GroupedMatches, match: FavoriteMatch) => {
-            const country = match.country || 'Global';
-            const leagueName = match.league;
-            if (!acc[country]) acc[country] = {};
-            if (!acc[country][leagueName]) acc[country][leagueName] = [];
-            acc[country][leagueName].push(match);
-            return acc;
-        }, {} as GroupedMatches);
-        setGroupedMatches(grouped);
+        try {
+            const matchPromises = idsToFetch.map(async (id) => {
+                const response = await fetch(`/api/matches?id=${id}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.matches?.[0] ? mapApiMatchToFavoriteMatch(data.matches[0]) : null;
+                }
+                return null;
+            });
 
-      } catch (error) {
-        console.error("Failed to fetch favorite matches:", error);
-        setGroupedMatches({});
-      } finally {
-        setIsLoading(false);
-      }
-    };
+            const matches = (await Promise.all(matchPromises)).filter(Boolean) as FavoriteMatch[];
+            
+            const grouped = matches.reduce((acc: GroupedMatches, match: FavoriteMatch) => {
+                const country = match.country || 'Global';
+                const leagueName = match.league;
+                if (!acc[country]) acc[country] = {};
+                if (!acc[country][leagueName]) acc[country][leagueName] = [];
+                acc[country][leagueName].push(match);
+                return acc;
+            }, {} as GroupedMatches);
+            setGroupedMatches(grouped);
+
+        } catch (error) {
+            console.error("Failed to fetch favorite matches:", error);
+            toast({ title: "Error", description: "Failed to load favorite matches.", variant: "destructive"});
+            setGroupedMatches({});
+        } finally {
+            setIsLoading(false);
+        }
+    }
     
-    fetchMatchDetails();
-
-  }, [favorites, favoritesLoading]);
+    fetchAndGroupMatches();
+  }, [favorites, favoritesLoading, toast]);
 
   const handleFavoriteToggle = async (e: React.MouseEvent, fixtureId: number) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!user || !firestore) {
-      toast({
-        title: "Please log in",
-        description: "You need to be logged in to add favorites.",
-        variant: "destructive",
-      });
-      return;
-    }
+    if (!user || !firestore) return;
 
     const fixtureIdStr = String(fixtureId);
-    const isFavorite = favoriteIds.has(fixtureIdStr);
     const favoriteRef = doc(firestore, `users/${user.uid}/favorites/${fixtureIdStr}`);
 
     try {
-      if (isFavorite) {
         await deleteDoc(favoriteRef);
         toast({ title: "Removed from favorites." });
-      } else {
-        // This case is unlikely on this page, but good to have
-        await setDoc(favoriteRef, { addedAt: new Date() });
-        toast({ title: "Added to favorites!" });
-      }
+        // The useCollection hook will automatically update the `favorites` data,
+        // which will trigger the useEffect to re-fetch and re-group matches.
     } catch (error) {
-      console.error("Error toggling favorite:", error);
+      console.error("Error removing favorite:", error);
       toast({
         title: "Error",
-        description: "Could not update your favorites.",
+        description: "Could not remove from your favorites.",
         variant: "destructive"
       });
     }
@@ -186,7 +166,7 @@ export default function FavoriteMatchesPage() {
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : totalFavorites === 0 ? (
+      ) : favorites?.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <p>You haven't added any matches to your favorites yet.</p>
           <p className="text-sm">Click the star icon next to a match to add it here.</p>
@@ -222,8 +202,7 @@ export default function FavoriteMatchesPage() {
                           </div>
                           <Button variant="ghost" size="icon" onClick={(e) => handleFavoriteToggle(e, match.fixture_id)} className="h-8 w-8">
                               <Star className={cn(
-                                  "h-5 w-5 text-muted-foreground/50 group-hover:text-yellow-400 transition-colors",
-                                  favoriteIds.has(String(match.fixture_id)) && "text-yellow-400 fill-yellow-400"
+                                  "h-5 w-5 text-yellow-400 fill-yellow-400 transition-colors"
                               )} />
                           </Button>
                         </Link>
