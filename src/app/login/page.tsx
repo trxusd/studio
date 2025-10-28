@@ -1,6 +1,6 @@
 
 'use client';
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -21,7 +21,7 @@ import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -68,11 +68,7 @@ export default function LoginPage() {
         let referredBy = null;
         if (referralId.startsWith('FWIN-')) {
             const uidPart = referralId.substring(5);
-            // This is a simplification. In a real app, you'd need a more robust way 
-            // to map the short code back to a full UID.
-            // For this example, we assume we can find a user whose UID starts with this.
-            // This is NOT secure or reliable for production.
-            referredBy = uidPart; // Storing the partial ID for now.
+            referredBy = uidPart; 
         }
 
         // Create user document in Firestore
@@ -297,4 +293,10 @@ export default function LoginPage() {
   );
 }
 
-    
+export default function LoginPage() {
+    return (
+        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
+            <LoginForm />
+        </Suspense>
+    )
+}
