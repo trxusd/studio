@@ -32,6 +32,9 @@ export default function FavoriteMatchesPage() {
 
     const favoritesQuery = firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null;
     const { data: favorites, loading: favoritesLoading } = useCollection<Favorite>(favoritesQuery);
+    
+    // Memoize the list of favorite IDs to prevent re-running the effect unnecessarily.
+    const favoriteIds = React.useMemo(() => favorites?.map(f => f.id) || [], [favorites]);
 
     React.useEffect(() => {
         if (!userLoading && !user) {
@@ -40,28 +43,22 @@ export default function FavoriteMatchesPage() {
     }, [user, userLoading, router]);
 
     React.useEffect(() => {
-        // This effect runs whenever 'favorites' data changes.
+        // This effect now reacts only when the memoized `favoriteIds` array changes.
         const fetchMatchDetails = async () => {
-            if (!favorites) {
-                 // If favorites is null (still loading from initial hook state), do nothing yet.
-                 // Only act when it's an empty array or has content.
-                if(!favoritesLoading) {
-                    setFavoriteMatches([]);
-                    setDetailsLoading(false);
-                }
+            if (favoritesLoading) {
                 return;
             }
-            
-            if (favorites.length === 0) {
+
+            if (favoriteIds.length === 0) {
                 setFavoriteMatches([]);
                 setDetailsLoading(false);
                 return;
             }
             
             setDetailsLoading(true);
-            const matchPromises = favorites.map(async (fav) => {
+            const matchPromises = favoriteIds.map(async (id) => {
                 try {
-                    const response = await fetch(`/api/matches?id=${fav.id}`);
+                    const response = await fetch(`/api/matches?id=${id}`);
                     if (response.ok) {
                         const data = await response.json();
                         const matchData: ApiMatch = data.matches?.[0];
@@ -80,7 +77,7 @@ export default function FavoriteMatchesPage() {
                         }
                     }
                 } catch (error) {
-                    console.error(`Failed to fetch details for match ${fav.id}`, error);
+                    console.error(`Failed to fetch details for match ${id}`, error);
                 }
                 return null;
             });
@@ -91,9 +88,9 @@ export default function FavoriteMatchesPage() {
         };
 
         fetchMatchDetails();
-    }, [favorites, favoritesLoading]);
+    }, [favoriteIds, favoritesLoading]); // Dependency array is now stable
     
-    const isLoading = userLoading || favoritesLoading || detailsLoading;
+    const isLoading = userLoading || detailsLoading;
 
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
