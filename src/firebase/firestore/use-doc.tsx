@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -9,6 +10,11 @@ import type {
 } from 'firebase/firestore';
 import { onSnapshot } from 'firebase/firestore';
 
+function areRefsEqual(r1: DocumentReference | null, r2: DocumentReference | null): boolean {
+    if (!r1 || !r2) return r1 === r2;
+    return r1.path === r2.path;
+}
+
 export function useDoc<T extends DocumentData>(
   ref: DocumentReference<T> | null
 ) {
@@ -19,19 +25,21 @@ export function useDoc<T extends DocumentData>(
   const refRef = useRef(ref);
 
   useEffect(() => {
+    if (areRefsEqual(ref, refRef.current)) {
+        return;
+    }
     refRef.current = ref;
-  }, [ref]);
 
-  useEffect(() => {
-    if (!refRef.current) {
+    if (!ref) {
         setData(null);
         setLoading(false);
+        setError(null);
         return;
     }
 
     setLoading(true);
     const unsubscribe = onSnapshot(
-      refRef.current,
+      ref,
       (snapshot: DocumentSnapshot<T>) => {
         if (snapshot.exists()) {
           setData({ ...snapshot.data(), id: snapshot.id });
@@ -49,7 +57,7 @@ export function useDoc<T extends DocumentData>(
     );
 
     return () => unsubscribe();
-  }, []); // Empty dependency array to run only once on mount
+  }, [ref]);
 
   return { data, loading, error };
 }

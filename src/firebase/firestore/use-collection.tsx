@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
@@ -26,7 +27,7 @@ export function useCollection<T extends DocumentData>(
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | null>(null);
   
-  const queryRef = useRef<Query<T> | null>(query);
+  const queryRef = useRef<Query<T> | null>(null);
 
   useEffect(() => {
     // Only re-run the effect if the query has actually changed.
