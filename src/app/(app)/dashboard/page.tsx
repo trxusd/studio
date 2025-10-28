@@ -40,54 +40,59 @@ export default function DashboardPage() {
   const categoriesQuery = firestore ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
-  const fetchStats = useCallback(async () => {
-    if (!firestore) return;
-
-    setStatsLoading(true);
-    try {
-        let allPredictions: PredictionResult[] = [];
-        for (let i = 0; i < 7; i++) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            const dateString = date.toISOString().split('T')[0];
-
-            const categoriesColRef = collection(firestore, `predictions/${dateString}/categories`);
-            const querySnapshot = await getDocs(categoriesColRef);
-
-            querySnapshot.forEach(doc => {
-                const category = doc.data() as PredictionCategoryDoc;
-                if (category.predictions) {
-                    allPredictions.push(...category.predictions as PredictionResult[]);
-                }
-            });
-        }
-        
-        let totalWins = 0;
-        let totalResolved = 0;
-
-        allPredictions.forEach(pred => {
-            if (pred.status === 'Win') {
-                totalWins++;
-                totalResolved++;
-            } else if (pred.status === 'Loss') {
-                totalResolved++;
-            }
-        });
-
-        const accuracy = totalResolved > 0 ? (totalWins / totalResolved) * 100 : 0;
-        setStats({ wins: totalWins, accuracy: parseFloat(accuracy.toFixed(1)) });
-
-    } catch (error) {
-        console.error("Error fetching stats:", error);
-        setStats({ wins: 0, accuracy: 0 });
-    } finally {
-        setStatsLoading(false);
-    }
-  }, [firestore]); 
-
   useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+    async function fetchStats() {
+      if (!firestore) {
+        setStatsLoading(false);
+        return;
+      };
+
+      setStatsLoading(true);
+      try {
+          let allPredictions: PredictionResult[] = [];
+          for (let i = 0; i < 7; i++) {
+              const date = new Date();
+              date.setDate(date.getDate() - i);
+              const dateString = date.toISOString().split('T')[0];
+
+              const categoriesColRef = collection(firestore, `predictions/${dateString}/categories`);
+              const querySnapshot = await getDocs(categoriesColRef);
+
+              querySnapshot.forEach(doc => {
+                  const category = doc.data() as PredictionCategoryDoc;
+                  if (category.predictions) {
+                      allPredictions.push(...category.predictions as PredictionResult[]);
+                  }
+              });
+          }
+          
+          let totalWins = 0;
+          let totalResolved = 0;
+
+          allPredictions.forEach(pred => {
+              if (pred.status === 'Win') {
+                  totalWins++;
+                  totalResolved++;
+              } else if (pred.status === 'Loss') {
+                  totalResolved++;
+              }
+          });
+
+          const accuracy = totalResolved > 0 ? (totalWins / totalResolved) * 100 : 0;
+          setStats({ wins: totalWins, accuracy: parseFloat(accuracy.toFixed(1)) });
+
+      } catch (error) {
+          console.error("Error fetching stats:", error);
+          setStats({ wins: 0, accuracy: 0 });
+      } finally {
+          setStatsLoading(false);
+      }
+    }
+
+    if (firestore) {
+        fetchStats();
+    }
+  }, [firestore]);
 
 
   const { activePredictionsCount, freePredictions } = useMemo(() => {
@@ -259,3 +264,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
