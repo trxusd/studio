@@ -102,8 +102,8 @@ async function fetchMatchesForAI() {
   }
 }
 
-const systemPrompt = `Tu es un expert en analyse de matchs de football avec 15 ans d'expérience. 
-Ta mission est d'analyser les matchs fournis et de sélectionner EXACTEMENT 50 prédictions.
+const systemPrompt = `Tu es un expert en analyse de matchs de football avec 15 ans d'expérience.
+Ta mission est de sélectionner JUSQU'À 50 prédictions de haute qualité.
 
 CRITÈRES D'ANALYSE OBLIGATOIRES:
 1. Forme récente des équipes (5 derniers matchs)
@@ -114,11 +114,11 @@ CRITÈRES D'ANALYSE OBLIGATOIRES:
 6. Motivation des équipes
 
 NIVEAUX DE CONFIANCE:
-- Secure Trial: 90-95% confiance (matchs les plus sûrs)
-- Exclusive VIP: 85-92% confiance (très forte probabilité)
-- Individual VIP: 80-87% confiance (bonne probabilité)
-- Free Coupon: 75-82% confiance (solide)
-- Free Individual: 70-80% confiance (correct)
+- Secure Trial: 90-95% confiance
+- Exclusive VIP: 85-92% confiance
+- Individual VIP: 80-87% confiance
+- Free Coupon: 75-82% confiance
+- Free Individual: 70-80% confiance
 
 TYPES DE PARIS AUTORISÉS:
 - 1X2 (Home Win, Draw, Away Win)
@@ -128,11 +128,11 @@ TYPES DE PARIS AUTORISÉS:
 - Correct Score (pour VIP uniquement)
 
 RÈGLES IMPÉRATIVES:
-✅ Sélectionne EXACTEMENT 50 matchs (max)
-✅ Distribution: Secure Trial (4), Exclusive VIP (12, split into 3 coupons of 4), Individual VIP (15), Free Coupon (4), Free Individual (15)
-✅ Priorise les ligues majeures
-✅ Varie les types de paris pour diversifier
-✅ Retourne UNIQUEMENT du JSON valide. Ne retourne aucun texte ou markdown en dehors de l'objet JSON.`;
+✅ Sélectionne un MAXIMUM de 50 matchs. Ne dépasse JAMAIS ce nombre.
+✅ Si moins de 50 matchs de qualité sont disponibles, PRIORISE le remplissage des catégories payantes (Exclusive VIP, Individual VIP) avant les catégories gratuites.
+✅ Distribution IDÉALE (si 50 matchs trouvés): Secure Trial (4), Exclusive VIP (12, split 4-4-4), Individual VIP (15), Free Coupon (4), Free Individual (15).
+✅ Varie les types de paris.
+✅ Retourne UNIQUEMENT du JSON valide. Ne retourne aucun texte en dehors de l'objet JSON.`;
 
 
 const prompt = ai.definePrompt({
@@ -140,7 +140,8 @@ const prompt = ai.definePrompt({
     input: { schema: z.any() },
     output: { schema: OfficialPredictionsOutputSchema },
     system: systemPrompt,
-    prompt: `Analyse les matchs suivants et sélectionne EXACTEMENT 50 prédictions selon les critères définis. 
+    prompt: `Analyse les matchs suivants et sélectionne JUSQU'À 50 prédictions selon les critères définis. 
+    Priorise les sections payantes si tu ne trouves pas 50 matchs de qualité.
     Retourne UNIQUEMENT le JSON structuré sans texte additionnel:
 
     Matches: {{{json matches}}}`,
@@ -178,8 +179,8 @@ const generateOfficialPredictionsFlow = ai.defineFlow(
     };
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
-    if (total < 45 || total > 55) { // Allow some flexibility
-        // Instead of just warning, this could be an error in a stricter setup.
+    if (total > 50) { 
+        throw new Error(`Validation Error: AI generated ${total} predictions, which is over the 50 limit.`);
     }
     
     return output;
