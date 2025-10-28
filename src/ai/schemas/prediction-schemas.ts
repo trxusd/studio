@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const MatchPredictionSchema = z.object({
+    fixture_id: z.number().describe("The unique ID of the match fixture."),
     match: z.string().describe("The full match description, e.g., 'Team A vs Team B'."),
     home_team: z.string().describe("The name of the home team."),
     away_team: z.string().describe("The name of the away team."),
@@ -30,3 +31,4 @@ export const OfficialPredictionsOutputSchema = z.object({
 });
 
 export type OfficialPredictionsOutput = z.infer<typeof OfficialPredictionsOutputSchema>;
+export type MatchPrediction = z.infer<typeof MatchPredictionSchema>;

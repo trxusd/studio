@@ -37,7 +37,7 @@ export async function generateOfficialPredictions(): Promise<OfficialPredictions
   const today = new Date().toISOString().split('T')[0];
   const batch = writeBatch(firestore);
 
-  const categories = {
+  const categoriesMap = {
     secure_trial: predictions.secure_trial?.coupon_1 || [],
     exclusive_vip_1: predictions.exclusive_vip?.coupon_1 || [],
     exclusive_vip_2: predictions.exclusive_vip?.coupon_2 || [],
@@ -47,7 +47,7 @@ export async function generateOfficialPredictions(): Promise<OfficialPredictions
     free_individual: predictions.free_individual || [],
   };
 
-  for (const [key, value] of Object.entries(categories)) {
+  for (const [key, value] of Object.entries(categoriesMap)) {
       if (value.length > 0) {
         const docRef = doc(firestore, `predictions/${today}/categories/${key}`);
         batch.set(docRef, {
@@ -155,6 +155,7 @@ TYPES DE PARIS AUTORISÉS:
 
 RÈGLES IMPÉRATIVES:
 ✅ Sélectionne un MAXIMUM de 50 matchs. Ne dépasse JAMAIS ce nombre.
+✅ Pour chaque prédiction, INCLUS OBLIGATOIREMENT le 'fixture_id' du match correspondant.
 ✅ Si moins de 50 matchs de qualité sont disponibles, PRIORISE le remplissage des catégories payantes (Exclusive VIP, Individual VIP) avant les catégories gratuites.
 ✅ Distribution IDÉALE (si 50 matchs trouvés): Secure Trial (4), Exclusive VIP (12, split 4-4-4), Individual VIP (15), Free Coupon (4), Free Individual (15).
 ✅ Si le nombre de matchs de qualité est faible, voici la distribution prioritaire pour les sections payantes: Exclusive VIP (9 matchs, répartis en 3-3-3), Individual VIP (5 matchs).
@@ -168,6 +169,7 @@ const prompt = ai.definePrompt({
     output: { schema: OfficialPredictionsOutputSchema },
     system: systemPrompt,
     prompt: `Analyse les matchs suivants et sélectionne JUSQU'À 50 prédictions selon les critères définis. 
+    Assure-toi d'inclure le 'fixture_id' pour chaque prédiction.
     Priorise les sections payantes si tu ne trouves pas 50 matchs de qualité.
     Retourne UNIQUEMENT le JSON structuré sans texte additionnel:
 

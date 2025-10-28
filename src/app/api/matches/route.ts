@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 
+// This function now handles both fetching by date and by a specific fixture ID.
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const date = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const date = searchParams.get('date');
+  const fixtureId = searchParams.get('id');
 
   const apiKey = process.env.FOOTBALL_API_KEY;
   const apiHost = "api-football.p.rapidapi.com";
@@ -11,19 +13,25 @@ export async function GET(request: Request) {
     return NextResponse.json({ message: 'API key or host is not configured.' }, { status: 500 });
   }
 
+  let apiUrl;
+  if (fixtureId) {
+    apiUrl = `https://v3.football.api-sports.io/fixtures?id=${fixtureId}`;
+  } else {
+    const requestDate = date || new Date().toISOString().split('T')[0];
+    apiUrl = `https://v3.football.api-sports.io/fixtures?date=${requestDate}`;
+  }
+
   try {
-    const response = await fetch(`https://v3.football.api-sports.io/fixtures?date=${date}`, {
+    const response = await fetch(apiUrl, {
       headers: {
         'x-rapidapi-host': apiHost,
         'x-rapidapi-key': apiKey,
       },
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 3600 } // Cache for 1 hour for date-based, less for ID-based if needed
     });
 
     if (!response.ok) {
-      console.error(`API request failed with status: ${response.status}`);
       const errorText = await response.text();
-      console.error('API Error Response:', errorText);
       return NextResponse.json({ message: `API request failed with status: ${response.status}`, error: errorText }, { status: response.status });
     }
 
@@ -31,7 +39,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ matches: data.response });
 
   } catch (error) {
-    console.error("Failed to fetch matches:", error);
     return NextResponse.json({ message: 'Failed to fetch matches', error: (error as Error).message }, { status: 500 });
   }
 }
