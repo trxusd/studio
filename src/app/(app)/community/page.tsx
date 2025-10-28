@@ -31,21 +31,18 @@ export default function CommunityPage() {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
 
-    const pinnedPostsQuery = firestore ? query(collection(firestore, "community-posts"), where("isPinned", "==", true), orderBy("timestamp", "desc")) : null;
-    const unpinnedPostsQuery = firestore ? query(collection(firestore, "community-posts"), where("isPinned", "==", false), orderBy("timestamp", "desc")) : null;
+    // Single, simple query to get all posts sorted by time.
+    const allPostsQuery = firestore ? query(collection(firestore, "community-posts"), orderBy("timestamp", "desc")) : null;
+    const { data: allPosts, loading: postsLoading } = useCollection<Post>(allPostsQuery);
 
-    const { data: pinnedPosts, loading: pinnedLoading } = useCollection<Post>(pinnedPostsQuery);
-    const { data: unpinnedPosts, loading: unpinnedLoading } = useCollection<Post>(unpinnedPostsQuery);
-
+    // We will perform the pinning logic on the client-side.
     const posts = useMemo(() => {
-        const p = pinnedPosts || [];
-        const u = unpinnedPosts || [];
-        // Make sure pinned posts are always at the top
-        p.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-        return [...p, ...u];
-    }, [pinnedPosts, unpinnedPosts]);
+        if (!allPosts) return [];
+        const pinned = allPosts.filter(p => p.isPinned);
+        const unpinned = allPosts.filter(p => !p.isPinned);
+        return [...pinned, ...unpinned];
+    }, [allPosts]);
     
-    const postsLoading = pinnedLoading || unpinnedLoading;
 
     useEffect(() => {
         if (scrollAreaRef.current) {
