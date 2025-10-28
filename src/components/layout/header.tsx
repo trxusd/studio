@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
-import { Chatbot } from '../chatbot';
 
 export function Header() {
   const pathname = usePathname();
@@ -54,7 +53,6 @@ export function Header() {
         <div className="hidden group-data-[collapsible=icon]:block">
           <UserNav />
         </div>
-        <Chatbot />
       </div>
     </header>
   );

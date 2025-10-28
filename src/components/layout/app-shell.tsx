@@ -24,7 +24,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <main className="flex-1">
                 {children}
             </main>
-            <Chatbot />
         </div>
       </div>
     </SidebarProvider>

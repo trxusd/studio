@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, MessageSquare, Send } from 'lucide-react';
@@ -55,84 +55,75 @@ export function Chatbot() {
   const quickReplies = ["What is VIP?", "How to pay?", "What are the rules?"];
 
   return (
-    <>
-        <Sheet>
-            <SheetTrigger asChild>
-                <Button className="fixed bottom-4 right-4 h-16 w-16 rounded-full shadow-lg" size="icon">
-                    <MessageSquare className="h-8 w-8" />
-                </Button>
-            </SheetTrigger>
-            <SheetContent className="flex flex-col">
-            <SheetHeader>
-                <SheetTitle className="font-headline flex items-center gap-2">
-                    <MessageSquare className="text-primary"/> AI Support Chat
-                </SheetTitle>
-            </SheetHeader>
-            <ScrollArea className="flex-1 p-4 -mx-6 my-4">
-                <div className="space-y-4">
-                {messages.map((message, index) => (
-                    <div key={index} className={`flex items-end gap-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    {message.role === 'bot' && (
-                        <Avatar className="h-8 w-8">
-                            <div className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground">
-                               <AppLogo className="h-5 w-5"/>
-                            </div>
-                        </Avatar>
-                    )}
-                    <div className={`max-w-xs rounded-lg p-3 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                        <p className="text-sm">{message.content}</p>
-                    </div>
-                     {message.role === 'user' && user && (
-                         <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/40/40`} />
-                            <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
-                        </Avatar>
-                    )}
-                    </div>
-                ))}
-                {isLoading && (
-                    <div className="flex items-end gap-2 justify-start">
-                        <Avatar className="h-8 w-8">
-                           <div className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground">
-                               <AppLogo className="h-5 w-5"/>
-                            </div>
-                        </Avatar>
-                        <div className="max-w-xs rounded-lg p-3 bg-muted">
-                            <Loader2 className="h-5 w-5 animate-spin" />
+    <SheetContent className="flex flex-col">
+        <SheetHeader>
+            <SheetTitle className="font-headline flex items-center gap-2">
+                <MessageSquare className="text-primary"/> AI Support Chat
+            </SheetTitle>
+        </SheetHeader>
+        <ScrollArea className="flex-1 p-4 -mx-6 my-4">
+            <div className="space-y-4">
+            {messages.map((message, index) => (
+                <div key={index} className={`flex items-end gap-2 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {message.role === 'bot' && (
+                    <Avatar className="h-8 w-8">
+                        <div className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground">
+                           <AppLogo className="h-5 w-5"/>
                         </div>
-                    </div>
+                    </Avatar>
+                )}
+                <div className={`max-w-xs rounded-lg p-3 ${message.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                    <p className="text-sm">{message.content}</p>
+                </div>
+                 {message.role === 'user' && user && (
+                     <Avatar className="h-8 w-8">
+                        <AvatarImage src={user.photoURL || `https://picsum.photos/seed/${user.uid}/40/40`} />
+                        <AvatarFallback>{user.displayName?.charAt(0) || 'U'}</AvatarFallback>
+                    </Avatar>
                 )}
                 </div>
-            </ScrollArea>
-            
-            {userLoading ? (
-              <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
-            ) : user ? (
-              <>
-                <div className="mb-4 flex flex-wrap gap-2">
-                    {quickReplies.map(reply => (
-                        <Button key={reply} variant="outline" size="sm" onClick={(e) => handleSendMessage(e, reply)} disabled={isLoading}>{reply}</Button>
-                    ))}
+            ))}
+            {isLoading && (
+                <div className="flex items-end gap-2 justify-start">
+                    <Avatar className="h-8 w-8">
+                       <div className="flex h-full w-full items-center justify-center rounded-full bg-primary text-primary-foreground">
+                           <AppLogo className="h-5 w-5"/>
+                        </div>
+                    </Avatar>
+                    <div className="max-w-xs rounded-lg p-3 bg-muted">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                    </div>
                 </div>
-                <form onSubmit={handleSendMessage} className="flex items-center gap-2">
-                    <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask a question..."
-                    disabled={isLoading}
-                    />
-                    <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
-                        <Send className="h-4 w-4" />
-                    </Button>
-                </form>
-              </>
-            ) : (
-              <div className="text-center text-sm text-muted-foreground">
-                <p>Tanpri <Link href="/login" className="font-bold text-primary underline">konekte w</Link> pou w itilize sipò a.</p>
-              </div>
             )}
-            </SheetContent>
-        </Sheet>
-    </>
+            </div>
+        </ScrollArea>
+        
+        {userLoading ? (
+          <div className="flex justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
+        ) : user ? (
+          <>
+            <div className="mb-4 flex flex-wrap gap-2">
+                {quickReplies.map(reply => (
+                    <Button key={reply} variant="outline" size="sm" onClick={(e) => handleSendMessage(e, reply)} disabled={isLoading}>{reply}</Button>
+                ))}
+            </div>
+            <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                <Input
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder="Ask a question..."
+                disabled={isLoading}
+                />
+                <Button type="submit" size="icon" disabled={isLoading || !input.trim()}>
+                    <Send className="h-4 w-4" />
+                </Button>
+            </form>
+          </>
+        ) : (
+          <div className="text-center text-sm text-muted-foreground">
+            <p>Tanpri <Link href="/login" className="font-bold text-primary underline">konekte w</Link> pou w itilize sipò a.</p>
+          </div>
+        )}
+    </SheetContent>
   );
 }
