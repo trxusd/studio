@@ -25,10 +25,10 @@ type ProcessedPrediction = MatchPrediction & {
 
 // This function checks a prediction against a final score.
 function checkPredictionStatus(prediction: MatchPrediction, finalScore: string | null): 'Win' | 'Loss' | 'Pending' {
-    if (!finalScore || ['NS', 'PST', 'CANC'].includes(finalScore)) return 'Pending';
+    if (!finalScore || ['NS', 'PST', 'CANC', 'TBD', 'ABD'].includes(finalScore)) return 'Pending';
     
     const parts = finalScore.split('-').map(s => parseInt(s.trim(), 10));
-    if (parts.some(isNaN)) return 'Pending';
+    if (parts.some(isNaN) || parts.length < 2) return 'Pending';
     const [homeScore, awayScore] = parts;
 
     const predictionText = prediction.prediction.toLowerCase();
@@ -53,6 +53,16 @@ function checkPredictionStatus(prediction: MatchPrediction, finalScore: string |
     if (predictionText.includes('btts') || predictionText.includes('gg')) {
         return homeScore > 0 && awayScore > 0 ? 'Win' : 'Loss';
     }
+     if (predictionText.includes('1x') || predictionText.includes('home or draw')) {
+        return homeScore >= awayScore ? 'Win' : 'Loss';
+    }
+    if (predictionText.includes('x2') || predictionText.includes('away or draw')) {
+        return awayScore >= homeScore ? 'Win' : 'Loss';
+    }
+     if (predictionText.includes('12') || predictionText.includes('home or away')) {
+        return homeScore !== awayScore ? 'Win' : 'Loss';
+    }
+
 
     return 'Pending';
 }
@@ -66,13 +76,16 @@ async function fetchMatchResult(fixtureId: number): Promise<string | null> {
         const match = data.matches?.[0];
         if (!match) return 'N/A';
         
-        // Return status for matches not started or finished
-        const notFinishedStatus = ['TBD', 'NS', 'PST', 'CANC', 'ABD'];
-        if (notFinishedStatus.includes(match.fixture.status.short)) {
-            return match.fixture.status.short;
+        const finishedStatus = ['FT', 'AET', 'PEN'];
+        if (finishedStatus.includes(match.fixture.status.short)) {
+            const homeScore = match.goals.home ?? match.score.fulltime.home ?? 0;
+            const awayScore = match.goals.away ?? match.score.fulltime.away ?? 0;
+            return `${homeScore}-${awayScore}`;
         }
 
-        return `${match.goals.home}-${match.goals.away}`;
+        // Return status text for matches not finished
+        return match.fixture.status.short;
+
     } catch (e) {
         console.error(`Failed to fetch result for ${fixtureId}`, e);
         return 'Error';
