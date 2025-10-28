@@ -12,7 +12,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, writeBatch } from 'firebase/firestore';
 import { getFirestoreInstance } from '@/firebase';
 import { OfficialPredictionsOutputSchema, type OfficialPredictionsOutput } from '@/ai/schemas/prediction-schemas';
 
@@ -29,22 +29,42 @@ export async function generateOfficialPredictions(): Promise<OfficialPredictions
   const firestore = getFirestoreInstance();
   const predictions = await generateOfficialPredictionsFlow();
 
-  // Save to Firestore
+  // Save each category to a separate document in Firestore
   const today = new Date().toISOString().split('T')[0];
-  const predictionDocRef = doc(firestore, 'predictions', today);
-  
-  const predictionData = {
+  const batch = writeBatch(firestore);
+
+  const categories = {
+    secure_trial: predictions.secure_trial?.coupon_1 || [],
+    exclusive_vip_1: predictions.exclusive_vip?.coupon_1 || [],
+    exclusive_vip_2: predictions.exclusive_vip?.coupon_2 || [],
+    exclusive_vip_3: predictions.exclusive_vip?.coupon_3 || [],
+    individual_vip: predictions.individual_vip || [],
+    free_coupon: predictions.free_coupon?.coupon_1 || [],
+    free_individual: predictions.free_individual || [],
+  };
+
+  for (const [key, value] of Object.entries(categories)) {
+      const docRef = doc(firestore, `predictions/${today}/${key}`);
+      batch.set(docRef, {
+          predictions: value,
+          status: 'unpublished',
+          category: key,
+          generated_at: new Date().toISOString(),
+      });
+  }
+
+  // Also save a master document for overview if needed
+  const masterDocRef = doc(firestore, 'predictions', today);
+  batch.set(masterDocRef, {
     date: today,
-    predictions: predictions,
     metadata: {
       generated_at: new Date().toISOString(),
-      total_predictions: 50,
-      status: 'published',
-      api_version: 'v2.0'
+      status: 'generated',
+      api_version: 'v2.1'
     }
-  };
+  });
   
-  await setDoc(predictionDocRef, predictionData);
+  await batch.commit();
   
   return predictions;
 }

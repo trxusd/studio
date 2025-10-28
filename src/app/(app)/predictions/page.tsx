@@ -11,10 +11,10 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Ticket, ShieldCheck, List, Crown, Lock, Loader2, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
-import { useUser, useFirestore, useDoc } from '@/firebase';
+import { useUser, useFirestore, useCollection } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { doc } from 'firebase/firestore';
+import { useEffect, useState, useMemo } from 'react';
+import { collection, query, where } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 
 // Mock subscription status. In a real app, this would come from your database.
@@ -30,7 +30,6 @@ const useVipStatus = (user: any) => {
       // setIsVip(userDoc.data()?.isVip || false);
       
       // For now, we'll just mock it.
-      // Let's say every other user is a VIP for demonstration.
       const isUserVip = true; // you can change this to false to see the locked state
       setIsVip(isUserVip);
 
@@ -43,20 +42,20 @@ const useVipStatus = (user: any) => {
   return { isVip, loading: loading };
 };
 
-type PredictionMatch = {
+type MatchPrediction = {
   match: string;
   prediction: string;
   odds?: number;
   confidence?: number;
 };
 
-type PredictionData = {
-  secure_trial: { coupon_1: PredictionMatch[] };
-  exclusive_vip: { coupon_1: PredictionMatch[]; coupon_2: PredictionMatch[]; coupon_3: PredictionMatch[] };
-  individual_vip: PredictionMatch[];
-  free_coupon: { coupon_1: PredictionMatch[] };
-  free_individual: PredictionMatch[];
+type PredictionCategoryDoc = {
+    id: string;
+    predictions: MatchPrediction[];
+    status: 'published' | 'unpublished';
+    category: string;
 };
+
 
 export default function PredictionsPage() {
   const { user, loading: userLoading } = useUser();
@@ -65,8 +64,11 @@ export default function PredictionsPage() {
   const firestore = useFirestore();
 
   const today = new Date().toISOString().split('T')[0];
-  const predictionDocRef = firestore ? doc(firestore, 'predictions', today) : null;
-  const { data: predictionData, loading: predictionsLoading } = useDoc<{ predictions: PredictionData }>(predictionDocRef);
+  const categoriesQuery = firestore 
+    ? query(collection(firestore, `predictions/${today}`), where("status", "==", "published"))
+    : null;
+    
+  const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -76,6 +78,30 @@ export default function PredictionsPage() {
 
   const isLoading = userLoading || vipLoading || predictionsLoading;
 
+  const predictions = useMemo(() => {
+    if (!publishedCategories) return null;
+
+    const structuredData = {
+        secure_trial: { coupon_1: [] as MatchPrediction[] },
+        exclusive_vip: { coupon_1: [] as MatchPrediction[], coupon_2: [] as MatchPrediction[], coupon_3: [] as MatchPrediction[] },
+        individual_vip: [] as MatchPrediction[],
+        free_coupon: { coupon_1: [] as MatchPrediction[] },
+        free_individual: [] as MatchPrediction[],
+    };
+
+    publishedCategories.forEach(cat => {
+        if (cat.id === 'secure_trial') structuredData.secure_trial.coupon_1 = cat.predictions;
+        if (cat.id === 'free_coupon') structuredData.free_coupon.coupon_1 = cat.predictions;
+        if (cat.id === 'free_individual') structuredData.free_individual = cat.predictions;
+        if (cat.id === 'exclusive_vip_1') structuredData.exclusive_vip.coupon_1 = cat.predictions;
+        if (cat.id === 'exclusive_vip_2') structuredData.exclusive_vip.coupon_2 = cat.predictions;
+        if (cat.id === 'exclusive_vip_3') structuredData.exclusive_vip.coupon_3 = cat.predictions;
+        if (cat.id === 'individual_vip') structuredData.individual_vip = cat.predictions;
+    });
+
+    return structuredData;
+  }, [publishedCategories]);
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
@@ -83,10 +109,8 @@ export default function PredictionsPage() {
       </div>
     );
   }
-
-  const predictions = predictionData?.predictions;
   
-  const renderMatch = (match: PredictionMatch, index: number) => (
+  const renderMatch = (match: MatchPrediction, index: number) => (
     <div key={index} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted/50">
         <span>{match.match}</span>
         <Badge variant="secondary">{match.prediction}</Badge>
@@ -103,6 +127,14 @@ export default function PredictionsPage() {
     </div>
   )
 
+  const noPredictionsAvailable = !predictions || (
+      !predictions.secure_trial.coupon_1.length &&
+      !predictions.free_coupon.coupon_1.length &&
+      !predictions.free_individual.length &&
+      !predictions.exclusive_vip.coupon_1.length &&
+      !predictions.individual_vip.length
+  );
+
 
   return (
     <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
@@ -115,153 +147,168 @@ export default function PredictionsPage() {
         </p>
       </div>
 
-       {!predictions && !isLoading && (
+       {noPredictionsAvailable && !isLoading && (
         <Card className='text-center p-12'>
             <p className='text-muted-foreground'>Pa gen prediksyon ki disponib pou jodi a. Tounen pita.</p>
         </Card>
       )}
 
 
-      {predictions && (
+      {predictions && !noPredictionsAvailable && (
         <>
             {/* Free Section */}
-            <section className="space-y-4">
-              <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
-                Seksyon Gratis
-              </h3>
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col">
-                  <CardHeader>
-                      <CardTitle className="flex items-center gap-3">
-                          <ShieldCheck className="h-6 w-6 text-primary" />
-                          <span>Trial Secure</span>
-                      </CardTitle>
-                    <CardDescription>
-                      Eseye prediksyon nou yo san risk ak òf sekirize nou an.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='flex-grow'>
-                    {predictions.secure_trial?.coupon_1?.map(renderMatch)}
-                  </CardContent>
-                </Card>
-                <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col">
-                  <CardHeader>
-                      <CardTitle className="flex items-center gap-3">
-                          <Ticket className="h-6 w-6 text-primary" />
-                          <span>Free Coupon</span>
-                      </CardTitle>
-                    <CardDescription>
-                      Aksede a koupon gratis pou prediksyon espesyal.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='flex-grow'>
-                    {predictions.free_coupon?.coupon_1?.map(renderMatch)}
-                  </CardContent>
-                </Card>
-                <Card className="hover/card:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
+            {(predictions.secure_trial.coupon_1.length > 0 || predictions.free_coupon.coupon_1.length > 0 || predictions.free_individual.length > 0) && (
+              <section className="space-y-4">
+                <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
+                  Seksyon Gratis
+                </h3>
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {predictions.secure_trial.coupon_1.length > 0 && (
+                    <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col">
+                      <CardHeader>
                           <CardTitle className="flex items-center gap-3">
-                              <List className="h-6 w-6 text-primary" />
-                              <span>Free List Individual</span>
+                              <ShieldCheck className="h-6 w-6 text-primary" />
+                              <span>Trial Secure</span>
                           </CardTitle>
-                          <Link href="/matches" passHref>
-                              <Button variant="ghost" size="icon">
-                                  <ArrowRight className="h-4 w-4" />
-                              </Button>
-                          </Link>
-                      </div>
-                    <CardDescription>
-                      Gade lis match endividyèl gratis nou yo pou jounen an.
-                    </CardDescription>
-                  </CardHeader>
-                   <CardContent className='flex-grow space-y-1'>
-                    {predictions.free_individual?.slice(0, 5).map(renderMatch)}
-                    {predictions.free_individual?.length > 5 && <p className='text-center text-sm text-muted-foreground pt-2'>... and {predictions.free_individual.length - 5} more.</p>}
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
+                        <CardDescription>
+                          Eseye prediksyon nou yo san risk ak òf sekirize nou an.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className='flex-grow'>
+                        {predictions.secure_trial.coupon_1.map(renderMatch)}
+                      </CardContent>
+                    </Card>
+                  )}
+                  {predictions.free_coupon.coupon_1.length > 0 && (
+                    <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col">
+                      <CardHeader>
+                          <CardTitle className="flex items-center gap-3">
+                              <Ticket className="h-6 w-6 text-primary" />
+                              <span>Free Coupon</span>
+                          </CardTitle>
+                        <CardDescription>
+                          Aksede a koupon gratis pou prediksyon espesyal.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className='flex-grow'>
+                        {predictions.free_coupon.coupon_1.map(renderMatch)}
+                      </CardContent>
+                    </Card>
+                  )}
+                  {predictions.free_individual.length > 0 && (
+                    <Card className="hover/card:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                              <CardTitle className="flex items-center gap-3">
+                                  <List className="h-6 w-6 text-primary" />
+                                  <span>Free List Individual</span>
+                              </CardTitle>
+                              <Link href="/matches" passHref>
+                                  <Button variant="ghost" size="icon">
+                                      <ArrowRight className="h-4 w-4" />
+                                  </Button>
+                              </Link>
+                          </div>
+                        <CardDescription>
+                          Gade lis match endividyèl gratis nou yo pou jounen an.
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className='flex-grow space-y-1'>
+                        {predictions.free_individual.slice(0, 5).map(renderMatch)}
+                        {predictions.free_individual.length > 5 && <p className='text-center text-sm text-muted-foreground pt-2'>... and {predictions.free_individual.length - 5} more.</p>}
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </section>
+            )}
             
             <Separator />
 
             {/* Paid Section */}
-            <section className="space-y-6">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                  <div>
-                      <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2 text-yellow-500">
-                          <Crown /> Seksyon Peyan
-                      </h3>
-                      <p className="text-muted-foreground max-w-2xl">
-                          Debloke aksè a prediksyon VIP nou yo pou pi bon chans genyen.
-                      </p>
-                  </div>
-                  {!isVip && (
-                    <Link href="/payments" passHref>
-                        <Button className="bg-yellow-600 hover:bg-yellow-700 text-primary-foreground font-bold shrink-0">
-                            Go VIP
-                            <Crown className="ml-2 h-4 w-4" />
-                        </Button>
-                    </Link>
-                  )}
-              </div>
+            {(predictions.exclusive_vip.coupon_1.length > 0 || predictions.individual_vip.length > 0) && (
+              <section className="space-y-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div>
+                        <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2 text-yellow-500">
+                            <Crown /> Seksyon Peyan
+                        </h3>
+                        <p className="text-muted-foreground max-w-2xl">
+                            Debloke aksè a prediksyon VIP nou yo pou pi bon chans genyen.
+                        </p>
+                    </div>
+                    {!isVip && (
+                      <Link href="/payments" passHref>
+                          <Button className="bg-yellow-600 hover:bg-yellow-700 text-primary-foreground font-bold shrink-0">
+                              Go VIP
+                              <Crown className="ml-2 h-4 w-4" />
+                          </Button>
+                      </Link>
+                    )}
+                </div>
 
-              <Card className="border-yellow-500/30 bg-yellow-400/5">
-                  <CardHeader>
-                      <CardTitle className="flex items-center gap-3">
-                          <Ticket className="h-6 w-6 text-yellow-600"/>
-                          Exclusive VIP Predictions: Coupons
-                      </CardTitle>
-                      <CardDescription>
-                          Sèvi ak koupon VIP ou yo pou debloke prediksyon prim sa yo.
-                      </CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-4 md:grid-cols-3">
-                      {isVip ? (
-                        <>
-                            <div>
-                                <h4 className="font-semibold mb-2">Coupon 1</h4>
-                                {predictions.exclusive_vip?.coupon_1.map(renderMatch)}
-                            </div>
-                            <div>
-                                <h4 className="font-semibold mb-2">Coupon 2</h4>
-                                {predictions.exclusive_vip?.coupon_2.map(renderMatch)}
-                            </div>
-                            <div>
-                                <h4 className="font-semibold mb-2">Coupon 3</h4>
-                                {predictions.exclusive_vip?.coupon_3.map(renderMatch)}
-                            </div>
-                        </>
-                      ) : renderLocked()}
-                  </CardContent>
-              </Card>
-              <Card className="border-yellow-500/30 bg-yellow-400/5">
-                  <CardHeader>
-                      <div className="flex items-center justify-between">
-                          <CardTitle className="flex items-center gap-3">
-                              <Star className="h-6 w-6 text-yellow-600"/>
-                              VIP List Individual
-                          </CardTitle>
-                          <Link href="/vip-predictions" passHref>
-                              <Button variant="ghost" size="icon">
-                                  <ArrowRight className="h-4 w-4 text-yellow-600" />
-                              </Button>
-                          </Link>
-                      </div>
-                      <CardDescription>
-                          Aksede a lis konplè prediksyon VIP endividyèl nou yo.
-                      </CardDescription>
-                  </CardHeader>
-                   <CardContent>
-                      {isVip ? (
-                        <div className='space-y-1'>
-                           {predictions.individual_vip?.slice(0, 5).map(renderMatch)}
-                            {predictions.individual_vip?.length > 5 && <p className='text-center text-sm text-muted-foreground pt-2'>... and {predictions.individual_vip.length - 5} more in the VIP section.</p>}
+                {predictions.exclusive_vip.coupon_1.length > 0 && (
+                  <Card className="border-yellow-500/30 bg-yellow-400/5">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                            <Ticket className="h-6 w-6 text-yellow-600"/>
+                            Exclusive VIP Predictions: Coupons
+                        </CardTitle>
+                        <CardDescription>
+                            Sèvi ak koupon VIP ou yo pou debloke prediksyon prim sa yo.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-3">
+                        {isVip ? (
+                          <>
+                              <div>
+                                  <h4 className="font-semibold mb-2">Coupon 1</h4>
+                                  {predictions.exclusive_vip.coupon_1.map(renderMatch)}
+                              </div>
+                              <div>
+                                  <h4 className="font-semibold mb-2">Coupon 2</h4>
+                                  {predictions.exclusive_vip.coupon_2.map(renderMatch)}
+                              </div>
+                              <div>
+                                  <h4 className="font-semibold mb-2">Coupon 3</h4>
+                                  {predictions.exclusive_vip.coupon_3.map(renderMatch)}
+                              </div>
+                          </>
+                        ) : renderLocked()}
+                    </CardContent>
+                  </Card>
+                )}
+
+                {predictions.individual_vip.length > 0 && (
+                  <Card className="border-yellow-500/30 bg-yellow-400/5">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <CardTitle className="flex items-center gap-3">
+                                <Star className="h-6 w-6 text-yellow-600"/>
+                                VIP List Individual
+                            </CardTitle>
+                            <Link href="/vip-predictions" passHref>
+                                <Button variant="ghost" size="icon">
+                                    <ArrowRight className="h-4 w-4 text-yellow-600" />
+                                </Button>
+                            </Link>
                         </div>
-                      ) : renderLocked()}
-                  </CardContent>
-              </Card>
-            </section>
+                        <CardDescription>
+                            Aksede a lis konplè prediksyon VIP endividyèl nou yo.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isVip ? (
+                          <div className='space-y-1'>
+                            {predictions.individual_vip.slice(0, 5).map(renderMatch)}
+                              {predictions.individual_vip.length > 5 && <p className='text-center text-sm text-muted-foreground pt-2'>... and {predictions.individual_vip.length - 5} more in the VIP section.</p>}
+                          </div>
+                        ) : renderLocked()}
+                    </CardContent>
+                  </Card>
+                )}
+              </section>
+            )}
         </>
       )}
     </div>
