@@ -64,7 +64,7 @@ export default function ReferralPage() {
     }, [referrals]);
 
 
-    const referralCode = user ? `FWIN-${user.uid.substring(0, 8).toUpperCase()}` : '...';
+    const referralCode = user ? `FBW-${user.uid.substring(0, 8).toUpperCase()}` : '...';
     
     const copyToClipboard = () => {
         if (!user) return;
@@ -76,11 +76,11 @@ export default function ReferralPage() {
     };
 
     const referralTiers = [
-        { id: 1, sourcePlan: "VIP 1 (1 Month)", reward: "Plan VIP 2 Gratis", icon: <UserPlus className="text-primary"/> },
-        { id: 2, sourcePlan: "VIP 2 (3 Months)", reward: "Plan VIP 3 Gratis", icon: <Star className="text-primary"/> },
-        { id: 3, sourcePlan: "VIP 3 (6 Months)", reward: "Plan VIP 4 Gratis", icon: <Award className="text-primary"/> },
-        { id: 4, sourcePlan: "VIP 4 (1 Year)", reward: "Plan VIP 5 Gratis", icon: <Crown className="text-primary"/> },
-        { id: 5, sourcePlan: "VIP 5 (Lifetime)", reward: "$300 USD Kach", icon: <DollarSign className="text-primary"/> },
+        { id: 1, sourcePlan: "VIP 1 (1 Month)", reward: "Free VIP 2 Plan", icon: <UserPlus className="text-primary"/> },
+        { id: 2, sourcePlan: "VIP 2 (3 Months)", reward: "Free VIP 3 Plan", icon: <Star className="text-primary"/> },
+        { id: 3, sourcePlan: "VIP 3 (6 Months)", reward: "Free VIP 4 Plan", icon: <Award className="text-primary"/> },
+        { id: 4, sourcePlan: "VIP 4 (1 Year)", reward: "Free VIP 5 Plan", icon: <Crown className="text-primary"/> },
+        { id: 5, sourcePlan: "VIP 5 (Lifetime)", reward: "$300 USD Cash", icon: <DollarSign className="text-primary"/> },
     ];
 
     if (loading || !user) {
@@ -94,28 +94,28 @@ export default function ReferralPage() {
     return (
         <div className="flex-1 space-y-6 p-4 pt-6 md:p-8">
             <h2 className="font-headline text-3xl font-bold tracking-tight flex items-center gap-3">
-                <Gift className="text-primary" /> Pwogram Parenaj FOOTBETWIN
+                <Gift className="text-primary" /> FOOTBETWIN Referral Program
             </h2>
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Kòd Parenaj Ou</CardTitle>
-                    <CardDescription>Pataje kòd sa a ak zanmi w yo pou yo ka enskri epi pou w kòmanse touche komisyon.</CardDescription>
+                    <CardTitle>Your Referral Code</CardTitle>
+                    <CardDescription>Share this code with your friends. When they sign up, you'll start earning commissions.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-center gap-4">
                     <div className="flex-1 border-2 border-dashed border-primary/50 bg-muted rounded-lg p-4 text-center">
                         <span className="text-2xl font-bold font-mono tracking-widest">{referralCode}</span>
                     </div>
                     <Button onClick={copyToClipboard} size="lg">
-                        <Copy className="mr-2 h-4 w-4" /> Kopye
+                        <Copy className="mr-2 h-4 w-4" /> Copy
                     </Button>
                 </CardContent>
             </Card>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Ki jan sa mache?</CardTitle>
-                    <CardDescription>Se senp! Envites 10 zanmi nan yon plan VIP pou w ka jwenn rekonpans ou. Chak nivo se yon sèl fwa.</CardDescription>
+                    <CardTitle>How does it work?</CardTitle>
+                    <CardDescription>It's simple! Invite 10 friends to a VIP plan to get your reward. Each tier is a one-time reward.</CardDescription>
                 </CardHeader>
                 <CardContent>
                    {referralsLoading ? (
@@ -133,16 +133,16 @@ export default function ReferralPage() {
                                         <div className="p-2 bg-primary/10 rounded-full">{tier.icon}</div>
                                         <div className="flex-1">
                                             <p className="font-semibold">
-                                                Envite 10 itilizatè nan <span className="text-primary">{tier.sourcePlan}</span>
+                                                Invite 10 users to <span className="text-primary">{tier.sourcePlan}</span>
                                             </p>
                                         </div>
                                         <div className="text-right">
-                                            <p className="font-bold text-primary">Jwenn → {tier.reward}</p>
+                                            <p className="font-bold text-primary">Get → {tier.reward}</p>
                                         </div>
                                     </div>
                                     <div className="px-2">
                                         <div className="flex justify-between items-center mb-1">
-                                            <span className="text-xs font-medium text-muted-foreground">Pwogrè</span>
+                                            <span className="text-xs font-medium text-muted-foreground">Progress</span>
                                             <span className="text-xs font-bold">{progress}/10</span>
                                         </div>
                                         <Progress value={progressPercentage} className="h-2" />
@@ -154,18 +154,18 @@ export default function ReferralPage() {
                    )}
                 </CardContent>
                  <CardFooter className="text-muted-foreground text-sm">
-                    <p>Siw deja gen yon plan epi ou rive gen komisyon an ou ka mande li nap transfere ou li.</p>
+                    <p>If you already have a plan and you earn a commission, you can request a transfer.</p>
                 </CardFooter>
             </Card>
 
             <Card className="border-amber-500/50 bg-amber-500/5">
                 <CardHeader className="flex flex-row items-center gap-3">
                     <Info className="text-amber-600" />
-                    <CardTitle className="text-amber-800">Nòt enpòtan</CardTitle>
+                    <CardTitle className="text-amber-800">Important Note</CardTitle>
                 </CardHeader>
                 <CardContent className="text-sm text-amber-700 space-y-2">
-                    <p>📌 Komisyon parenaj sa yo valab sèlman sou **premye aktivasyon** yon itilizatè. Renouvelman pa antre ladan l.</p>
-                    <p>📌 Tèm ak kondisyon aplikab.</p>
+                    <p>📌 These referral commissions are only valid on a user's **first activation**. Renewals are not included.</p>
+                    <p>📌 Terms and conditions apply.</p>
                 </CardContent>
             </Card>
         </div>
