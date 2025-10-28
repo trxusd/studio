@@ -41,16 +41,11 @@ export default function DashboardPage() {
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
   const fetchStats = useCallback(async () => {
-    // Only run if firestore is available
-    if (!firestore) {
-      setStatsLoading(false);
-      return;
-    }
+    if (!firestore) return;
+
     setStatsLoading(true);
     try {
         let allPredictions: PredictionResult[] = [];
-
-        // Fetch predictions for the last 7 days, one day at a time
         for (let i = 0; i < 7; i++) {
             const date = new Date();
             date.setDate(date.getDate() - i);
@@ -84,15 +79,13 @@ export default function DashboardPage() {
 
     } catch (error) {
         console.error("Error fetching stats:", error);
-        // In case of error, still set stats to default and stop loading
         setStats({ wins: 0, accuracy: 0 });
     } finally {
         setStatsLoading(false);
     }
-  }, [firestore]); // The function now correctly depends only on firestore
+  }, [firestore]); 
 
   useEffect(() => {
-    // This effect will run once when firestore is initialized.
     fetchStats();
   }, [fetchStats]);
 
