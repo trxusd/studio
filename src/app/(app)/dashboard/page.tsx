@@ -206,31 +206,31 @@ export default function DashboardPage() {
             </Button>
           </CardFooter>
         </Card>
-        <Card className="lg:col-span-3 bg-gradient-to-br from-yellow-300/20 via-yellow-400/20 to-yellow-500/20 border-yellow-500/50">
+        <Card className="lg:col-span-3 bg-yellow-500 text-black">
            <CardHeader>
              <div className="flex items-center gap-2">
-                <Crown className="text-yellow-600" />
-                <CardTitle className="font-headline text-yellow-800">Unlock VIP Access</CardTitle>
+                <Crown />
+                <CardTitle className="font-headline">Unlock VIP Access</CardTitle>
              </div>
-            <CardDescription className="text-yellow-700/80">
+            <CardDescription className="text-black/80">
               Get exclusive access to our most accurate, AI-powered predictions and in-depth analysis.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ul className="list-disc list-inside space-y-2 text-sm text-yellow-900/80">
+            <ul className="list-disc list-inside space-y-2 text-sm text-black/90">
                 <li>Premium match predictions with higher accuracy.</li>
                 <li>In-depth statistical analysis and insights.</li>
                 <li>Access to the exclusive VIP community chat.</li>
                 <li>Real-time alerts and betting signals.</li>
             </ul>
             <div className="mt-6">
-                <h4 className="font-semibold text-yellow-900">Your VIP Progress</h4>
-                <Progress value={vipStatus?.isVip ? 100 : 25} className="w-full mt-2 [&>div]:bg-yellow-600" />
-                <p className="text-xs text-yellow-700/80 mt-1">{vipStatus?.isVip ? "You're in the winner's circle!" : "You're one step away from joining."}</p>
+                <h4 className="font-semibold">Your VIP Progress</h4>
+                <Progress value={vipStatus?.isVip ? 100 : 25} className="w-full mt-2 [&>div]:bg-yellow-300 bg-black/20" />
+                <p className="text-xs text-black/80 mt-1">{vipStatus?.isVip ? "You're in the winner's circle!" : "You're one step away from joining."}</p>
             </div>
           </CardContent>
           <CardFooter>
-            <Button asChild className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold shadow-lg" disabled={!!vipStatus?.isVip}>
+            <Button asChild className="w-full bg-yellow-300 hover:bg-yellow-400 text-black font-bold shadow-lg" disabled={!!vipStatus?.isVip}>
                 <Link href="/payments">
                     {vipStatus?.isVip ? 'You are VIP' : 'Go VIP Now'}
                     <Crown className="ml-2 h-4 w-4"/>
