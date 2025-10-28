@@ -6,15 +6,15 @@ import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
 
-const FirebaseAppContext = createContext<FirebaseApp | undefined>(undefined);
-const AuthContext = createContext<Auth | undefined>(undefined);
-const FirestoreContext = createContext<Firestore | undefined>(undefined);
+const FirebaseAppContext = createContext<FirebaseApp | null>(null);
+const AuthContext = createContext<Auth | null>(null);
+const FirestoreContext = createContext<Firestore | null>(null);
 
 type FirebaseProviderProps = {
   children: ReactNode;
-  app: FirebaseApp;
-  auth: Auth;
-  firestore: Firestore;
+  app: FirebaseApp | null;
+  auth: Auth | null;
+  firestore: Firestore | null;
 };
 
 export function FirebaseProvider({
