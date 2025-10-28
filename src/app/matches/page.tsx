@@ -198,6 +198,19 @@ function MatchesPageContent() {
     }
   }, [debouncedSearchQuery]);
 
+  const getMatchStatus = (status: Fixture['status']) => {
+    switch (status.short) {
+        case 'NS': // Not Started
+            return new Date(status.long).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        case 'HT': // Halftime
+            return '1H';
+        case 'FT': // Full Time
+            return 'FT';
+        default:
+            return status.short;
+    }
+  };
+
 
   const sortedCountries = Object.entries(groupedMatches).sort(([a], [b]) => {
     const indexA = priorityCountries.indexOf(a);
@@ -332,11 +345,7 @@ function MatchesPageContent() {
                             <Link href={`/predictions/${match.fixture.id}`} key={match.fixture.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
                             <div className="flex items-center gap-4">
                                 <div className="flex w-12 flex-col items-center justify-center text-xs text-muted-foreground">
-                                    {match.fixture.status.short === 'NS' ? (
-                                        <span>{new Date(match.fixture.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}</span>
-                                    ) : (
-                                        <span className="font-bold text-primary">{match.fixture.status.short}</span>
-                                    )}
+                                    <span className="font-bold text-primary">{getMatchStatus(match.fixture)}</span>
                                     {match.fixture.status.elapsed && (
                                         <span className='text-xs text-red-500 animate-pulse'>{match.fixture.status.elapsed}'</span>
                                     )}
