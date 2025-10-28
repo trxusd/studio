@@ -33,8 +33,8 @@ const API_HOST = "api-football.p.rapidapi.com";
 const API_KEY = process.env.FOOTBALL_API_KEY;
 
 async function fetchFromApi(endpoint: string) {
-    if (!API_KEY || !API_HOST) {
-        console.error("API key or host is not configured.");
+    if (!API_KEY || API_KEY === 'REPLACE_WITH_YOUR_API_KEY') {
+        console.error("API key is not configured. Please add your FOOTBALL_API_KEY to the .env file.");
         return null;
     }
     try {
@@ -44,6 +44,8 @@ async function fetchFromApi(endpoint: string) {
         });
         if (!response.ok) {
             console.error(`API request failed for ${endpoint} with status: ${response.status}`);
+            const errorBody = await response.text();
+            console.error('API Error Body:', errorBody);
             return null;
         }
         const data = await response.json();
@@ -222,8 +224,21 @@ function TeamLineup({ lineups }: { lineups: ApiLineup[] | null }) {
         );
     }
 
-    const homeTeam = lineups[0];
-    const awayTeam = lineups[1];
+    const homeTeam = lineups.find(l => l.team.id === lineups[0].team.id);
+    const awayTeam = lineups.find(l => l.team.id === lineups[1].team.id);
+
+    if (!homeTeam || !awayTeam) {
+         return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline flex items-center gap-2"><Users className="text-primary"/>Composition des Équipes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-muted-foreground text-center py-8">Impossible de charger la composition des deux équipes.</p>
+                </CardContent>
+            </Card>
+        );
+    }
 
     return (
         <Card>
@@ -241,11 +256,15 @@ function TeamLineup({ lineups }: { lineups: ApiLineup[] | null }) {
                         {homeTeam.startXI.map(p => <div key={p.player.id} className="flex items-center gap-2 text-sm"><Badge variant="outline" className="w-8 justify-center">{p.player.number}</Badge> <span>{p.player.name} ({p.player.pos})</span></div>)}
                         <h4 className="font-semibold text-sm pt-2">Remplaçants</h4>
                         {homeTeam.substitutes.map(p => <div key={p.player.id} className="flex items-center gap-2 text-sm"><Badge variant="outline" className="w-8 justify-center">{p.player.number}</Badge> <span>{p.player.name} ({p.player.pos})</span></div>)}
-                        <h4 className="font-semibold text-sm pt-2">Entraîneur</h4>
-                        <div className="flex items-center gap-2 text-sm">
-                            <Avatar className="h-6 w-6"><AvatarImage src={homeTeam.coach.photo} alt={homeTeam.coach.name} /><AvatarFallback>{homeTeam.coach.name.charAt(0)}</AvatarFallback></Avatar>
-                             <span>{homeTeam.coach.name}</span>
-                        </div>
+                        {homeTeam.coach.name &&
+                          <>
+                            <h4 className="font-semibold text-sm pt-2">Entraîneur</h4>
+                            <div className="flex items-center gap-2 text-sm">
+                                {homeTeam.coach.photo && <Avatar className="h-6 w-6"><AvatarImage src={homeTeam.coach.photo} alt={homeTeam.coach.name} /><AvatarFallback>{homeTeam.coach.name.charAt(0)}</AvatarFallback></Avatar> }
+                                <span>{homeTeam.coach.name}</span>
+                            </div>
+                          </>
+                        }
                     </div>
                 </div>
                  <div className="space-y-4">
@@ -258,11 +277,15 @@ function TeamLineup({ lineups }: { lineups: ApiLineup[] | null }) {
                         {awayTeam.startXI.map(p => <div key={p.player.id} className="flex items-center gap-2 text-sm"><Badge variant="outline" className="w-8 justify-center">{p.player.number}</Badge> <span>{p.player.name} ({p.player.pos})</span></div>)}
                         <h4 className="font-semibold text-sm pt-2">Remplaçants</h4>
                         {awayTeam.substitutes.map(p => <div key={p.player.id} className="flex items-center gap-2 text-sm"><Badge variant="outline" className="w-8 justify-center">{p.player.number}</Badge> <span>{p.player.name} ({p.player.pos})</span></div>)}
-                        <h4 className="font-semibold text-sm pt-2">Entraîneur</h4>
-                        <div className="flex items-center gap-2 text-sm">
-                            <Avatar className="h-6 w-6"><AvatarImage src={awayTeam.coach.photo} alt={awayTeam.coach.name} /><AvatarFallback>{awayTeam.coach.name.charAt(0)}</AvatarFallback></Avatar>
-                             <span>{awayTeam.coach.name}</span>
-                        </div>
+                        {awayTeam.coach.name &&
+                          <>
+                            <h4 className="font-semibold text-sm pt-2">Entraîneur</h4>
+                            <div className="flex items-center gap-2 text-sm">
+                                {awayTeam.coach.photo && <Avatar className="h-6 w-6"><AvatarImage src={awayTeam.coach.photo} alt={awayTeam.coach.name} /><AvatarFallback>{awayTeam.coach.name.charAt(0)}</AvatarFallback></Avatar>}
+                                <span>{awayTeam.coach.name}</span>
+                            </div>
+                          </>
+                        }
                     </div>
                 </div>
             </CardContent>
