@@ -46,6 +46,11 @@ export function MatchFilterControls({ selectedDate, isVip }: MatchFilterControls
                     <Radio className="mr-2 h-4 w-4 text-red-500" /> LIVE
                 </Button>
             </Link>
+             <Link href="/matches/favorites" passHref>
+                <Button variant="outline">
+                    <Star className="mr-2 h-4 w-4 text-yellow-400" /> Favorites
+                </Button>
+            </Link>
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                 <Button variant="outline" className={cn(!date && 'text-muted-foreground')}>
