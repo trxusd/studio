@@ -32,6 +32,8 @@ export default function PaymentsPage() {
   const [transactionId, setTransactionId] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [screenshotDataUri, setScreenshotDataUri] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -75,7 +77,17 @@ export default function PaymentsPage() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedFile);
+      reader.onload = () => {
+        setScreenshotDataUri(reader.result as string);
+      };
+      reader.onerror = () => {
+        showErrorToast('Error reading file.');
+        setScreenshotDataUri(null);
+      }
     }
   };
   
@@ -87,32 +99,20 @@ export default function PaymentsPage() {
 
     setIsVerifying(true);
     let paymentConfirmation = `Email: ${email}, Plan: ${selectedPlan}, TXID: ${transactionId}`;
-
-    if (file) {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const screenshotDataUri = reader.result as string;
-        await verify(paymentConfirmation, screenshotDataUri);
-      };
-      reader.onerror = () => {
-        showErrorToast('Error reading file.');
-        setIsVerifying(false);
-      }
-    } else {
-      await verify(paymentConfirmation);
-    }
+    
+    await verify(paymentConfirmation, screenshotDataUri || undefined);
   };
 
-  const verify = async (details: string, screenshotDataUri?: string) => {
+  const verify = async (details: string, screenshot?: string) => {
      try {
       if (!firestore || !user) throw new Error("Database or user not available.");
 
       const result = await automatedPaymentVerification({
-        paymentConfirmation: screenshotDataUri || details,
+        paymentConfirmation: details,
         paymentMethod: selectedPaymentMethod,
         expectedAmount: plans[selectedPlan as keyof typeof plans].price,
         userId: email, // Using email as user identifier
+        screenshotDataUri: screenshot,
       });
 
       // Save to Firestore for manual admin verification
@@ -126,7 +126,7 @@ export default function PaymentsPage() {
         status: 'Pending',
         timestamp: serverTimestamp(),
         aiVerificationResult: result,
-        hasScreenshot: !!screenshotDataUri,
+        screenshotUrl: screenshot, // Save the data URI
       });
 
       if (result.isVerified) {
@@ -148,6 +148,7 @@ export default function PaymentsPage() {
       setSelectedPlan('quarterly');
       setTransactionId('');
       setFile(null);
+      setScreenshotDataUri(null);
 
     } catch (error) {
       console.error(error);
@@ -339,5 +340,3 @@ export default function PaymentsPage() {
     </div>
   );
 }
-
-    

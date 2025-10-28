@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Eye } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useCollection } from "@/firebase";
 import { collection, doc, updateDoc, query, where, Timestamp } from 'firebase/firestore';
@@ -22,6 +22,7 @@ type Verification = {
     transactionId: string;
     status: 'Pending' | 'Approved' | 'Rejected';
     timestamp: Timestamp;
+    screenshotUrl?: string; // It could be a data URI
 };
 
 export default function PaymentVerificationPage() {
@@ -77,6 +78,15 @@ export default function PaymentVerificationPage() {
     return format(timestamp.toDate(), 'yyyy-MM-dd HH:mm');
   }
 
+  const viewScreenshot = (url: string) => {
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`<img src="${url}" style="max-width: 100%; height: auto;" alt="Payment Screenshot">`);
+      newWindow.document.title = "Payment Screenshot";
+    }
+  };
+
+
   return (
     <Card>
       <CardHeader>
@@ -95,7 +105,7 @@ export default function PaymentVerificationPage() {
                 <TableHead>User</TableHead>
                 <TableHead>Plan</TableHead>
                 <TableHead>Method</TableHead>
-                <TableHead>TXID</TableHead>
+                <TableHead>TXID / Screenshot</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -113,7 +123,14 @@ export default function PaymentVerificationPage() {
                    <TableCell>
                      <Badge variant="outline">{verification.method}</Badge>
                   </TableCell>
-                  <TableCell className="font-mono text-xs max-w-[120px] truncate">{verification.transactionId}</TableCell>
+                  <TableCell className="max-w-[150px]">
+                     <div className="font-mono text-xs truncate">{verification.transactionId}</div>
+                     {verification.screenshotUrl && (
+                        <Button variant="link" size="sm" className="h-auto p-0" onClick={() => viewScreenshot(verification.screenshotUrl!)}>
+                            <Eye className="mr-1 h-3 w-3" /> View Screenshot
+                        </Button>
+                     )}
+                  </TableCell>
                   <TableCell>{formatDate(verification.timestamp)}</TableCell>
                   <TableCell className="text-right">
                      <div className="flex justify-end gap-2">
@@ -159,5 +176,3 @@ export default function PaymentVerificationPage() {
     </Card>
   );
 }
-
-    

@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -13,9 +14,10 @@ import {z} from 'genkit';
 
 const AutomatedPaymentVerificationInputSchema = z.object({
   paymentConfirmation: z.string().describe("Payment confirmation details, which could be text-based details (Email, Plan, TXID) or a data URI of a screenshot of the payment confirmation. If passing a screenshot, it should be as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."),
-  paymentMethod: z.enum(['MonCash', 'NatCash', 'Crypto', 'Visa']).describe('The payment method used.'),
+  paymentMethod: z.enum(['MonCash', 'NatCash', 'Crypto']).describe('The payment method used.'),
   expectedAmount: z.number().describe('The expected payment amount.'),
   userId: z.string().describe('The email or ID of the user making the payment.'),
+  screenshotDataUri: z.string().optional().describe('The data URI of the payment screenshot, if provided.'),
 });
 export type AutomatedPaymentVerificationInput = z.infer<typeof AutomatedPaymentVerificationInputSchema>;
 
@@ -81,7 +83,7 @@ const automatedPaymentVerificationFlow = ai.defineFlow(
       expectedAmount: input.expectedAmount,
       userId: input.userId,
       confirmationDetails: isScreenshot ? undefined : input.paymentConfirmation,
-      confirmationScreenshot: isScreenshot ? input.paymentConfirmation : undefined,
+      confirmationScreenshot: input.screenshotDataUri,
     };
 
     const {output} = await prompt(promptInput);
