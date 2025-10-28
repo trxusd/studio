@@ -40,14 +40,14 @@ export function MatchCard({ match, isVip = false }: MatchCardProps) {
           </div>
           <div className='flex items-center justify-between'>
             <Badge variant="secondary">{match.prediction}</Badge>
-            {match.odds && match.odds > 1 && <span className='font-bold text-lg'>{match.odds}</span>}
+            {match.odds && match.odds > 1 && <span className='font-bold text-lg'>{match.odds.toFixed(2)}</span>}
           </div>
         </div>
       </CardContent>
       <CardFooter>
         <Button asChild variant="outline" size="sm" className="w-full">
           <Link href={`/predictions/${match.fixture_id}`}>
-            View Details <ArrowRight className="ml-2 h-4 w-4" />
+            View Predictions <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>
       </CardFooter>

@@ -5,7 +5,7 @@ import { useMemo, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowUpRight, Award, Crown, LifeBuoy, Loader2, ShieldCheck, Ticket } from "lucide-react";
+import { ArrowUpRight, Award, Crown, LifeBuoy, Loader2, ShieldCheck, Ticket, Calendar } from "lucide-react";
 import Link from 'next/link';
 import { MatchCard } from "@/components/match-card";
 import { useUser, useFirestore, useCollection } from '@/firebase';
@@ -95,21 +95,21 @@ export default function DashboardPage() {
   }, [firestore]);
 
 
-  const { activePredictionsCount, freePredictions } = useMemo(() => {
-    if (!publishedCategories) return { activePredictionsCount: 0, freePredictions: [] };
+  const { activePredictionsCount, topEvents } = useMemo(() => {
+    if (!publishedCategories) return { activePredictionsCount: 0, topEvents: [] };
 
-    const freeCats = ['secure_trial', 'free_coupon'];
     let count = 0;
-    const free: MatchPrediction[] = [];
+    const allPublished: MatchPrediction[] = [];
 
     for (const cat of publishedCategories) {
         count += cat.predictions.length;
-        if (freeCats.includes(cat.id)) {
-            free.push(...cat.predictions.slice(0, 3)); // Limit to a few for the dashboard
-        }
+        allPublished.push(...cat.predictions);
     }
     
-    return { activePredictionsCount: count, freePredictions: free.slice(0,3) };
+    // Sort all matches by confidence to find the "best" ones
+    const sortedMatches = allPublished.sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+    
+    return { activePredictionsCount: count, topEvents: sortedMatches.slice(0, 2) };
 
   }, [publishedCategories]);
 
@@ -186,23 +186,23 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2"><Ticket /> Today's Free Predictions</CardTitle>
+            <CardTitle className="font-headline flex items-center gap-2"><Calendar /> Today's Events</CardTitle>
             <CardDescription>
-              Here are the top matches available for free today.
+              Here are the top matches available for today.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {freePredictions.length > 0 ? (
-                freePredictions.map((match, index) => (
+            {topEvents.length > 0 ? (
+                topEvents.map((match, index) => (
                   <MatchCard key={`${match.fixture_id}-${index}`} match={match} />
                 ))
             ) : (
-                <p className="text-center text-muted-foreground py-8">No free predictions available today. Check back later!</p>
+                <p className="text-center text-muted-foreground py-8">No highlight events available today. Check back later!</p>
             )}
           </CardContent>
           <CardFooter>
             <Button asChild variant="outline">
-              <Link href="/predictions">View All Free Predictions <ArrowUpRight className="ml-2 h-4 w-4"/></Link>
+              <Link href="/predictions">View All Predictions <ArrowUpRight className="ml-2 h-4 w-4"/></Link>
             </Button>
           </CardFooter>
         </Card>
@@ -264,5 +264,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
