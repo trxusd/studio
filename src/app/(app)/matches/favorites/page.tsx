@@ -42,6 +42,12 @@ export default function FavoriteMatchesPage() {
     React.useEffect(() => {
         const fetchMatchDetails = async () => {
             if (favoritesLoading || !favorites) {
+                // If still loading or no favorites data, do nothing yet.
+                // If not loading and favorites is empty array, it will be handled below.
+                if(!favoritesLoading && !favorites) {
+                    setFavoriteMatches([]);
+                    setDetailsLoading(false);
+                }
                 return;
             }
 
@@ -88,7 +94,7 @@ export default function FavoriteMatchesPage() {
         fetchMatchDetails();
     }, [favorites, favoritesLoading]);
     
-    const isLoading = userLoading || detailsLoading;
+    const isLoading = userLoading || favoritesLoading || detailsLoading;
 
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
