@@ -98,7 +98,7 @@ export default function OfficialPredictionsPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <div className="bg-muted/50 p-4 rounded-lg h-96 overflow-y-auto">
+                        <div className="bg-muted/50 p-4 rounded-lg max-h-96 overflow-y-auto">
                             <pre className="text-xs whitespace-pre-wrap">
                                 {JSON.stringify(predictionResult, null, 2)}
                             </pre>
