@@ -3,18 +3,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { ThumbsUp, MessageSquare, Send, Loader2, ArrowLeft } from "lucide-react";
+import { Send, Loader2, ArrowLeft } from "lucide-react";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { collection, addDoc, serverTimestamp, updateDoc, doc, query, orderBy, writeBatch } from "firebase/firestore";
-import { formatDistanceToNow } from 'date-fns';
+import { collection, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { CommunityPostCard } from "@/components/community-post-card";
 
-type Post = {
+export type Post = {
     id: string;
-    user: { name: string; avatar: string, uid: string; };
+    user: { name: string; avatar: string; uid: string; };
     timestamp: any;
     content: string;
     likes: number;
@@ -69,36 +68,7 @@ export default function CommunityPage() {
             setIsSending(false);
         }
     };
-
-    const handleLike = async (postId: string, currentLikes: number, likedBy: string[]) => {
-        if (!firestore || !user) return;
-        const postRef = doc(firestore, "community-posts", postId);
-        const batch = writeBatch(firestore);
-
-        if (likedBy.includes(user.uid)) {
-            // User has already liked, so unlike
-            const newLikedBy = likedBy.filter(uid => uid !== user.uid);
-            batch.update(postRef, {
-                likes: currentLikes - 1,
-                likedBy: newLikedBy
-            });
-        } else {
-            // User has not liked, so like
-            const newLikedBy = [...likedBy, user.uid];
-            batch.update(postRef, {
-                likes: currentLikes + 1,
-                likedBy: newLikedBy
-            });
-        }
-        await batch.commit();
-    };
     
-    const formatTimestamp = (timestamp: any) => {
-        if (!timestamp) return 'Just now';
-        const date = timestamp.toDate();
-        return `${formatDistanceToNow(date)} ago`;
-    }
-
     if (userLoading || !user) {
         return (
             <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
@@ -131,31 +101,7 @@ export default function CommunityPage() {
             </div>
           )}
           {!postsLoading && posts && posts.map((post) => (
-            <Card key={post.id} className="overflow-hidden mb-6">
-              <CardHeader className="flex flex-row items-center gap-3 space-y-0 p-4">
-                <Avatar>
-                  <AvatarImage src={post.user.avatar} alt={post.user.name} data-ai-hint="person portrait" />
-                  <AvatarFallback>{post.user.name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="grid gap-0.5">
-                  <p className="font-semibold">{post.user.name}</p>
-                  <p className="text-xs text-muted-foreground">{formatTimestamp(post.timestamp)}</p>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <p className="whitespace-pre-wrap">{post.content}</p>
-              </CardContent>
-              <CardFooter className="flex items-center gap-4 bg-muted/50 p-2">
-                <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => handleLike(post.id, post.likes, post.likedBy || [])} disabled={!user}>
-                  <ThumbsUp className={`h-4 w-4 ${post.likedBy?.includes(user.uid) ? 'text-primary fill-current' : ''}`} />
-                  <span>{post.likes}</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  <span>{post.comments}</span>
-                </Button>
-              </CardFooter>
-            </Card>
+            <CommunityPostCard key={post.id} post={post} />
           ))}
            {!postsLoading && (!posts || posts.length === 0) && (
             <div className="text-center text-muted-foreground py-12">
@@ -194,3 +140,4 @@ export default function CommunityPage() {
     </div>
   );
 }
+
