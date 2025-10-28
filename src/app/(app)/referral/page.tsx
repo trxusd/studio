@@ -3,15 +3,23 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { useUser } from "@/firebase";
+import { useUser, useFirestore, useCollection } from "@/firebase";
 import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { Progress } from "@/components/ui/progress";
+import { collection, query, where } from 'firebase/firestore';
+
+type Referral = {
+    id: string;
+    referredUserPlan: string;
+    timestamp: any;
+};
 
 export default function ReferralPage() {
     const { user, loading } = useUser();
+    const firestore = useFirestore();
     const { toast } = useToast();
     const router = useRouter();
 
@@ -20,6 +28,41 @@ export default function ReferralPage() {
             router.push('/login');
         }
     }, [user, loading, router]);
+
+    const referralsQuery = firestore && user ? query(collection(firestore, `users/${user.uid}/referrals`)) : null;
+    const { data: referrals, loading: referralsLoading } = useCollection<Referral>(referralsQuery);
+    
+    const referralProgress = useMemo(() => {
+        const progress = {
+            'VIP 1 (1 Month)': 0,
+            'VIP 2 (3 Months)': 0,
+            'VIP 3 (6 Months)': 0,
+            'VIP 4 (1 Year)': 0,
+            'VIP 5 (Lifetime)': 0,
+        };
+        if (referrals) {
+            referrals.forEach(ref => {
+                // This logic might need adjustment based on exact plan names
+                if (ref.referredUserPlan.includes('Month')) {
+                    progress['VIP 1 (1 Month)']++;
+                }
+                if (ref.referredUserPlan.includes('3 Months')) {
+                    progress['VIP 2 (3 Months)']++;
+                }
+                 if (ref.referredUserPlan.includes('6 Months')) {
+                    progress['VIP 3 (6 Months)']++;
+                }
+                if (ref.referredUserPlan.includes('1 Year')) {
+                    progress['VIP 4 (1 Year)']++;
+                }
+                if (ref.referredUserPlan.includes('Lifetime')) {
+                    progress['VIP 5 (Lifetime)']++;
+                }
+            });
+        }
+        return progress;
+    }, [referrals]);
+
 
     const referralCode = user ? `FWIN-${user.uid.substring(0, 8).toUpperCase()}` : '...';
     
@@ -30,15 +73,6 @@ export default function ReferralPage() {
             title: "Copied to clipboard!",
             description: `Your referral code ${referralCode} is ready to be shared.`,
         });
-    };
-
-    // Mock data for counters. This would be fetched from Firestore in a real implementation.
-    const referralProgress = {
-        'VIP 1 (1 Month)': 0,
-        'VIP 2 (3 Months)': 0,
-        'VIP 3 (6 Months)': 0,
-        'VIP 4 (1 Year)': 0,
-        'VIP 5 (Lifetime)': 0,
     };
 
     const referralTiers = [
@@ -84,7 +118,12 @@ export default function ReferralPage() {
                     <CardDescription>Se senp! Envites 10 zanmi nan yon plan VIP pou w ka jwenn rekonpans ou. Chak nivo se yon sèl fwa.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ul className="space-y-4">
+                   {referralsLoading ? (
+                        <div className="flex justify-center items-center h-40">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                   ): (
+                     <ul className="space-y-4">
                         {referralTiers.map(tier => {
                             const progress = referralProgress[tier.sourcePlan as keyof typeof referralProgress] || 0;
                             const progressPercentage = (progress / 10) * 100;
@@ -108,10 +147,11 @@ export default function ReferralPage() {
                                         </div>
                                         <Progress value={progressPercentage} className="h-2" />
                                     </div>
-                                </li>
+                                li key={tier.id}
                             );
                         })}
                     </ul>
+                   )}
                 </CardContent>
                  <CardFooter className="text-muted-foreground text-sm">
                     <p>Siw deja gen yon plan epi ou rive gen komisyon an ou ka mande li nap transfere ou li.</p>
@@ -131,3 +171,5 @@ export default function ReferralPage() {
         </div>
     );
 }
+
+    
