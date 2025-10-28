@@ -269,7 +269,7 @@ export default function MatchesPage() {
             <p>No matches found for this date.</p>
         </div>
       ) : (
-        <Accordion type="multiple" className="w-full" defaultValue={sortedCountries.map(([country]) => country)}>
+        <Accordion type="multiple" className="w-full">
             {sortedCountries.map(([country, leagues]) => (
             <AccordionItem value={country} key={country}>
                 <AccordionTrigger className="font-bold text-lg hover:no-underline">
@@ -343,3 +343,5 @@ export default function MatchesPage() {
     </div>
   );
 }
+
+    
