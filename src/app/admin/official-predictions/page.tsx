@@ -6,11 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Loader2, PlayCircle, Terminal, FileJson } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { generateOfficialPredictions, type OfficialPredictionsOutput } from "@/ai/flows/generate-official-predictions";
 
 export default function OfficialPredictionsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [logs, setLogs] = useState<string[]>([]);
-    const [predictionResult, setPredictionResult] = useState<object | null>(null);
+    const [predictionResult, setPredictionResult] = useState<OfficialPredictionsOutput | null>(null);
     const { toast } = useToast();
 
     const handleGeneratePredictions = async () => {
@@ -18,47 +19,33 @@ export default function OfficialPredictionsPage() {
         setLogs(['🚀 Starting Football Predictions Generation...']);
         setPredictionResult(null);
 
-        // In a real app, you would call your Firebase Function endpoint here.
-        // For now, this is a simulation.
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setLogs(prev => [...prev, '✅ Fetched matches from API-Football']);
+        try {
+            setLogs(prev => [...prev, '⏳ Fetching matches & running AI analysis... This may take a minute.']);
+            const result = await generateOfficialPredictions();
+            
+            setLogs(prev => [...prev, '✅ AI Analysis and validation complete.']);
+            setLogs(prev => [...prev, '✅ Predictions saved to Firestore.']);
+            setLogs(prev => [...prev, '🎉 Process Finished!']);
+            
+            setPredictionResult(result);
 
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        setLogs(prev => [...prev, '✅ AI Analysis with Claude completed']);
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setLogs(prev => [...prev, '✅ Predictions validated']);
+            toast({
+                title: "Process Complete",
+                description: "Official predictions have been generated and published successfully.",
+            });
 
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setLogs(prev => [...prev, '✅ Saved to Firestore']);
-
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setLogs(prev => [...prev, '✅ Published to website']);
-        
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setLogs(prev => [...prev, '✅ Sent success notification']);
-
-        // Mock prediction result data
-        const mockResult = {
-            secure_trial: { coupon_1: [ { match: 'Man U vs Chelsea', prediction: '1' } ]},
-            exclusive_vip: { 
-                coupon_1: [ { match: 'Real Madrid vs Barca', prediction: 'X' } ], 
-                coupon_2: [], 
-                coupon_3: [] 
-            },
-            individual_vip: [ { match: 'Bayern vs Dortmund', prediction: 'Over 2.5' } ],
-            free_coupon: { coupon_1: [ { match: 'PSG vs Monaco', prediction: '1' } ] },
-            free_individual: [ { match: 'Liverpool vs Arsenal', prediction: 'BTTS' } ],
-        };
-        setPredictionResult(mockResult);
-
-
-        toast({
-            title: "Process Complete",
-            description: "Official predictions have been generated and published successfully.",
-        });
-
-        setIsLoading(false);
+        } catch (error: any) {
+            const errorMessage = error.message || "An unknown error occurred during prediction generation.";
+            console.error(error);
+            setLogs(prev => [...prev, `❌ Error: ${errorMessage}`]);
+            toast({
+                variant: "destructive",
+                title: "Generation Failed",
+                description: errorMessage,
+            });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
