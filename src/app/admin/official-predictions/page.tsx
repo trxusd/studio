@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, PlayCircle, Terminal, FileJson, ChevronDown } from "lucide-react";
+import { Loader2, PlayCircle, Terminal, FileJson, ChevronDown, UploadCloud } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { generateOfficialPredictions } from "@/ai/flows/generate-official-predictions";
@@ -77,8 +77,14 @@ const ResultsDisplay = ({ results }: { results: OfficialPredictionsOutput }) => 
                 <Accordion type="multiple" defaultValue={categories.map(c => c.title)}>
                     {categories.map(category => (
                          <AccordionItem value={category.title} key={category.title}>
-                            <AccordionTrigger className="text-lg font-semibold">
-                                {category.title} ({(category.data || []).length} matches)
+                            <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+                                <div className="flex items-center justify-between w-full">
+                                    <span>{category.title} ({(category.data || []).length} matches)</span>
+                                    <Button size="sm" variant="outline" className="mr-2" onClick={(e) => e.stopPropagation()} disabled>
+                                        <UploadCloud className="mr-2 h-4 w-4" />
+                                        Publish
+                                    </Button>
+                                </div>
                             </AccordionTrigger>
                             <AccordionContent>
                                 <PredictionTable matches={category.data || []} />
@@ -162,7 +168,7 @@ export default function OfficialPredictionsPage() {
                         <CardTitle className="flex items-center gap-2"><Terminal /> Generation Logs</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="bg-muted/50 p-4 rounded-lg h-64 overflow-y-auto">
+                        <div className="bg-muted/50 p-4 rounded-lg overflow-y-auto max-h-96">
                             <pre className="text-xs whitespace-pre-wrap">
                                 {logs.join('\n')}
                             </pre>
