@@ -16,25 +16,28 @@ export function useCollection<T extends DocumentData>(
   const [data, setData] = useState<T[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | null>(null);
+  
+  // Using a ref to hold the query object. This helps prevent re-subscribing on every render.
   const queryRef = useRef(query);
+  
+  // This effect ensures that our ref is always up-to-date if the query prop changes.
+  useEffect(() => {
+    queryRef.current = query;
+  }, [query]);
 
   useEffect(() => {
-    if (query === null) {
+    // If the query is null, we should not proceed.
+    if (!queryRef.current) {
       setData(null);
       setLoading(false);
       return;
     }
-    
-    // Deep compare query to prevent re-running on every render
-    if (queryRef.current && JSON.stringify(queryRef.current) === JSON.stringify(query)) {
-        if (!loading) setLoading(false);
-        return;
-    }
-    queryRef.current = query;
 
     setLoading(true);
+    
+    // Set up the real-time listener.
     const unsubscribe = onSnapshot(
-      query,
+      queryRef.current,
       (snapshot: QuerySnapshot<T>) => {
         const docs = snapshot.docs.map((doc) => ({
           ...doc.data(),
@@ -51,8 +54,9 @@ export function useCollection<T extends DocumentData>(
       }
     );
 
+    // The cleanup function will be called when the component unmounts.
     return () => unsubscribe();
-  }, [query, loading]);
+  }, []); // Empty dependency array means this effect runs only once on mount.
 
   return { data, loading, error };
 }

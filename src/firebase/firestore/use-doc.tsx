@@ -15,25 +15,23 @@ export function useDoc<T extends DocumentData>(
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<FirestoreError | null>(null);
+  
   const refRef = useRef(ref);
 
   useEffect(() => {
-    if (ref === null) {
+    refRef.current = ref;
+  }, [ref]);
+
+  useEffect(() => {
+    if (!refRef.current) {
         setData(null);
         setLoading(false);
         return;
     }
-    
-    // Deep compare ref to prevent re-running on every render
-    if(refRef.current && JSON.stringify(refRef.current) === JSON.stringify(ref)) {
-        if (!loading) setLoading(false);
-        return;
-    }
-    refRef.current = ref;
 
     setLoading(true);
     const unsubscribe = onSnapshot(
-      ref,
+      refRef.current,
       (snapshot: DocumentSnapshot<T>) => {
         if (snapshot.exists()) {
           setData({ ...snapshot.data(), id: snapshot.id });
@@ -51,7 +49,7 @@ export function useDoc<T extends DocumentData>(
     );
 
     return () => unsubscribe();
-  }, [ref, loading]);
+  }, []); // Empty dependency array to run only once on mount
 
   return { data, loading, error };
 }
