@@ -42,8 +42,8 @@ export default function ReferralPage() {
         };
         if (referrals) {
             referrals.forEach(ref => {
-                // This logic might need adjustment based on exact plan names
-                if (ref.referredUserPlan.includes('Month')) {
+                // This logic might need adjustment based on exact plan names from payments page
+                if (ref.referredUserPlan.includes('Month') && !ref.referredUserPlan.includes('3') && !ref.referredUserPlan.includes('6')) {
                     progress['VIP 1 (1 Month)']++;
                 }
                 if (ref.referredUserPlan.includes('3 Months')) {
@@ -147,7 +147,7 @@ export default function ReferralPage() {
                                         </div>
                                         <Progress value={progressPercentage} className="h-2" />
                                     </div>
-                                li key={tier.id}
+                                </li>
                             );
                         })}
                     </ul>
@@ -171,5 +171,3 @@ export default function ReferralPage() {
         </div>
     );
 }
-
-    
