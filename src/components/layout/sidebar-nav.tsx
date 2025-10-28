@@ -82,6 +82,7 @@ export function SidebarNav() {
             <SidebarMenuItem>
                  <SheetTrigger asChild>
                     <SidebarMenuButton
+                      onClick={handleLinkClick}
                       tooltip={{ children: 'Support', side: 'right' }}
                       className="w-full"
                     >
