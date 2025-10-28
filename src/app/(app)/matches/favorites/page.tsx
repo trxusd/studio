@@ -40,8 +40,15 @@ export default function FavoriteMatchesPage() {
     }, [user, userLoading, router]);
 
     React.useEffect(() => {
+        // We wait until the initial loading of favorites is complete
+        if (favoritesLoading) {
+            return;
+        }
+
         const fetchMatchDetails = async () => {
-            if (favoritesLoading || !favorites) {
+            if (!favorites) {
+                setFavoriteMatches([]);
+                setDetailsLoading(false);
                 return;
             }
 
@@ -88,9 +95,10 @@ export default function FavoriteMatchesPage() {
         };
 
         fetchMatchDetails();
+    // This effect should only run when the list of favorites is loaded or changes.
     }, [favorites, favoritesLoading]);
     
-    const isLoading = userLoading || favoritesLoading || detailsLoading;
+    const isLoading = userLoading || detailsLoading;
 
     return (
         <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
