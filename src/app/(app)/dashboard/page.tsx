@@ -1,13 +1,64 @@
 
+'use client';
+
+import { useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { ArrowUpRight, Award, Crown, LifeBuoy } from "lucide-react";
+import { ArrowUpRight, Award, Crown, LifeBuoy, Loader2, ShieldCheck, Ticket } from "lucide-react";
 import Link from 'next/link';
 import { MatchCard } from "@/components/match-card";
-import { matches } from "@/lib/data";
+import { useUser, useFirestore, useCollection } from '@/firebase';
+import { collection, query, where, Timestamp } from 'firebase/firestore';
+import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
+
+type PredictionCategoryDoc = {
+    id: string;
+    predictions: MatchPrediction[];
+};
 
 export default function DashboardPage() {
+  const { user, loading: userLoading } = useUser();
+  const firestore = useFirestore();
+
+  // Fetch user's VIP status
+  const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
+  const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean; vipPlan?: string }>(userQuery);
+  const vipStatus = userData?.[0];
+
+  // Fetch today's predictions
+  const today = new Date().toISOString().split('T')[0];
+  const categoriesQuery = firestore ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
+  const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
+  
+  const { activePredictionsCount, freePredictions } = useMemo(() => {
+    if (!publishedCategories) return { activePredictionsCount: 0, freePredictions: [] };
+
+    const freeCats = ['secure_trial', 'free_coupon'];
+    let count = 0;
+    const free = [];
+
+    for (const cat of publishedCategories) {
+        count += cat.predictions.length;
+        if (freeCats.includes(cat.id)) {
+            free.push(...cat.predictions.slice(0, 3)); // Limit to a few for the dashboard
+        }
+    }
+    
+    return { activePredictionsCount: count, freePredictions: free.slice(0,3) };
+
+  }, [publishedCategories]);
+
+  const isLoading = userLoading || userDataLoading || predictionsLoading;
+
+  if (isLoading) {
+    return (
+        <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    );
+  }
+
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center justify-between space-y-2">
@@ -49,24 +100,10 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Predictions</CardTitle>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              className="h-4 w-4 text-muted-foreground"
-            >
-              <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-              <line x1="16" x2="16" y1="2" y2="6" />
-              <line x1="8" x2="8" y1="2" y2="6" />
-              <line x1="3" x2="21" y1="10" y2="10" />
-            </svg>
+             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+12</div>
+            <div className="text-2xl font-bold">+{activePredictionsCount}</div>
             <p className="text-xs text-muted-foreground">Available today</p>
           </CardContent>
         </Card>
@@ -76,8 +113,8 @@ export default function DashboardPage() {
             <Crown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">Free Plan</div>
-            <p className="text-xs text-muted-foreground">Upgrade for premium predictions</p>
+            <div className="text-2xl font-bold">{vipStatus?.isVip ? vipStatus.vipPlan || 'VIP' : 'Free Plan'}</div>
+            <p className="text-xs text-muted-foreground">{vipStatus?.isVip ? 'You have full access' : 'Upgrade for premium predictions'}</p>
           </CardContent>
         </Card>
       </div>
@@ -85,15 +122,19 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
         <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle className="font-headline">Today&apos;s Free Predictions</CardTitle>
+            <CardTitle className="font-headline flex items-center gap-2"><Ticket /> Today's Free Predictions</CardTitle>
             <CardDescription>
               Here are the top matches available for free today.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {matches.slice(0, 3).map((match) => (
-              <MatchCard key={match.id} match={match} />
-            ))}
+            {freePredictions.length > 0 ? (
+                freePredictions.map((match) => (
+                  <MatchCard key={match.fixture_id} match={match} />
+                ))
+            ) : (
+                <p className="text-center text-muted-foreground py-8">No free predictions available today. Check back later!</p>
+            )}
           </CardContent>
           <CardFooter>
             <Button asChild variant="outline">
@@ -120,14 +161,14 @@ export default function DashboardPage() {
             </ul>
             <div className="mt-6">
                 <h4 className="font-semibold text-yellow-900">Your VIP Progress</h4>
-                <Progress value={25} className="w-full mt-2 [&>div]:bg-yellow-600" />
-                <p className="text-xs text-yellow-700/80 mt-1">You're one step away from joining the winners circle.</p>
+                <Progress value={vipStatus?.isVip ? 100 : 25} className="w-full mt-2 [&>div]:bg-yellow-600" />
+                <p className="text-xs text-yellow-700/80 mt-1">{vipStatus?.isVip ? "You're in the winner's circle!" : "You're one step away from joining."}</p>
             </div>
           </CardContent>
           <CardFooter>
-            <Button asChild className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold shadow-lg">
+            <Button asChild className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold shadow-lg" disabled={!!vipStatus?.isVip}>
                 <Link href="/payments">
-                    Go VIP Now
+                    {vipStatus?.isVip ? 'You are VIP' : 'Go VIP Now'}
                     <Crown className="ml-2 h-4 w-4"/>
                 </Link>
             </Button>
@@ -141,7 +182,7 @@ export default function DashboardPage() {
               <LifeBuoy className="text-primary"/> All Matches
             </CardTitle>
             <CardDescription>
-              Browse all upcoming matches and find your next winning bet.
+              Browse all upcoming fixtures and find your next winning bet.
             </CardDescription>
           </CardHeader>
            <CardContent>
