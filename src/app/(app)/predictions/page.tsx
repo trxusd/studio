@@ -16,6 +16,8 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, query, where } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 
 // Mock subscription status. In a real app, this would come from your database.
 const useVipStatus = (user: any) => {
@@ -118,7 +120,7 @@ export default function PredictionsPage() {
   );
 
   const renderLocked = () => (
-    <div className="flex flex-col items-center justify-center p-4 text-center text-muted-foreground">
+    <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
         <Lock className="h-6 w-6 mb-2"/>
         <p className="text-sm">This section is for VIP members only.</p>
         <Button asChild variant="link" className="text-primary h-auto p-0 mt-1">
@@ -258,22 +260,24 @@ export default function PredictionsPage() {
                             Use your VIP coupons to unlock these premium predictions.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-3">
+                    <CardContent>
                         {isVip ? (
-                          <>
-                              <div>
-                                  <h4 className="font-semibold mb-2">Coupon 1</h4>
-                                  {predictions.exclusive_vip.coupon_1.map(renderMatch)}
-                              </div>
-                              <div>
-                                  <h4 className="font-semibold mb-2">Coupon 2</h4>
-                                  {predictions.exclusive_vip.coupon_2.map(renderMatch)}
-                              </div>
-                              <div>
-                                  <h4 className="font-semibold mb-2">Coupon 3</h4>
-                                  {predictions.exclusive_vip.coupon_3.map(renderMatch)}
-                              </div>
-                          </>
+                          <Tabs defaultValue="coupon1">
+                            <TabsList className="grid w-full grid-cols-3">
+                              <TabsTrigger value="coupon1">Coupon 1</TabsTrigger>
+                              <TabsTrigger value="coupon2" disabled={predictions.exclusive_vip.coupon_2.length === 0}>Coupon 2</TabsTrigger>
+                              <TabsTrigger value="coupon3" disabled={predictions.exclusive_vip.coupon_3.length === 0}>Coupon 3</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="coupon1" className="pt-4 space-y-1">
+                                {predictions.exclusive_vip.coupon_1.map(renderMatch)}
+                            </TabsContent>
+                            <TabsContent value="coupon2" className="pt-4 space-y-1">
+                                {predictions.exclusive_vip.coupon_2.map(renderMatch)}
+                            </TabsContent>
+                            <TabsContent value="coupon3" className="pt-4 space-y-1">
+                                {predictions.exclusive_vip.coupon_3.map(renderMatch)}
+                            </TabsContent>
+                          </Tabs>
                         ) : renderLocked()}
                     </CardContent>
                   </Card>
