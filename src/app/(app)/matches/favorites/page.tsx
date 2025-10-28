@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, query } from 'firebase/firestore';
+import { collection, query, doc, deleteDoc, setDoc } from 'firebase/firestore';
 import { Loader2, ArrowLeft, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -14,6 +14,8 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 type Favorite = { id: string; addedAt: any };
 
@@ -31,7 +33,9 @@ type FavoriteMatch = {
     fixture_id: number;
     match: string;
     home_team: string;
+    home_team_logo: string;
     away_team: string;
+    away_team_logo: string;
     league: string;
     time: string;
     country: string;
@@ -46,7 +50,9 @@ function mapApiMatchToFavoriteMatch(apiMatch: ApiMatchResponse): FavoriteMatch {
         fixture_id: apiMatch.fixture.id,
         match: `${apiMatch.teams.home.name} vs ${apiMatch.teams.away.name}`,
         home_team: apiMatch.teams.home.name,
+        home_team_logo: apiMatch.teams.home.logo,
         away_team: apiMatch.teams.away.name,
+        away_team_logo: apiMatch.teams.away.logo,
         league: apiMatch.league.name,
         time: apiMatch.fixture.date,
         country: apiMatch.league.country,
@@ -58,6 +64,7 @@ function mapApiMatchToFavoriteMatch(apiMatch: ApiMatchResponse): FavoriteMatch {
 export default function FavoriteMatchesPage() {
   const { user } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
   
   const [groupedMatches, setGroupedMatches] = React.useState<GroupedMatches>({});
   const [isLoading, setIsLoading] = React.useState(true);
@@ -65,23 +72,29 @@ export default function FavoriteMatchesPage() {
 
   const favoritesQuery = firestore && user ? query(collection(firestore, `users/${user.uid}/favorites`)) : null;
   const { data: favorites, loading: favoritesLoading } = useCollection<Favorite>(favoritesQuery);
+  const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
+
 
   React.useEffect(() => {
     const fetchMatchDetails = async () => {
-      if (favoritesLoading || !favorites) return;
+      if (favoritesLoading) return; // Wait until favorites are loaded
       
-      setTotalFavorites(favorites.length);
+      setIsLoading(true);
       
-      if (favorites.length === 0) {
-        setIsLoading(false);
+      if (!favorites || favorites.length === 0) {
+        setTotalFavorites(0);
         setGroupedMatches({});
+        setIsLoading(false);
         return;
       }
       
+      setTotalFavorites(favorites.length);
       const favoriteIds = favorites.map(f => f.id);
       
       try {
         const matchPromises = favoriteIds.map(async (id) => {
+          // Note: This makes one fetch per favorite. For very large lists,
+          // a single backend endpoint that takes all IDs would be more performant.
           const response = await fetch(`/api/matches?id=${id}`);
           if (response.ok) {
             const data = await response.json();
@@ -113,11 +126,45 @@ export default function FavoriteMatchesPage() {
       }
     };
     
-    // This effect runs only when the loading state of favorites changes.
-    // When favoritesLoading becomes false, we know if we have favorites to fetch.
     fetchMatchDetails();
 
   }, [favorites, favoritesLoading]);
+
+  const handleFavoriteToggle = async (e: React.MouseEvent, fixtureId: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!user || !firestore) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to add favorites.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const fixtureIdStr = String(fixtureId);
+    const isFavorite = favoriteIds.has(fixtureIdStr);
+    const favoriteRef = doc(firestore, `users/${user.uid}/favorites/${fixtureIdStr}`);
+
+    try {
+      if (isFavorite) {
+        await deleteDoc(favoriteRef);
+        toast({ title: "Removed from favorites." });
+      } else {
+        // This case is unlikely on this page, but good to have
+        await setDoc(favoriteRef, { addedAt: new Date() });
+        toast({ title: "Added to favorites!" });
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      toast({
+        title: "Error",
+        description: "Could not update your favorites.",
+        variant: "destructive"
+      });
+    }
+  };
 
   const sortedCountries = Object.entries(groupedMatches).sort(([a], [b]) => a.localeCompare(b));
 
@@ -162,18 +209,23 @@ export default function FavoriteMatchesPage() {
                       {leagueMatches.map(match => (
                         <Link href={`/predictions/${match.fixture_id}`} key={match.fixture_id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
                           <div className="flex items-center gap-4">
-                            <div className="flex flex-col gap-2">
+                             <div className="flex flex-col gap-2">
                               <div className="flex items-center gap-2">
+                                <Image src={match.home_team_logo} alt={match.home_team} width={20} height={20} data-ai-hint="sports logo" />
                                 <span className="font-medium">{match.home_team}</span>
                               </div>
                               <div className="flex items-center gap-2">
+                                <Image src={match.away_team_logo} alt={match.away_team} width={20} height={20} data-ai-hint="sports logo" />
                                 <span className="font-medium">{match.away_team}</span>
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center gap-4">
-                            <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                          </div>
+                          <Button variant="ghost" size="icon" onClick={(e) => handleFavoriteToggle(e, match.fixture_id)} className="h-8 w-8">
+                              <Star className={cn(
+                                  "h-5 w-5 text-muted-foreground/50 group-hover:text-yellow-400 transition-colors",
+                                  favoriteIds.has(String(match.fixture_id)) && "text-yellow-400 fill-yellow-400"
+                              )} />
+                          </Button>
                         </Link>
                       ))}
                     </div>
