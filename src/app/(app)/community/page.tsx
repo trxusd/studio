@@ -40,6 +40,8 @@ export default function CommunityPage() {
     const posts = useMemo(() => {
         const p = pinnedPosts || [];
         const u = unpinnedPosts || [];
+        // Make sure pinned posts are always at the top
+        p.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
         return [...p, ...u];
     }, [pinnedPosts, unpinnedPosts]);
     
@@ -73,7 +75,7 @@ export default function CommunityPage() {
                 likes: 0,
                 comments: 0,
                 likedBy: [],
-                isPinned: false,
+                isPinned: false, // Explicitly set isPinned to false
             });
             setNewMessage("");
         } catch (error) {
