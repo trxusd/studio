@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
@@ -7,6 +8,7 @@ import { type Auth } from 'firebase/auth';
 import { type Firestore } from 'firebase/firestore';
 
 export function FirebaseClientProvider({ children }: { children: ReactNode }) {
+  // We initialize the state with null, but we will always render children.
   const [firebase, setFirebase] = useState<{
     app: FirebaseApp;
     auth: Auth;
@@ -21,9 +23,12 @@ export function FirebaseClientProvider({ children }: { children: ReactNode }) {
     setFirebase({ app, auth, firestore });
   }, []);
 
+  // While firebase is initializing, we can still render the children.
+  // The hooks like `useAuth` will simply not return an instance until initialization is complete.
   if (!firebase) {
-    // You can render a loader here if you want
-    return null;
+    // Render children inside a dummy provider or just children directly.
+    // This prevents the server/client mismatch.
+    return <>{children}</>;
   }
 
   return (
