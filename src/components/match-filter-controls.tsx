@@ -40,22 +40,23 @@ export function MatchFilterControls({ selectedDate, isVip }: MatchFilterControls
 
 
     return (
-        <div className="flex flex-wrap items-center gap-2">
-            <Link href="/matches/live" passHref>
-                <Button variant="outline">
-                    <Radio className="mr-2 h-4 w-4 text-red-500" /> LIVE
-                </Button>
-            </Link>
-             <Link href="/matches/favorites" passHref>
-                <Button variant="outline">
-                    <Star className="mr-2 h-4 w-4 text-yellow-400" /> Favorites
-                </Button>
-            </Link>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" asChild>
+                <Link href="/matches/live" className="flex items-center gap-2">
+                    <Radio className="h-4 w-4 text-red-500" />
+                    <span>LIVE</span>
+                </Link>
+            </Button>
+            <div className="flex-grow"></div>
+             <Button variant="outline" size="icon" asChild>
+                <Link href="/matches/favorites">
+                    <Star className="h-4 w-4 text-yellow-400" />
+                </Link>
+            </Button>
             <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
-                <Button variant="outline" className={cn(!date && 'text-muted-foreground')}>
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {date ? format(adjustedDate, 'PPP') : <span>Pick a date</span>}
+                <Button variant="outline" size="icon" className={cn(!date && 'text-muted-foreground')}>
+                    <CalendarIcon className="h-4 w-4" />
                 </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -68,11 +69,12 @@ export function MatchFilterControls({ selectedDate, isVip }: MatchFilterControls
                 </PopoverContent>
             </Popover>
             {!isVip && (
-                <Link href="/payments" passHref>
-                    <Button className="bg-yellow-500 hover:bg-yellow-600 text-primary-foreground">
-                        <Crown className="mr-2 h-4 w-4" /> Become a VIP Member
-                    </Button>
-                </Link>
+                <Button asChild className="bg-yellow-500 hover:bg-yellow-600 text-primary-foreground">
+                    <Link href="/payments">
+                        <Crown className="mr-2 h-4 w-4" /> 
+                        <span>Subscription</span>
+                    </Link>
+                </Button>
             )}
         </div>
     );

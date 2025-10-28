@@ -199,18 +199,6 @@ function MatchesPageContent() {
     }
   }, [debouncedSearchQuery]);
 
-  const getMatchStatus = (status: Fixture['status'], date: string) => {
-    const time = new Date(date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
-    
-    switch (status.short) {
-        case 'NS': return time; // Not Started
-        case 'FT': return 'FT'; // Full Time
-        case 'HT': return 'HT'; // Halftime
-        default:
-            return status.elapsed ? `${status.elapsed}'` : status.short;
-    }
-  };
-
   const getStatusContent = (match: ApiMatch) => {
     const status = match.fixture.status;
     const date = match.fixture.date;
@@ -218,9 +206,7 @@ function MatchesPageContent() {
 
     switch (status.short) {
         case 'FT':
-        case 'AET': // After Extra Time
-        case 'PEN': // Penalty shootout
-            return <span className='font-normal text-xs'>{format(new Date(date), 'HH:mm')}</span>;
+             return <span className='font-normal text-xs'>{format(new Date(date), 'dd/MM HH:mm')}</span>;
         
         case 'NS':
             return <span className="font-bold text-primary">{time}</span>;
@@ -332,8 +318,8 @@ function MatchesPageContent() {
       </div>
 
       {/* Control Bar */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-2 border-b">
-         <div className="relative mb-4">
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm -mx-4 md:-mx-8 px-4 md:px-8 py-2 border-b space-y-2">
+         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input 
             type="search" 
