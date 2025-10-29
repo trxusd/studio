@@ -32,7 +32,7 @@ const guideSections = [
 - **Accueil** : Votre tableau de bord central avec un résumé des prédictions du jour et les actualités.
 - **Matchs** : Explorez tous les matchs disponibles, filtrez par date, ligue ou pays.
 - **Statistiques** : Visualisez les performances passées de nos prédictions (taux de réussite, victoires, pertes).
-- **Prédictions** : Accédez aux catégories de prédictions gratuites et VIP.
+- **Prédictions** : Accédez aux catégories de prédictions gratuites et Subscription.
 - **Communauté** : Un espace de chat pour discuter avec d'autres utilisateurs et partager des analyses.
 - **Support** : Contactez notre équipe d'assistance via le chatbot IA 24/7.`
     },
@@ -40,7 +40,7 @@ const guideSections = [
         icon: BarChart3,
         title: "4. Système de Prédictions",
         content: `
-- **Prédictions Gratuites vs. VIP** : Les prédictions VIP sont basées sur des analyses plus poussées et ont un niveau de confiance plus élevé.
+- **Prédictions Gratuites vs. Subscription** : Les prédictions Subscription sont basées sur des analyses plus poussées et ont un niveau de confiance plus élevé.
 - **Comment lire une prédiction** : Chaque prédiction inclut le match, le type de pari (ex: "Victoire Équipe A", "Plus de 2.5 buts"), la cote, et un indice de confiance.
 - **Analyse détaillée** : Pour chaque match, nous fournissons des statistiques clés comme les confrontations directes (H2H), la forme récente, le classement et les performances à domicile/extérieur.`
     },
@@ -49,14 +49,14 @@ const guideSections = [
         title: "5. Système de Coupons",
         content: `
 - **Coupons Gratuits** : Disponibles dans la section "Prédictions", ils regroupent plusieurs matchs gratuits.
-- **Coupons VIP** : Accessibles via un abonnement, ils offrent des cotes combinées plus élevées.
+- **Coupons Subscription** : Accessibles via un abonnement, ils offrent des cotes combinées plus élevées.
 - **Utilisation** : Sélectionnez un coupon pour voir la liste des matchs. Les cotes totales sont calculées automatiquement.`
     },
     {
         icon: Crown,
-        title: "6. Abonnements et Accès VIP",
+        title: "6. Abonnements et Accès Subscription",
         content: `
-- **Avantages VIP** : Accès à des prédictions exclusives, des analyses plus profondes et des coupons à plus fort potentiel.
+- **Avantages Subscription** : Accès à des prédictions exclusives, des analyses plus profondes et des coupons à plus fort potentiel.
 - **Modes de Paiement** : Nous acceptons MonCash, NatCash, et les crypto-monnaies (USDT).
 - **Gestion** : Rendez-vous dans la section "Paiements" pour activer ou renouveler votre abonnement.`
     },

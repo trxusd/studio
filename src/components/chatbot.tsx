@@ -52,7 +52,7 @@ export function Chatbot() {
     }
   };
   
-  const quickReplies = ["What is VIP?", "How to pay?", "What are the rules?"];
+  const quickReplies = ["What is Subscription?", "How to pay?", "What are the rules?"];
 
   return (
     <SheetContent className="flex flex-col">

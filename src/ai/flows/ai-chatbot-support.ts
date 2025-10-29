@@ -36,23 +36,23 @@ const KNOWLEDGE_BASE = `
 - Fonksyon prensipal: bay prediksyon foutbòl avèk analiz avanse, epi ede itilizatè pran pi bon desizyon nan parye yo.
 - Seksyon prensipal yo:
   - Paj prensipal: montre dènye prediksyon, estatistik, ak rezilta yo.
-  - VIP: se zòn espesyal kote sèlman abònen jwenn prediksyon ki gen plis fyab, ak rapò detaye.
-  - Peman: kote itilizatè yo ka peye plan VIP yo.
+  - Subscription: se zòn espesyal kote sèlman abònen jwenn prediksyon ki gen plis fyab, ak rapò detaye.
+  - Peman: kote itilizatè yo ka peye plan Subscription yo.
   - Kominote: espas chat kote manm yo ka fè deba, poze kesyon, epi pataje opinyon.
 - Mizajou: chak nouvo vèsyon pote amelyorasyon (egzanp: plis endikatè analiz, plis opsyon peman, amelyorasyon sekirite).
 
-2. Itilizasyon VIP
-- Kisa VIP ye? Yon sèvis espesyal ki ouvri pòt pou prediksyon pwofesyonèl ki gen plis konfyans.
+2. Itilizasyon Subscription
+- Kisa Subscription ye? Yon sèvis espesyal ki ouvri pòt pou prediksyon pwofesyonèl ki gen plis konfyans.
 - Pri abònman yo:
   - Vip1/semèn: 5$
   - Vip2/mwa : 15$
   - Vip3/6mwa: 70$
   - Vip4/anyèl: 100$
-- Avantaj VIP yo:
+- Avantaj Subscription yo:
   - Prediksyon ak yon nivo fyab ki pi wo.
   - Notifikasyon rapid sou telefòn ou (push alerts).
   - Rapò detaye ak estatistik analiz pou chak match.
-- Periòd gratis: nouvo itilizatè yo ka jwi yon peryòd tès gratis anvan yo pran abònman VIP.
+- Periòd gratis: nouvo itilizatè yo ka jwi yon peryòd tès gratis anvan yo pran abònman Subscription.
 
 3. Peman
 - Mwayen aksepte:
@@ -66,7 +66,7 @@ const KNOWLEDGE_BASE = `
   3. Antre montan / konfime.
   4. Resevwa konfimasyon sou app la.
 - Tan pwosesis: pifò tranzaksyon yo trete an mwens ke 5 minit.
-- Verifikasyon: apre peman, estati abònman ou vin VIP otomatikman.
+- Verifikasyon: apre peman, estati abònman ou vin Subscription otomatikman.
 
 4. Prediksyon & Analiz
 - Ki jan pou li prediksyon yo: chak match gen siy (1 = lakay, X = egal, 2 = deplasman) ak yon pousantaj fyab.
@@ -101,7 +101,7 @@ const KNOWLEDGE_BASE = `
   1. Fè logout epi relogin.
   2. Reyinisyalize koneksyon entènèt ou.
   3. Reyinstale app la si nesesè.
-- Kontakte sipò: sèlman atravè seksyon sipò nan aplikasyon an (footbetwin2025@gmail.com).
+- Kontakte sipò: sèlman atravè seksyon sipò nan aplikasyon an (footbetwin2025@gmail.com). Lòt administratè tankou @TRX USDT ka jwenn nan kominote a.
 `;
 
 const aiChatbotSupportPrompt = ai.definePrompt({
