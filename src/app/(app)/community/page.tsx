@@ -99,9 +99,9 @@ export default function CommunityPage() {
               </Link>
             </Button>
             <div>
-              <h2 className="font-headline text-3xl font-bold tracking-tight">Community tchat</h2>
+              <h2 className="font-headline text-3xl font-bold tracking-tight">Community Chat</h2>
               <p className="text-muted-foreground">
-                  Antre nan chat la, pataje prediksyon ou, epi konekte ak lòt itilizatè.
+                  Join the chat, share your predictions, and connect with other users.
               </p>
             </div>
         </div>
@@ -126,7 +126,7 @@ export default function CommunityPage() {
           ))}
            {!postsLoading && (!posts || posts.length === 0) && (
             <div className="text-center text-muted-foreground py-12">
-              <p>Pa gen mesaj nan chat la pou kounye a. Fè premye a!</p>
+              <p>No messages in the chat yet. Be the first to post!</p>
             </div>
           )}
         </div>
