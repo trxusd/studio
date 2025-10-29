@@ -13,8 +13,15 @@ import { StatisticsChart } from '@/components/statistics-chart';
 type Period = 'yesterday' | '7d' | '15d' | '30d';
 
 type MatchResult = {
-    status: 'Win' | 'Loss';
+    status?: 'Win' | 'Loss' | 'Pending';
+    [key: string]: any;
 };
+
+type PredictionDoc = {
+    predictions: MatchResult[];
+    date: Timestamp;
+};
+
 
 type Stats = {
     wins: number;
@@ -61,29 +68,31 @@ async function fetchPredictionStats(firestore: any, period: Period): Promise<Sta
     const predictionsByDate: Record<string, { wins: number, losses: number }> = {};
 
     const q = query(
-        collectionGroup(firestore, 'predictions'),
-        where('status', 'in', ['Win', 'Loss']),
+        collectionGroup(firestore, 'categories'),
         where('date', '>=', Timestamp.fromDate(startDate)),
         where('date', '<=', Timestamp.fromDate(endDate))
     );
     
     const querySnapshot = await getDocs(q);
-    const results: MatchResult[] = querySnapshot.docs.flatMap(doc => {
-        const data = doc.data();
-        const docDate = (data.date as Timestamp).toDate();
-        const dateKey = docDate.toISOString().split('T')[0];
+    
+    querySnapshot.docs.forEach(doc => {
+        const data = doc.data() as PredictionDoc;
+        if (data && Array.isArray(data.predictions)) {
+            const docDate = data.date.toDate();
+            const dateKey = docDate.toISOString().split('T')[0];
 
-        if (!predictionsByDate[dateKey]) {
-            predictionsByDate[dateKey] = { wins: 0, losses: 0 };
-        }
+            if (!predictionsByDate[dateKey]) {
+                predictionsByDate[dateKey] = { wins: 0, losses: 0 };
+            }
 
-        if (data.status === 'Win') {
-            predictionsByDate[dateKey].wins++;
-        } else if (data.status === 'Loss') {
-            predictionsByDate[dateKey].losses++;
+            data.predictions.forEach(prediction => {
+                if (prediction.status === 'Win') {
+                    predictionsByDate[dateKey].wins++;
+                } else if (prediction.status === 'Loss') {
+                    predictionsByDate[dateKey].losses++;
+                }
+            });
         }
-        
-        return data.predictions || [];
     });
 
     let totalWins = 0;
