@@ -5,13 +5,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppLogo } from "@/components/icons";
-import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft, Bot, Loader2, UserCog } from "lucide-react";
+import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft, Bot, Loader2, UserCog, Megaphone } from "lucide-react";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const navItems = [
     { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
+    { href: "/admin/announcements", icon: Megaphone, label: "Announcements" },
     { href: "/admin/users", icon: Users, label: "Users" },
     { href: "/admin/payment-verification", icon: CheckCheck, label: "Payment Verification" },
     { href: "/admin/vip-manager", icon: UserCog, label: "VIP Manager" },
