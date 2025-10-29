@@ -139,7 +139,7 @@ const legalContent = {
     disclaimer: {
       title: 'Avètisman',
       content:
-        'FOOTBET-WIN bay prediksyon estatistik pou plezi. Pa gen okenn rezilta garanti. Itilizasyon entèdi nan peyi kote paryaj espòtif entèdi.',
+        'FOOTBET-WIN bay prediksyon ki baze sou estatistik ak fòm ekip yo. Pa gen okenn rezilta ki garanti a 100% . Itilizasyon an entèdi nan peyi kote parayj espò yo ilegal.',
     },
   },
   en: {
@@ -196,7 +196,7 @@ const legalContent = {
     disclaimer: {
       title: 'Disclaimer',
       content:
-        'FOOTBET-WIN provides statistical predictions for entertainment purposes. No results are guaranteed. Use is prohibited in countries where sports betting is illegal.',
+        'FOOTBET-WIN provides predictions based on team statistics and form. No result is guaranteed at 100%. Use is prohibited in countries where sports betting is illegal.',
     },
   },
 };
