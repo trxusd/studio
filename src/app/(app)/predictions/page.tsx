@@ -98,7 +98,7 @@ const LockedVipCard = ({ title }: { title: string }) => (
 );
 
 const VipSectionSkeleton = () => (
-    <>
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Card className="border-yellow-500/30 bg-yellow-400/5">
             <CardHeader>
                 <Skeleton className="h-6 w-3/4" />
@@ -128,12 +128,12 @@ const VipSectionSkeleton = () => (
                  <Skeleton className="h-10 w-full" />
             </CardContent>
         </Card>
-    </>
+    </div>
 );
 
 const PaidSectionContent = ({ predictions, isVip, isLoading }: { predictions: any, isVip: boolean, isLoading: boolean }) => {
     if (isLoading) {
-        return <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"><VipSectionSkeleton /></div>;
+        return <VipSectionSkeleton />;
     }
 
     if (!isVip) {
@@ -183,21 +183,12 @@ export default function PredictionsPage() {
   const router = useRouter();
   const firestore = useFirestore();
 
-  const [publishedCategories, setPublishedCategories] = useState<PredictionCategoryDoc[] | null>(null);
-  const [predictionsLoading, setPredictionsLoading] = useState(true);
-
   const today = new Date().toISOString().split('T')[0];
   const categoriesQuery = firestore 
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
     : null;
     
-  const { data, loading: collectionLoading, error } = useCollection<PredictionCategoryDoc>(categoriesQuery);
-
-  useEffect(() => {
-    setPublishedCategories(data);
-    setPredictionsLoading(collectionLoading);
-    if(error) console.error("Error fetching predictions:", error);
-  }, [data, collectionLoading, error]);
+  const { data: publishedCategories, loading: predictionsLoading, error } = useCollection<PredictionCategoryDoc>(categoriesQuery);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -205,7 +196,7 @@ export default function PredictionsPage() {
     }
   }, [user, userLoading, router]);
 
-  const isLoading = userLoading || vipLoading;
+  const isLoading = userLoading || vipLoading || predictionsLoading;
 
   const predictions = useMemo(() => {
     const structuredData: {
@@ -234,7 +225,7 @@ export default function PredictionsPage() {
     return structuredData;
   }, [publishedCategories]);
 
-  if (isLoading) {
+  if (userLoading || vipLoading) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -266,6 +257,12 @@ export default function PredictionsPage() {
           Choose a category to see the available predictions for today.
         </p>
       </div>
+
+       {predictionsLoading && (
+         <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+         </div>
+       )}
 
        {noPredictionsAvailable && !predictionsLoading && (
         <Card className='text-center p-12'>
@@ -329,7 +326,7 @@ export default function PredictionsPage() {
                       </Link>
                     )}
                 </div>
-                <PaidSectionContent predictions={predictions} isVip={isVip} isLoading={predictionsLoading || vipLoading} />
+                <PaidSectionContent predictions={predictions} isVip={isVip} isLoading={isLoading} />
               </section>
             )}
         </>
