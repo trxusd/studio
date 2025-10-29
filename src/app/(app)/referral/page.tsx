@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2, Crown, ArrowLeft } from "lucide-react";
+import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -17,6 +17,15 @@ type Referral = {
     referredUserPlan: string;
     timestamp: any;
 };
+
+// Moved referralTiers outside the component and simplified the icon definition.
+const referralTiers = [
+    { id: 1, sourcePlan: "VIP 1 (1 Month)", reward: "Free VIP 2 Plan", icon: UserPlus },
+    { id: 2, sourcePlan: "VIP 2 (3 Months)", reward: "Free VIP 3 Plan", icon: Star },
+    { id: 3, sourcePlan: "VIP 3 (6 Months)", reward: "Free VIP 4 Plan", icon: Award },
+    { id: 4, sourcePlan: "VIP 4 (1 Year)", reward: "Free VIP 5 Plan", icon: Gift }, // Changed from Crown to Gift for variety
+    { id: 5, sourcePlan: "VIP 5 (Lifetime)", reward: "$300 USD Cash", icon: DollarSign },
+];
 
 export default function ReferralPage() {
     const { user, loading } = useUser();
@@ -43,7 +52,6 @@ export default function ReferralPage() {
         };
         if (referrals) {
             referrals.forEach(ref => {
-                // Ensure ref and referredUserPlan are valid before processing
                 if (ref && typeof ref.referredUserPlan === 'string') {
                     if (ref.referredUserPlan.includes('Month') && !ref.referredUserPlan.includes('3') && !ref.referredUserPlan.includes('6')) {
                         progress['VIP 1 (1 Month)']++;
@@ -77,14 +85,6 @@ export default function ReferralPage() {
             description: `Your referral code ${referralCode} is ready to be shared.`,
         });
     };
-
-    const referralTiers = [
-        { id: 1, sourcePlan: "VIP 1 (1 Month)", reward: "Free VIP 2 Plan", icon: <UserPlus className="text-primary"/> },
-        { id: 2, sourcePlan: "VIP 2 (3 Months)", reward: "Free VIP 3 Plan", icon: <Star className="text-primary"/> },
-        { id: 3, sourcePlan: "VIP 3 (6 Months)", reward: "Free VIP 4 Plan", icon: <Award className="text-primary"/> },
-        { id: 4, sourcePlan: "VIP 4 (1 Year)", reward: "Free VIP 5 Plan", icon: <Crown className="text-primary"/> },
-        { id: 5, sourcePlan: "VIP 5 (Lifetime)", reward: "$300 USD Cash", icon: <DollarSign className="text-primary"/> },
-    ];
 
     if (loading || !user) {
          return (
@@ -136,12 +136,15 @@ export default function ReferralPage() {
                    ): (
                      <ul className="space-y-4">
                         {referralTiers.map(tier => {
+                            const Icon = tier.icon; // Get the component reference
                             const progress = referralProgress[tier.sourcePlan as keyof typeof referralProgress] || 0;
                             const progressPercentage = (progress / 10) * 100;
                             return (
                                 <li key={tier.id} className="flex flex-col gap-3 p-4 bg-muted/50 rounded-lg">
                                     <div className="flex items-center gap-4">
-                                        <div className="p-2 bg-primary/10 rounded-full">{tier.icon}</div>
+                                        <div className="p-2 bg-primary/10 rounded-full">
+                                            <Icon className="text-primary"/>
+                                        </div>
                                         <div className="flex-1">
                                             <p className="font-semibold">
                                                 Invite 10 users to <span className="text-primary">{tier.sourcePlan}</span>
