@@ -17,31 +17,6 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, query, where } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
-import { Skeleton } from '@/components/ui/skeleton';
-
-// Custom hook to get real-time VIP status, simplified and more robust.
-const useVipStatus = (user: any) => {
-  const firestore = useFirestore();
-  const [isVip, setIsVip] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  const userQuery = useMemo(() => {
-    if (!user || !firestore) return null;
-    return query(collection(firestore, 'users'), where('uid', '==', user.uid));
-  }, [user, firestore]);
-
-  const { data: userData, loading: userLoadingHook } = useCollection<{ isVip?: boolean }>(userQuery);
-
-  useEffect(() => {
-    if (!userLoadingHook) {
-      setIsVip(!!userData?.[0]?.isVip);
-      setLoading(false);
-    }
-  }, [userData, userLoadingHook]);
-
-  return { isVip, loading };
-};
-
 
 type PredictionCategoryDoc = {
     id: string;
@@ -83,30 +58,7 @@ const renderCouponCard = (id: string, title: string, description: string, icon: 
     );
 }
 
-const LockedVipCard = ({ title }: { title: string }) => (
-    <Card className="border-yellow-500/30 bg-yellow-400/5 flex flex-col justify-center">
-        <CardContent className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground h-full">
-            <Lock className="h-6 w-6 mb-2"/>
-            <p className="font-semibold">{title}</p>
-            <p className="text-sm">This section is for VIP members only.</p>
-            <Button asChild variant="link" className="text-primary h-auto p-0 mt-1">
-                <Link href="/payments">Go VIP</Link>
-            </Button>
-        </CardContent>
-    </Card>
-);
-
-const PaidSectionContent = ({ predictions, isVip }: { predictions: any, isVip: boolean }) => {
-    if (!isVip) {
-        return (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <LockedVipCard title="Exclusive VIP 1" />
-                <LockedVipCard title="Exclusive VIP 2" />
-                <LockedVipCard title="Exclusive VIP 3" />
-            </div>
-        );
-    }
-
+const PaidSectionContent = ({ predictions }: { predictions: any }) => {
     return (
         <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -140,7 +92,6 @@ const PaidSectionContent = ({ predictions, isVip }: { predictions: any, isVip: b
 
 export default function PredictionsPage() {
   const { user, loading: userLoading } = useUser();
-  const { isVip, loading: vipLoading } = useVipStatus(user);
   const router = useRouter();
   const firestore = useFirestore();
 
@@ -158,7 +109,7 @@ export default function PredictionsPage() {
   }, [user, userLoading, router]);
 
   // Unified loading state
-  const isLoading = userLoading || vipLoading || predictionsLoading;
+  const isLoading = userLoading || predictionsLoading;
 
   const predictions = useMemo(() => {
     const structuredData = {
@@ -265,16 +216,8 @@ export default function PredictionsPage() {
                             Unlock access to our VIP predictions for the best chance to win.
                         </p>
                     </div>
-                    {!isVip && (
-                      <Link href="/payments" passHref>
-                          <Button className="bg-yellow-600 hover:bg-yellow-700 text-primary-foreground font-bold shrink-0">
-                              Go VIP
-                              <Crown className="ml-2 h-4 w-4" />
-                          </Button>
-                      </Link>
-                    )}
                 </div>
-                <PaidSectionContent predictions={predictions} isVip={isVip} />
+                <PaidSectionContent predictions={predictions} />
               </section>
             )}
         </>
