@@ -64,11 +64,18 @@ export function NavMenu() {
 
   return (
     <div className="space-y-8">
+        <h3 className="font-headline text-xl font-bold tracking-tight text-center">
+            Toutes les fonctionnalités
+        </h3>
+        <p className="text-sm text-muted-foreground text-center -mt-6">
+            Naviguez facilement vers toutes les sections de l'application
+        </p>
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {menuItems.map((item) => {
              if (item.adminOnly && !isUserAdmin) {
                 return null;
             }
+            const Icon = item.icon;
             if (item.isSheetTrigger) {
                 return (
                     <SheetTrigger asChild key={item.label}>
@@ -77,7 +84,7 @@ export function NavMenu() {
                             className="flex flex-col items-center justify-center h-28 gap-2 text-center bg-card rounded-lg shadow-md hover:bg-accent transition-all"
                         >
                              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary">
-                                <item.icon className="h-6 w-6" />
+                                <Icon className="h-6 w-6" />
                             </div>
                             <span className="text-xs font-semibold uppercase tracking-wider">{item.label}</span>
                         </Button>
@@ -93,7 +100,7 @@ export function NavMenu() {
               >
                 <Link href={item.href}>
                   <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary">
-                    <item.icon className="h-6 w-6" />
+                    <Icon className="h-6 w-6" />
                   </div>
                   <span className="text-xs font-semibold uppercase tracking-wider">{item.label}</span>
                 </Link>
@@ -105,13 +112,16 @@ export function NavMenu() {
         <div className="text-center space-y-4">
             <h3 className="font-headline text-2xl font-bold tracking-tight">Follow Us</h3>
             <div className="flex justify-center gap-4">
-                 {socialItems.map(item => (
-                    <Button key={item.label} variant="outline" size="icon" className="h-14 w-14 rounded-full" asChild>
-                        <Link href={item.href} target="_blank">
-                            <item.icon className="h-6 w-6" />
-                        </Link>
-                    </Button>
-                ))}
+                 {socialItems.map(item => {
+                    const Icon = item.icon;
+                    return (
+                        <Button key={item.label} variant="outline" size="icon" className="h-14 w-14 rounded-full" asChild>
+                            <Link href={item.href} target="_blank">
+                                <Icon className="h-6 w-6" />
+                            </Link>
+                        </Button>
+                    )
+                })}
                  <Button variant="outline" size="icon" className="h-14 w-14 rounded-full font-bold text-lg" asChild>
                     <Link href="https://1xbet.com?bf=68f9194d20b32_12344064745" target="_blank">
                         1x
