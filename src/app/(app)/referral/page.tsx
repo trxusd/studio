@@ -96,94 +96,96 @@ export default function ReferralPage() {
     }
 
     return (
-        <div className="flex-1 space-y-6 p-4 pt-6 md:p-8">
-            <div className="flex items-center justify-between">
-                <h2 className="font-headline text-3xl font-bold tracking-tight flex items-center gap-3">
-                    <Gift className="text-primary" /> FOOTBETWIN Referral Program
-                </h2>
-                <Button variant="outline" asChild>
-                    <Link href="/dashboard">
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Dashboard
-                    </Link>
-                </Button>
-            </div>
-            
-            <Card>
-                <CardHeader>
-                    <CardTitle>Your Referral Link</CardTitle>
-                    <CardDescription>Share this link with your friends. When they sign up for a VIP plan, you'll start earning rewards.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center gap-4">
-                    <div className="flex-1 border-2 border-dashed border-primary/50 bg-muted rounded-lg p-3 text-center flex items-center gap-2">
-                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium font-mono truncate">{referralLink}</span>
-                    </div>
-                    <Button onClick={copyToClipboard} size="lg">
-                        <Copy className="mr-2 h-4 w-4" /> Copy
+        <div className="flex-1 p-4 md:p-6">
+            <div className="mx-auto w-full max-w-4xl space-y-6">
+                <div className="flex items-center justify-between">
+                    <h2 className="font-headline text-3xl font-bold tracking-tight flex items-center gap-3">
+                        <Gift className="text-primary" /> Referral Program
+                    </h2>
+                    <Button variant="outline" asChild>
+                        <Link href="/dashboard">
+                            <ArrowLeft className="h-4 w-4 mr-2" />
+                            Dashboard
+                        </Link>
                     </Button>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>How It Works</CardTitle>
-                    <CardDescription>It's simple! Invite 10 friends to a specific VIP plan to get your one-time reward for that tier.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                   {referralsLoading ? (
-                        <div className="flex justify-center items-center h-40">
-                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+                
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Your Referral Link</CardTitle>
+                        <CardDescription>Share this link with friends. When they sign up for a VIP plan, you earn rewards.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1 w-full border-2 border-dashed border-primary/50 bg-muted rounded-lg p-3 text-center flex items-center gap-2">
+                            <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm font-medium font-mono truncate">{referralLink}</span>
                         </div>
-                   ): (
-                     <ul className="space-y-4">
-                        {referralTiers.map(tier => {
-                            const Icon = tier.icon; // Get the component reference
-                            const progress = referralProgress[tier.sourcePlan as keyof typeof referralProgress] || 0;
-                            const progressPercentage = (progress / 10) * 100;
-                            return (
-                                <li key={tier.id} className="flex flex-col gap-3 p-4 bg-muted/50 rounded-lg">
-                                    <div className="flex items-center gap-4">
-                                        <div className="p-2 bg-primary/10 rounded-full">
-                                            <Icon className="text-primary"/>
-                                        </div>
-                                        <div className="flex-1">
-                                            <p className="font-semibold">
-                                                Invite 10 users to <span className="text-primary">{tier.sourcePlan}</span>
-                                            </p>
-                                        </div>
-                                        <div className="text-right">
-                                            <p className="font-bold text-primary">Get → {tier.reward}</p>
-                                        </div>
-                                    </div>
-                                    <div className="px-2">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className="text-xs font-medium text-muted-foreground">Progress</span>
-                                            <span className="text-xs font-bold">{progress}/10</span>
-                                        </div>
-                                        <Progress value={progressPercentage} className="h-2" />
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
-                   )}
-                </CardContent>
-                 <CardFooter className="text-muted-foreground text-sm">
-                    <p>If you already have a plan and you earn a commission, you can request a transfer.</p>
-                </CardFooter>
-            </Card>
+                        <Button onClick={copyToClipboard} size="lg" className="w-full sm:w-auto">
+                            <Copy className="mr-2 h-4 w-4" /> Copy
+                        </Button>
+                    </CardContent>
+                </Card>
 
-            <Card className="border-amber-500/50 bg-amber-500/5">
-                <CardHeader className="flex flex-row items-center gap-3">
-                    <Info className="text-amber-600" />
-                    <CardTitle className="text-amber-800">Important Note</CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-amber-700 space-y-2">
-                    <p>📌 These referral commissions are only valid on a user's **first activation**. Renewals are not included.</p>
-                    <p>📌 Terms and conditions apply.</p>
-                </CardContent>
-            </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>How It Works</CardTitle>
+                        <CardDescription>Invite 10 friends to a specific VIP plan to get your one-time reward for that tier.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    {referralsLoading ? (
+                            <div className="flex justify-center items-center h-40">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                            </div>
+                    ): (
+                        <ul className="space-y-4">
+                            {referralTiers.map(tier => {
+                                const Icon = tier.icon; // Get the component reference
+                                const progress = referralProgress[tier.sourcePlan as keyof typeof referralProgress] || 0;
+                                const progressPercentage = (progress / 10) * 100;
+                                return (
+                                    <li key={tier.id} className="flex flex-col gap-3 p-4 bg-muted/50 rounded-lg">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                                            <div className="p-2 bg-primary/10 rounded-full">
+                                                <Icon className="text-primary"/>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-semibold">
+                                                    Invite 10 users to <span className="text-primary">{tier.sourcePlan}</span>
+                                                </p>
+                                            </div>
+                                            <div className="text-left sm:text-right">
+                                                <p className="font-bold text-primary">Get → {tier.reward}</p>
+                                            </div>
+                                        </div>
+                                        <div className="px-2">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className="text-xs font-medium text-muted-foreground">Progress</span>
+                                                <span className="text-xs font-bold">{progress}/10</span>
+                                            </div>
+                                            <Progress value={progressPercentage} className="h-2" />
+                                        </div>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                    </CardContent>
+                    <CardFooter className="text-muted-foreground text-sm">
+                        <p>If you already have a plan and you earn a commission, you can request a transfer.</p>
+                    </CardFooter>
+                </Card>
+
+                <Card className="border-amber-500/50 bg-amber-500/5">
+                    <CardHeader className="flex flex-row items-center gap-3">
+                        <Info className="text-amber-600" />
+                        <CardTitle className="text-amber-800">Important Note</CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm text-amber-700 space-y-2">
+                        <p>📌 These referral commissions are only valid on a user's **first activation**. Renewals are not included.</p>
+                        <p>📌 Terms and conditions apply.</p>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 }
