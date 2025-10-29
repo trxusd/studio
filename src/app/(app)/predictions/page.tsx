@@ -103,15 +103,18 @@ export default function PredictionsPage() {
   
   const renderMatch = (match: MatchPrediction, index: number) => (
     <div key={index} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted/50">
-        <span className="truncate pr-2">{match.match}</span>
-        <Badge variant="secondary">{match.prediction}</Badge>
+      <div className="flex-1 truncate pr-2">
+        <p className="truncate">{match.match}</p>
+        <p className="text-xs text-muted-foreground">{match.prediction}</p>
+      </div>
+      <Badge variant="secondary" className="font-bold">{match.odds?.toFixed(2)}</Badge>
     </div>
   );
   
   const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[]) => {
       if (!matches || matches.length === 0) return null;
       return (
-          <Link href={`/predictions/coupon/${id}`} passHref className="h-full">
+          <Link href={`/predictions/coupon/${id}`} passHref className="h-full block">
               <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full cursor-pointer">
                   <CardHeader>
                       <CardTitle className="flex items-center gap-3">
@@ -278,5 +281,3 @@ export default function PredictionsPage() {
     </div>
   );
 }
-
-    

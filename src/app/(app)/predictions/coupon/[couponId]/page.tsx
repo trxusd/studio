@@ -50,11 +50,12 @@ export default function CouponDetailPage() {
     }, [category]);
 
     useEffect(() => {
-        if (!isLoading && !category) {
-            // Instead of notFound(), we redirect the user.
+        // We only check for a 404 condition *after* loading is complete and if there's no data.
+        // This prevents the redirect loop.
+        if (!categoryLoading && !category) {
             router.push('/predictions');
         }
-    }, [isLoading, category, router]);
+    }, [categoryLoading, category, router]);
     
     if (isLoading) {
         return (
@@ -64,8 +65,8 @@ export default function CouponDetailPage() {
         );
     }
     
-    // If category is still null/undefined after loading, it means the useEffect will trigger a redirect.
-    // We can return null or a loading state to prevent rendering the rest of the component.
+    // If loading is finished but there's no category, it means the user will be redirected.
+    // We render a loading state to prevent errors on the server while redirecting.
     if (!category) {
         return (
              <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
@@ -109,8 +110,8 @@ export default function CouponDetailPage() {
                                     <span>{format(new Date(match.time), "HH:mm")}</span>
                                 </div>
                                 <div>
-                                    <p className="font-semibold">{match.home_team}</p>
-                                    <p className="font-semibold">vs {match.away_team}</p>
+                                    <p className="font-semibold">{match.home_team} vs {match.away_team}</p>
+                                    <p className="text-sm text-muted-foreground">{match.league}</p>
                                 </div>
                             </div>
                              <div className="flex items-center gap-4">
