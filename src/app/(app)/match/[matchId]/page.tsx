@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import { translateText } from '@/ai/flows/translate-text';
 
 // Types from API
 type Team = { id: number; name: string; logo: string; };
@@ -104,6 +105,12 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
       })
   ]);
 
+  const translatedStats = prediction.keyStatistics.startsWith('Prediction')
+    ? prediction.keyStatistics
+    : await translateText({ text: prediction.keyStatistics, targetLanguage: 'French' })
+        .then(res => res.translatedText)
+        .catch(() => prediction.keyStatistics);
+
   const predictionData = [
     { name: match.teams.home.name, value: Math.round(prediction.teamAWinProbability * 100), fill: 'hsl(var(--primary))' },
     { name: 'Draw', value: Math.round(prediction.drawProbability * 100), fill: 'hsl(var(--muted-foreground))' },
@@ -185,7 +192,7 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
                         </CardHeader>
                         <CardContent>
                            <div className="prose prose-sm max-w-none text-card-foreground dark:prose-invert">
-                            <p>{prediction.keyStatistics}</p>
+                            <p>{translatedStats}</p>
                            </div>
                         </CardContent>
                     </Card>
@@ -412,4 +419,5 @@ function LeagueStandings({ standings }: { standings: ApiStandings | null }) {
     
 
     
+
 

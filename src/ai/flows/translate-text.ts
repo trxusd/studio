@@ -39,6 +39,19 @@ const translateTextPrompt = ai.definePrompt({
   Return ONLY the translated text.`,
 });
 
+const translateFootballPrompt = ai.definePrompt({
+  name: 'translateFootballPrompt',
+  input: { schema: z.object({ text: z.string() }) },
+  output: { schema: TranslateTextOutputSchema },
+  prompt: `Translate the following football analysis text to French.
+  Pay close attention to specific football terms like "goals", "wins", "draws", "conceded", "clean sheet", "head-to-head".
+  
+  Text: "{{{text}}}"
+
+  Return ONLY the translated text.`,
+});
+
+
 const translateTextFlow = ai.defineFlow(
   {
     name: 'translateTextFlow',
@@ -50,6 +63,13 @@ const translateTextFlow = ai.defineFlow(
     if (input.targetLanguage.toLowerCase().includes('kreyòl') || input.targetLanguage.toLowerCase() === 'ht') {
         input.targetLanguage = 'Haitian Creole';
     }
+
+    // Special prompt for French football stats
+    if (input.targetLanguage.toLowerCase() === 'french' || input.targetLanguage.toLowerCase() === 'fr') {
+        const { output } = await translateFootballPrompt({ text: input.text });
+        return output!;
+    }
+    
     const { output } = await translateTextPrompt(input);
     return output!;
   }
