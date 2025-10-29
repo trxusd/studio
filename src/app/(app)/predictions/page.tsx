@@ -17,7 +17,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, query, where } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
-
+import { Skeleton } from '@/components/ui/skeleton';
 
 // Custom hook to get real-time VIP status
 const useVipStatus = (user: any) => {
@@ -25,18 +25,56 @@ const useVipStatus = (user: any) => {
   const [loading, setLoading] = useState(true);
   const firestore = useFirestore();
 
-  const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
-  const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean }>(userQuery);
-
   useEffect(() => {
-    if (!userDataLoading) {
-      setIsVip(!!userData?.[0]?.isVip);
+    if (!user || !firestore) {
       setLoading(false);
+      return;
     }
-  }, [userData, userDataLoading]);
+
+    const userQuery = query(collection(firestore, 'users'), where('uid', '==', user.uid));
+    const unsubscribe = useCollection<{ isVip?: boolean }>(userQuery, (data, error, isLoading) => {
+        if (!isLoading) {
+            setIsVip(!!data?.[0]?.isVip);
+            setLoading(false);
+        }
+    });
+
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, [user, firestore]);
 
   return { isVip, loading };
 };
+
+
+// Custom hook that calls the callback with the data.
+function useCollection<T>(
+    query: ReturnType<typeof collection> | null,
+    callback: (data: T[] | null, error: Error | null, loading: boolean) => void
+): () => void {
+    useEffect(() => {
+        if (!query) {
+            callback(null, null, false);
+            return () => {};
+        }
+
+        const { onSnapshot } = require('firebase/firestore');
+        const unsubscribe = onSnapshot(query, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({ ...doc.data() as object, id: doc.id })) as T[];
+            callback(data, null, false);
+        }, (error) => {
+            callback(null, error, false);
+        });
+
+        return () => unsubscribe();
+    }, [query, callback]);
+
+    return () => {};
+}
+
 
 
 type PredictionCategoryDoc = {
@@ -46,6 +84,132 @@ type PredictionCategoryDoc = {
     category: string;
 };
 
+const renderMatch = (match: MatchPrediction, index: number) => (
+  <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-muted/50">
+    <div className="flex-1 truncate pr-2">
+      <p className="font-medium truncate">{match.match}</p>
+      <p className="text-muted-foreground">{match.prediction}</p>
+    </div>
+    <Badge variant="secondary" className="font-bold">{match.odds?.toFixed(2)}</Badge>
+  </div>
+);
+
+const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[], isVipCard = false) => {
+    if (!matches || matches.length === 0) return null;
+    return (
+        <Link href={`/predictions/coupon/${id}`} passHref className="h-full block">
+            <Card className={
+                `hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full cursor-pointer 
+                ${isVipCard ? 'border-yellow-500/30 bg-yellow-400/5' : ''}`
+            }>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                        {icon}
+                        <span>{title}</span>
+                    </CardTitle>
+                    <CardDescription>{description}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow space-y-1">
+                    {matches.map(renderMatch)}
+                </CardContent>
+            </Card>
+        </Link>
+    );
+}
+
+const LockedVipCard = ({ title }: { title: string }) => (
+    <Card className="border-yellow-500/30 bg-yellow-400/5 flex flex-col justify-center">
+        <CardContent className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground h-full">
+            <Lock className="h-6 w-6 mb-2"/>
+            <p className="font-semibold">{title}</p>
+            <p className="text-sm">This section is for VIP members only.</p>
+            <Button asChild variant="link" className="text-primary h-auto p-0 mt-1">
+                <Link href="/payments">Go VIP</Link>
+            </Button>
+        </CardContent>
+    </Card>
+);
+
+const VipSectionSkeleton = () => (
+    <>
+        <Card className="border-yellow-500/30 bg-yellow-400/5">
+            <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </CardContent>
+        </Card>
+        <Card className="border-yellow-500/30 bg-yellow-400/5">
+            <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+            </CardContent>
+        </Card>
+        <Card className="border-yellow-500/30 bg-yellow-400/5">
+            <CardHeader>
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-4 w-1/2" />
+            </CardHeader>
+            <CardContent className="space-y-2">
+                 <Skeleton className="h-10 w-full" />
+                 <Skeleton className="h-10 w-full" />
+            </CardContent>
+        </Card>
+    </>
+);
+
+const PaidSectionContent = ({ predictions, isVip, isLoading }: { predictions: any, isVip: boolean, isLoading: boolean }) => {
+    if (isLoading) {
+        return <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"><VipSectionSkeleton /></div>;
+    }
+
+    if (!isVip) {
+        return (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {predictions.exclusive_vip_1.length > 0 && <LockedVipCard title="Exclusive VIP 1" />}
+                {predictions.exclusive_vip_2.length > 0 && <LockedVipCard title="Exclusive VIP 2" />}
+                {predictions.exclusive_vip_3.length > 0 && <LockedVipCard title="Exclusive VIP 3" />}
+            </div>
+        );
+    }
+
+    // This part renders only when isLoading is false and isVip is true
+    return (
+        <>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_1, true)}
+                {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_2, true)}
+                {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_3, true)}
+            </div>
+            
+            {predictions.individual_vip.length > 0 && (
+              <Card className="border-yellow-500/30 bg-yellow-400/5 mt-6">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                        <Star className="h-6 w-6 text-yellow-600"/>
+                        VIP Individual List
+                    </CardTitle>
+                    <CardDescription>
+                        Access the complete list of our individual VIP predictions.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className='space-y-1'>
+                    {predictions.individual_vip.map(renderMatch)}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+        </>
+    );
+};
+
 
 export default function PredictionsPage() {
   const { user, loading: userLoading } = useUser();
@@ -53,12 +217,19 @@ export default function PredictionsPage() {
   const router = useRouter();
   const firestore = useFirestore();
 
+  const [publishedCategories, setPublishedCategories] = useState<PredictionCategoryDoc[] | null>(null);
+  const [predictionsLoading, setPredictionsLoading] = useState(true);
+
   const today = new Date().toISOString().split('T')[0];
   const categoriesQuery = firestore 
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
     : null;
     
-  const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
+  useCollection<PredictionCategoryDoc>(categoriesQuery, (data, error, loading) => {
+      setPublishedCategories(data);
+      setPredictionsLoading(loading);
+      if (error) console.error("Error fetching predictions:", error);
+  });
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -66,28 +237,14 @@ export default function PredictionsPage() {
     }
   }, [user, userLoading, router]);
 
-  const isLoading = userLoading || vipLoading || predictionsLoading;
+  const isLoading = userLoading || vipLoading;
 
   const predictions = useMemo(() => {
-    if (!publishedCategories) return null;
-
-    const structuredData: {
-      secure_trial: MatchPrediction[],
-      exclusive_vip_1: MatchPrediction[],
-      exclusive_vip_2: MatchPrediction[],
-      exclusive_vip_3: MatchPrediction[],
-      individual_vip: MatchPrediction[],
-      free_coupon: MatchPrediction[],
-      free_individual: MatchPrediction[],
-    } = {
-        secure_trial: [],
-        exclusive_vip_1: [],
-        exclusive_vip_2: [],
-        exclusive_vip_3: [],
-        individual_vip: [],
-        free_coupon: [],
-        free_individual: [],
+    const structuredData = {
+        secure_trial: [], exclusive_vip_1: [], exclusive_vip_2: [], exclusive_vip_3: [],
+        individual_vip: [], free_coupon: [], free_individual: [],
     };
+    if (!publishedCategories) return structuredData;
 
     publishedCategories.forEach(cat => {
         if (cat.id === 'secure_trial') structuredData.secure_trial = cat.predictions;
@@ -98,7 +255,6 @@ export default function PredictionsPage() {
         if (cat.id === 'exclusive_vip_3') structuredData.exclusive_vip_3 = cat.predictions;
         if (cat.id === 'individual_vip') structuredData.individual_vip = cat.predictions;
     });
-
     return structuredData;
   }, [publishedCategories]);
 
@@ -110,62 +266,18 @@ export default function PredictionsPage() {
     );
   }
   
-  const renderMatch = (match: MatchPrediction, index: number) => (
-    <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-muted/50">
-      <div className="flex-1 truncate pr-2">
-        <p className="font-medium truncate">{match.match}</p>
-        <p className="text-muted-foreground">{match.prediction}</p>
-      </div>
-      <Badge variant="secondary" className="font-bold">{match.odds?.toFixed(2)}</Badge>
-    </div>
-  );
-  
-  const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[], isVipCard = false) => {
-      if (!matches || matches.length === 0) return null;
-      return (
-          <Link href={`/predictions/coupon/${id}`} passHref className="h-full block">
-              <Card className={
-                  `hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full cursor-pointer 
-                  ${isVipCard ? 'border-yellow-500/30 bg-yellow-400/5' : ''}`
-              }>
-                  <CardHeader>
-                      <CardTitle className="flex items-center gap-3">
-                          {icon}
-                          <span>{title}</span>
-                      </CardTitle>
-                      <CardDescription>{description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex-grow space-y-1">
-                      {matches.map(renderMatch)}
-                  </CardContent>
-              </Card>
-          </Link>
-      );
-  }
+  const noPredictionsAvailable = !publishedCategories || publishedCategories.length === 0;
 
+  const hasPaidPredictions = 
+    predictions.exclusive_vip_1.length > 0 ||
+    predictions.exclusive_vip_2.length > 0 ||
+    predictions.exclusive_vip_3.length > 0 ||
+    predictions.individual_vip.length > 0;
 
-  const renderLocked = (title:string) => (
-    <Card className="border-yellow-500/30 bg-yellow-400/5 flex flex-col justify-center">
-        <CardContent className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground h-full">
-            <Lock className="h-6 w-6 mb-2"/>
-            <p className="font-semibold">{title}</p>
-            <p className="text-sm">This section is for VIP members only.</p>
-            <Button asChild variant="link" className="text-primary h-auto p-0 mt-1">
-                <Link href="/payments">Go VIP</Link>
-            </Button>
-        </CardContent>
-    </Card>
-  )
-
-  const noPredictionsAvailable = !predictions || (
-      !predictions.secure_trial.length &&
-      !predictions.free_coupon.length &&
-      !predictions.free_individual.length &&
-      !predictions.exclusive_vip_1.length &&
-      !predictions.exclusive_vip_2.length &&
-      !predictions.exclusive_vip_3.length &&
-      !predictions.individual_vip.length
-  );
+  const hasFreePredictions = 
+    predictions.secure_trial.length > 0 ||
+    predictions.free_coupon.length > 0 ||
+    predictions.free_individual.length > 0;
 
 
   return (
@@ -179,17 +291,17 @@ export default function PredictionsPage() {
         </p>
       </div>
 
-       {noPredictionsAvailable && !isLoading && (
+       {noPredictionsAvailable && !predictionsLoading && (
         <Card className='text-center p-12'>
             <p className='text-muted-foreground'>No predictions available for today. Check back later.</p>
         </Card>
       )}
 
 
-      {predictions && !noPredictionsAvailable && (
+      {!predictionsLoading && !noPredictionsAvailable && (
         <>
             {/* Free Section */}
-            {(predictions.secure_trial.length > 0 || predictions.free_coupon.length > 0 || predictions.free_individual.length > 0) && (
+            {hasFreePredictions && (
               <section className="space-y-4">
                 <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
                   Free Section
@@ -201,12 +313,10 @@ export default function PredictionsPage() {
                   {predictions.free_individual.length > 0 && (
                      <Card className="hover/card:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full">
                        <CardHeader>
-                         <div className="flex items-center justify-between">
-                               <CardTitle className="flex items-center gap-3">
-                                   <List className="h-6 w-6 text-primary" />
-                                   <span>Free Individual List</span>
-                               </CardTitle>
-                           </div>
+                           <CardTitle className="flex items-center gap-3">
+                               <List className="h-6 w-6 text-primary" />
+                               <span>Free Individual List</span>
+                           </CardTitle>
                          <CardDescription>
                            See our list of free individual matches for the day.
                          </CardDescription>
@@ -223,7 +333,7 @@ export default function PredictionsPage() {
             <Separator />
 
             {/* Paid Section */}
-            {(predictions.exclusive_vip_1.length > 0 || predictions.exclusive_vip_2.length > 0 || predictions.exclusive_vip_3.length > 0 || predictions.individual_vip.length > 0) && (
+            {hasPaidPredictions && (
               <section className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
@@ -243,45 +353,7 @@ export default function PredictionsPage() {
                       </Link>
                     )}
                 </div>
-
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {isVip ? (
-                    <>
-                      {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_1, true)}
-                      {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_2, true)}
-                      {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_3, true)}
-                    </>
-                  ) : (
-                    <>
-                      {predictions.exclusive_vip_1.length > 0 && renderLocked('Exclusive VIP 1')}
-                      {predictions.exclusive_vip_2.length > 0 && renderLocked('Exclusive VIP 2')}
-                      {predictions.exclusive_vip_3.length > 0 && renderLocked('Exclusive VIP 3')}
-                    </>
-                  )}
-                </div>
-                
-                {predictions.individual_vip.length > 0 && (
-                  <Card className={isVip ? "border-yellow-500/30 bg-yellow-400/5" : ""}>
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <CardTitle className="flex items-center gap-3">
-                                <Star className="h-6 w-6 text-yellow-600"/>
-                                VIP Individual List
-                            </CardTitle>
-                        </div>
-                        <CardDescription>
-                            Access the complete list of our individual VIP predictions.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isVip ? (
-                          <div className='space-y-1'>
-                            {predictions.individual_vip.map(renderMatch)}
-                          </div>
-                        ) : renderLocked('VIP Individual List')}
-                    </CardContent>
-                  </Card>
-                )}
+                <PaidSectionContent predictions={predictions} isVip={isVip} isLoading={predictionsLoading || vipLoading} />
               </section>
             )}
         </>
@@ -289,5 +361,3 @@ export default function PredictionsPage() {
     </div>
   );
 }
-
-    
