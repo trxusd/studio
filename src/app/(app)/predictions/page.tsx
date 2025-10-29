@@ -14,26 +14,43 @@ import { Separator } from '@/components/ui/separator';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
-import { collection, query, where } from 'firebase/firestore';
+import { collection, query, where, doc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
 
-type PredictionCategoryDoc = {
-    id: string;
-    predictions: MatchPrediction[];
-    status: 'published' | 'unpublished';
-    category: string;
+
+// Custom hook to fetch and determine VIP status
+const useVipStatus = (user: any) => {
+  const [isVip, setIsVip] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+
+  const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
+  const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean }>(userQuery);
+
+  useEffect(() => {
+    if (!userDataLoading) {
+      setIsVip(userData?.[0]?.isVip || false);
+      setLoading(false);
+    }
+  }, [userData, userDataLoading]);
+
+  return { isVip, loading };
 };
 
-const renderMatch = (match: MatchPrediction, index: number) => (
-  <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-muted/50">
-    <div className="flex-1 truncate pr-2">
-      <p className="font-medium truncate">{match.match}</p>
-      <p className="text-muted-foreground">{match.prediction}</p>
+
+const renderMatch = (match: MatchPrediction, index: number) => {
+  if (!match) return null;
+  return (
+    <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-muted/50">
+      <div className="flex-1 truncate pr-2">
+        <p className="font-medium truncate">{match.match}</p>
+        <p className="text-muted-foreground">{match.prediction}</p>
+      </div>
+      <Badge variant="secondary" className="font-bold">{match.odds?.toFixed(2)}</Badge>
     </div>
-    <Badge variant="secondary" className="font-bold">{match.odds?.toFixed(2)}</Badge>
-  </div>
-);
+  );
+};
 
 const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[], isVipCard = false) => {
     if (!matches || matches.length === 0) return null;
@@ -58,7 +75,45 @@ const renderCouponCard = (id: string, title: string, description: string, icon: 
     );
 }
 
-const PaidSectionContent = ({ predictions }: { predictions: any }) => {
+const PaidSectionContent = ({ predictions, isVip, canAccessVip }: { predictions: any, isVip: boolean, canAccessVip: boolean }) => {
+    if (!canAccessVip) {
+        return (
+             <Card className="mt-8 border-yellow-500/50 bg-gradient-to-br from-yellow-300/20 to-transparent">
+                <CardContent className="flex flex-col items-center justify-center p-12 text-center">
+                    <div className="rounded-full bg-yellow-500/20 p-4">
+                        <Lock className="h-12 w-12 text-yellow-600"/>
+                    </div>
+                    <h3 className="mt-6 font-headline text-2xl font-bold text-yellow-800">This Content is Locked</h3>
+                    <p className="mt-2 max-w-md text-yellow-700/80">
+                        You must be a VIP member to view these premium predictions. Upgrade your plan to unlock instant access.
+                    </p>
+                    <Button asChild className="mt-6 bg-yellow-600 hover:bg-yellow-700 text-white font-bold shadow-lg">
+                        <Link href="/payments">
+                            Upgrade to VIP
+                            <Crown className="ml-2 h-4 w-4"/>
+                        </Link>
+                    </Button>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    const hasPaidPredictions =
+        predictions.exclusive_vip_1.length > 0 ||
+        predictions.exclusive_vip_2.length > 0 ||
+        predictions.exclusive_vip_3.length > 0 ||
+        predictions.individual_vip.length > 0;
+    
+    if (!hasPaidPredictions) {
+        return (
+             <Card className="border-yellow-500/30 bg-yellow-400/5 mt-6">
+                <CardContent className="p-12 text-center text-muted-foreground">
+                   No VIP predictions available for today. Please check back later.
+                </CardContent>
+            </Card>
+        )
+    }
+
     return (
         <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -92,6 +147,7 @@ const PaidSectionContent = ({ predictions }: { predictions: any }) => {
 
 export default function PredictionsPage() {
   const { user, loading: userLoading } = useUser();
+  const { isVip, loading: vipLoading } = useVipStatus(user);
   const router = useRouter();
   const firestore = useFirestore();
 
@@ -102,14 +158,12 @@ export default function PredictionsPage() {
     
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
 
-  useEffect(() => {
-    if (!userLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, userLoading, router]);
+  const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
+  const isUserAdmin = user?.email ? adminEmails.includes(user.email) : false;
 
-  // Unified loading state
-  const isLoading = userLoading || predictionsLoading;
+  const isLoading = userLoading || vipLoading || predictionsLoading;
+
+  const canAccessVip = isUserAdmin || isVip;
 
   const predictions = useMemo(() => {
     const structuredData = {
@@ -129,14 +183,6 @@ export default function PredictionsPage() {
 
   
   const noPredictionsAvailable = !isLoading && (!publishedCategories || publishedCategories.length === 0);
-
-  const hasPaidPredictions = 
-    !isLoading && (
-        predictions.exclusive_vip_1.length > 0 ||
-        predictions.exclusive_vip_2.length > 0 ||
-        predictions.exclusive_vip_3.length > 0 ||
-        predictions.individual_vip.length > 0
-    );
 
   const hasFreePredictions = 
     !isLoading && (
@@ -205,7 +251,6 @@ export default function PredictionsPage() {
             <Separator />
 
             {/* Paid Section */}
-            {hasPaidPredictions && (
               <section className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
@@ -217,9 +262,8 @@ export default function PredictionsPage() {
                         </p>
                     </div>
                 </div>
-                <PaidSectionContent predictions={predictions} />
+                <PaidSectionContent predictions={predictions} isVip={isVip} canAccessVip={canAccessVip} />
               </section>
-            )}
         </>
       )}
     </div>
