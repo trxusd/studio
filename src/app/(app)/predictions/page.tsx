@@ -25,23 +25,21 @@ const useVipStatus = (user: any) => {
   const [loading, setLoading] = useState(true);
   const firestore = useFirestore();
 
-  useEffect(() => {
-    if (!user || !firestore) {
-      setLoading(false);
-      return;
-    }
-
-    const userQuery = query(collection(firestore, 'users'), where('uid', '==', user.uid));
-    
-    // Using the imported useCollection hook
-    const { data: userData, loading: userLoadingHook } = useCollection<{ isVip?: boolean }>(userQuery);
-
-    if (!userLoadingHook) {
-        setIsVip(!!userData?.[0]?.isVip);
-        setLoading(false);
-    }
-    
+  const userQuery = useMemo(() => {
+    if (!user || !firestore) return null;
+    return query(collection(firestore, 'users'), where('uid', '==', user.uid));
   }, [user, firestore]);
+  
+  const { data: userData, loading: userLoadingHook } = useCollection<{ isVip?: boolean }>(userQuery);
+
+  useEffect(() => {
+    if (userLoadingHook) {
+      setLoading(true);
+    } else {
+      setIsVip(!!userData?.[0]?.isVip);
+      setLoading(false);
+    }
+  }, [userData, userLoadingHook]);
 
   return { isVip, loading };
 };
