@@ -206,7 +206,7 @@ function MatchesPageContent() {
 
     switch (status.short) {
         case 'FT':
-             return <span className='font-normal text-xs'>{format(new Date(date), 'dd/MM HH:mm')}</span>;
+             return <span className='font-bold text-muted-foreground'>FT</span>;
         
         case 'NS':
             return <span className="font-bold text-primary">{time}</span>;
