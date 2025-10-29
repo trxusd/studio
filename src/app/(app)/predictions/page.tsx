@@ -102,10 +102,10 @@ export default function PredictionsPage() {
   }
   
   const renderMatch = (match: MatchPrediction, index: number) => (
-    <div key={index} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted/50">
+    <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-muted/50">
       <div className="flex-1 truncate pr-2">
-        <p className="truncate">{match.match}</p>
-        <p className="text-xs text-muted-foreground">{match.prediction}</p>
+        <p className="font-medium truncate">{match.match}</p>
+        <p className="text-muted-foreground">{match.prediction}</p>
       </div>
       <Badge variant="secondary" className="font-bold">{match.odds?.toFixed(2)}</Badge>
     </div>
@@ -124,8 +124,7 @@ export default function PredictionsPage() {
                       <CardDescription>{description}</CardDescription>
                   </CardHeader>
                   <CardContent className="flex-grow space-y-1">
-                      {matches.slice(0, 2).map(renderMatch)}
-                      {matches.length > 2 && <p className="text-xs text-muted-foreground text-center pt-2">... and {matches.length - 2} more.</p>}
+                      {matches.map(renderMatch)}
                   </CardContent>
               </Card>
           </Link>
@@ -153,8 +152,8 @@ export default function PredictionsPage() {
 
 
   return (
-    <div className="flex-1 space-y-8 p-4 pt-6 md:p-8">
-      <div>
+    <div className="flex-1 space-y-6 p-4 pt-6 md:p-8">
+      <div className="text-center">
         <h2 className="font-headline text-3xl font-bold tracking-tight">
           Prediction Categories
         </h2>
@@ -190,15 +189,13 @@ export default function PredictionsPage() {
                                    <List className="h-6 w-6 text-primary" />
                                    <span>Free Individual List</span>
                                </CardTitle>
-                               {/* No link here as it's not a coupon */}
                            </div>
                          <CardDescription>
                            See our list of free individual matches for the day.
                          </CardDescription>
                        </CardHeader>
                        <CardContent className='flex-grow space-y-1'>
-                         {predictions.free_individual.slice(0, 5).map(renderMatch)}
-                         {predictions.free_individual.length > 5 && <p className='text-center text-sm text-muted-foreground pt-2'>... and {predictions.free_individual.length - 5} more.</p>}
+                         {predictions.free_individual.map(renderMatch)}
                        </CardContent>
                      </Card>
                   )}
@@ -267,8 +264,7 @@ export default function PredictionsPage() {
                     <CardContent>
                         {isVip ? (
                           <div className='space-y-1'>
-                            {predictions.individual_vip.slice(0, 5).map(renderMatch)}
-                              {predictions.individual_vip.length > 5 && <p className='text-center text-sm text-muted-foreground pt-2'>... and {predictions.individual_vip.length - 5} more in the VIP section.</p>}
+                            {predictions.individual_vip.map(renderMatch)}
                           </div>
                         ) : renderLocked()}
                     </CardContent>
