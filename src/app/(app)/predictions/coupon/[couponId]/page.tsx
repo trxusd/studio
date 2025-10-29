@@ -50,28 +50,16 @@ export default function CouponDetailPage() {
     }, [category]);
 
     useEffect(() => {
-        // We only check for a 404 condition *after* loading is complete and if there's no data.
-        // This prevents the redirect loop.
         if (!categoryLoading && !category) {
-            router.push('/predictions');
+            notFound();
         }
-    }, [categoryLoading, category, router]);
+    }, [categoryLoading, category]);
     
-    if (isLoading) {
+    if (isLoading || !category) {
         return (
           <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
           </div>
-        );
-    }
-    
-    // If loading is finished but there's no category, it means the user will be redirected.
-    // We render a loading state to prevent errors on the server while redirecting.
-    if (!category) {
-        return (
-             <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
-                <Loader2 className="h-16 w-16 animate-spin text-primary" />
-             </div>
         );
     }
     
