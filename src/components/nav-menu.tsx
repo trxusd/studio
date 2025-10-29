@@ -37,16 +37,16 @@ import { AppLogo } from './icons';
 import { SheetTrigger } from './ui/sheet';
 
 const menuItems = [
-  { href: '/matches', icon: LifeBuoy, label: 'MATCH' },
-  { href: '/guide', icon: BookOpen, label: 'GID' }, // Assuming GID means Guide
-  { href: '/predictions', icon: BarChart2, label: 'PREDIKSYON' },
-  { href: '/announcements', icon: Megaphone, label: 'ANONS' },
-  { href: '/statistics', icon: LineChart, label: 'ESTATISTIK' },
-  { href: '/referral', icon: Gift, label: 'PARENAJ' },
-  { href: '/community', icon: Users, label: 'KOMINOTE' },
+  { href: '/matches', icon: LifeBuoy, label: 'MATCHES' },
+  { href: '/guide', icon: BookOpen, label: 'GUIDE' },
+  { href: '/predictions', icon: BarChart2, label: 'PREDICTIONS' },
+  { href: '/announcements', icon: Megaphone, label: 'NEWS' },
+  { href: '/statistics', icon: LineChart, label: 'STATS' },
+  { href: '/referral', icon: Gift, label: 'REFERRAL' },
+  { href: '/community', icon: Users, label: 'COMMUNITY' },
   { href: '/vip-predictions', icon: Crown, label: 'VIP' },
-  { href: '#', icon: Headset, label: 'SIPO', isSheetTrigger: true },
-  { href: '/settings', icon: Settings, label: 'PARAMET' },
+  { href: '#', icon: Headset, label: 'SUPPORT', isSheetTrigger: true },
+  { href: '/settings', icon: Settings, label: 'SETTINGS' },
   { href: '/legal', icon: Scale, label: 'LEGAL' },
   { href: '/admin/dashboard', icon: Shield, label: 'ADMIN', adminOnly: true },
 ];
@@ -65,10 +65,10 @@ export function NavMenu() {
   return (
     <div className="space-y-8">
         <h3 className="font-headline text-xl font-bold tracking-tight text-center">
-            Toutes les fonctionnalités
+            All Features
         </h3>
         <p className="text-sm text-muted-foreground text-center -mt-6">
-            Naviguez facilement vers toutes les sections de l'application
+            Easily navigate to all sections of the application
         </p>
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {menuItems.map((item) => {
