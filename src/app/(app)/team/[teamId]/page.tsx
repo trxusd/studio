@@ -74,9 +74,9 @@ export default async function TeamDetailsPage({ params }: { params: { teamId: st
       fetchFromApi(`standings=39&2023`) // Example: Premier League 2023. This should be dynamic.
   ]);
 
-  const squad: ApiSquad | null = squadData?.squad;
-  const fixtures: ApiFixture[] | null = fixturesData?.fixtures;
-  const standings: ApiStandings[] | null = standingsData?.standings;
+  const squad: ApiSquad | null = squadData?.squad ?? null;
+  const fixtures: ApiFixture[] | null = fixturesData?.fixtures ?? null;
+  const standings: ApiStandings[] | null = standingsData?.standings ?? null;
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
@@ -139,7 +139,7 @@ function TeamDetails({ info }: { info: ApiTeamDetails }) {
 }
 
 function SquadList({ squad }: { squad: ApiSquad | null }) {
-    if (!squad || squad.players.length === 0) {
+    if (!squad || !squad.players || squad.players.length === 0) {
         return <p className="text-muted-foreground text-center py-8">Squad information is not available.</p>;
     }
     return (
@@ -190,7 +190,7 @@ function RecentFixtures({ fixtures, teamId }: { fixtures: ApiFixture[] | null, t
             </CardHeader>
             <CardContent className="space-y-2">
                {fixtures.map(({ fixture, teams, goals, league }) => (
-                   <Link href={`/predictions/${fixture.id}`} key={fixture.id} className="block p-3 rounded-md hover:bg-muted/50">
+                   <Link href={`/match/${fixture.id}`} key={fixture.id} className="block p-3 rounded-md hover:bg-muted/50">
                        <div className="text-xs text-muted-foreground">{league.name} - {format(new Date(fixture.date), 'dd MMM yyyy')}</div>
                        <div className="flex justify-between items-center">
                             <div className='flex items-center gap-2'>
@@ -222,7 +222,7 @@ function LeagueStandings({ standings }: { standings: ApiStandings[] | null }) {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {s.league.standings[0] && (
+                        {s.league.standings?.[0] && (
                              <Table>
                                 <TableHeader>
                                     <TableRow>

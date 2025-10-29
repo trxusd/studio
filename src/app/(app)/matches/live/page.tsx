@@ -38,7 +38,7 @@ export default function LiveMatchesPage() {
                 throw new Error('Failed to fetch live matches');
             }
             const data = await response.json();
-            const allMatches = data.matches || [];
+            const allMatches = Array.isArray(data.matches) ? data.matches : [];
             setLiveMatches(allMatches);
 
             // Group matches

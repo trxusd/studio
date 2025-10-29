@@ -141,7 +141,7 @@ function MatchesPageContent() {
           throw new Error('Failed to fetch matches');
         }
         const data = await response.json();
-        const allMatches = data.matches || [];
+        const allMatches = Array.isArray(data.matches) ? data.matches : [];
         setMatches(allMatches);
         groupMatches(allMatches);
       } catch (error) {

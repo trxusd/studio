@@ -63,11 +63,13 @@ async function getMatchDetails(matchId: string): Promise<ApiMatch | null> {
 }
 
 async function getLineups(matchId: string): Promise<ApiLineup[] | null> {
-    return await fetchFromApi(`fixtures/lineups?fixture=${matchId}`);
+    const response = await fetchFromApi(`fixtures/lineups?fixture=${matchId}`);
+    return Array.isArray(response) ? response : null;
 }
 
 async function getOdds(matchId: string): Promise<ApiOdds[] | null> {
-    return await fetchFromApi(`odds?fixture=${matchId}`);
+    const response = await fetchFromApi(`odds?fixture=${matchId}`);
+    return Array.isArray(response) ? response : null;
 }
 
 async function getStandings(leagueId: number, season: number): Promise<ApiStandings | null> {
@@ -132,7 +134,7 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
 
                     <div className="flex flex-col items-center w-1/3">
                         <span className="font-headline text-5xl font-bold tracking-tighter">
-                           {match.fixture.status.short === 'NS' ? 'VS' : `${match.goals.home} - ${match.goals.away}`}
+                           {match.fixture.status.short === 'NS' ? 'VS' : `${match.goals.home ?? '-'} - ${match.goals.away ?? '-'}`}
                         </span>
                         <span className="text-sm text-muted-foreground mt-1">{match.fixture.status.long}</span>
                         {match.fixture.status.elapsed && <Badge variant="destructive" className="mt-2 animate-pulse">{match.fixture.status.elapsed}'</Badge>}
@@ -250,7 +252,7 @@ function TeamLineup({ lineups }: { lineups: ApiLineup[] | null }) {
                         {homeTeam.startXI.map(p => <div key={p.player.id} className="flex items-center gap-2 text-sm"><Badge variant="outline" className="w-8 justify-center">{p.player.number}</Badge> <span>{p.player.name} ({p.player.pos})</span></div>)}
                         <h4 className="font-semibold text-sm pt-2">Remplaçants</h4>
                         {homeTeam.substitutes.map(p => <div key={p.player.id} className="flex items-center gap-2 text-sm"><Badge variant="outline" className="w-8 justify-center">{p.player.number}</Badge> <span>{p.player.name} ({p.player.pos})</span></div>)}
-                        {homeTeam.coach.name &&
+                        {homeTeam.coach?.name &&
                           <>
                             <h4 className="font-semibold text-sm pt-2">Entraîneur</h4>
                             <div className="flex items-center gap-2 text-sm">
@@ -271,7 +273,7 @@ function TeamLineup({ lineups }: { lineups: ApiLineup[] | null }) {
                         {awayTeam.startXI.map(p => <div key={p.player.id} className="flex items-center gap-2 text-sm"><Badge variant="outline" className="w-8 justify-center">{p.player.number}</Badge> <span>{p.player.name} ({p.player.pos})</span></div>)}
                         <h4 className="font-semibold text-sm pt-2">Remplaçants</h4>
                         {awayTeam.substitutes.map(p => <div key={p.player.id} className="flex items-center gap-2 text-sm"><Badge variant="outline" className="w-8 justify-center">{p.player.number}</Badge> <span>{p.player.name} ({p.player.pos})</span></div>)}
-                        {awayTeam.coach.name &&
+                        {awayTeam.coach?.name &&
                           <>
                             <h4 className="font-semibold text-sm pt-2">Entraîneur</h4>
                             <div className="flex items-center gap-2 text-sm">
@@ -410,3 +412,4 @@ function LeagueStandings({ standings }: { standings: ApiStandings | null }) {
     
 
     
+

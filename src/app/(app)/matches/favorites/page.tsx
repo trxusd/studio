@@ -161,7 +161,7 @@ export default function FavoriteMatchesPage() {
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
-      ) : favorites?.length === 0 ? (
+      ) : !favorites || favorites.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
           <p>You haven't added any matches to your favorites yet.</p>
           <p className="text-sm">Click the star icon next to a match to add it here.</p>
