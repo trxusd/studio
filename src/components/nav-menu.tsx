@@ -34,6 +34,7 @@ import {
 import { useUser } from '@/firebase';
 import { cn } from '@/lib/utils';
 import { AppLogo } from './icons';
+import { SheetTrigger } from './ui/sheet';
 
 const menuItems = [
   { href: '/matches', icon: LifeBuoy, label: 'MATCH' },
@@ -67,6 +68,21 @@ export function NavMenu() {
           {menuItems.map((item) => {
              if (item.adminOnly && !isUserAdmin) {
                 return null;
+            }
+            if (item.isSheetTrigger) {
+                return (
+                    <SheetTrigger asChild key={item.label}>
+                         <Button
+                            variant="ghost"
+                            className="flex flex-col items-center justify-center h-28 gap-2 text-center bg-card rounded-lg shadow-md hover:bg-accent transition-all"
+                        >
+                             <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary">
+                                <item.icon className="h-6 w-6" />
+                            </div>
+                            <span className="text-xs font-semibold uppercase tracking-wider">{item.label}</span>
+                        </Button>
+                    </SheetTrigger>
+                )
             }
             return (
               <Button
