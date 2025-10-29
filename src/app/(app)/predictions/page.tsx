@@ -32,50 +32,19 @@ const useVipStatus = (user: any) => {
     }
 
     const userQuery = query(collection(firestore, 'users'), where('uid', '==', user.uid));
-    const unsubscribe = useCollection<{ isVip?: boolean }>(userQuery, (data, error, isLoading) => {
-        if (!isLoading) {
-            setIsVip(!!data?.[0]?.isVip);
-            setLoading(false);
-        }
-    });
+    
+    // Using the imported useCollection hook
+    const { data: userData, loading: userLoadingHook } = useCollection<{ isVip?: boolean }>(userQuery);
 
-    return () => {
-      if (typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
-    };
+    if (!userLoadingHook) {
+        setIsVip(!!userData?.[0]?.isVip);
+        setLoading(false);
+    }
+    
   }, [user, firestore]);
 
   return { isVip, loading };
 };
-
-
-// Custom hook that calls the callback with the data.
-function useCollection<T>(
-    query: ReturnType<typeof collection> | null,
-    callback: (data: T[] | null, error: Error | null, loading: boolean) => void
-): () => void {
-    useEffect(() => {
-        if (!query) {
-            callback(null, null, false);
-            return () => {};
-        }
-
-        const { onSnapshot } = require('firebase/firestore');
-        const unsubscribe = onSnapshot(query, (snapshot) => {
-            const data = snapshot.docs.map(doc => ({ ...doc.data() as object, id: doc.id })) as T[];
-            callback(data, null, false);
-        }, (error) => {
-            callback(null, error, false);
-        });
-
-        return () => unsubscribe();
-    }, [query, callback]);
-
-    return () => {};
-}
-
-
 
 type PredictionCategoryDoc = {
     id: string;
@@ -179,7 +148,6 @@ const PaidSectionContent = ({ predictions, isVip, isLoading }: { predictions: an
         );
     }
 
-    // This part renders only when isLoading is false and isVip is true
     return (
         <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -225,11 +193,13 @@ export default function PredictionsPage() {
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
     : null;
     
-  useCollection<PredictionCategoryDoc>(categoriesQuery, (data, error, loading) => {
-      setPublishedCategories(data);
-      setPredictionsLoading(loading);
-      if (error) console.error("Error fetching predictions:", error);
-  });
+  const { data, loading: collectionLoading, error } = useCollection<PredictionCategoryDoc>(categoriesQuery);
+
+  useEffect(() => {
+    setPublishedCategories(data);
+    setPredictionsLoading(collectionLoading);
+    if(error) console.error("Error fetching predictions:", error);
+  }, [data, collectionLoading, error]);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -240,7 +210,15 @@ export default function PredictionsPage() {
   const isLoading = userLoading || vipLoading;
 
   const predictions = useMemo(() => {
-    const structuredData = {
+    const structuredData: {
+      secure_trial: MatchPrediction[];
+      exclusive_vip_1: MatchPrediction[];
+      exclusive_vip_2: MatchPrediction[];
+      exclusive_vip_3: MatchPrediction[];
+      individual_vip: MatchPrediction[];
+      free_coupon: MatchPrediction[];
+      free_individual: MatchPrediction[];
+    } = {
         secure_trial: [], exclusive_vip_1: [], exclusive_vip_2: [], exclusive_vip_3: [],
         individual_vip: [], free_coupon: [], free_individual: [],
     };
