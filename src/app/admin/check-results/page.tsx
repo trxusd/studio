@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Loader2, RefreshCw } from 'lucide-react';
 import { useFirestore, useCollection } from '@/firebase';
-import { collection, query, where, doc, writeBatch } from 'firebase/firestore';
+import { collection, query, where, doc, writeBatch, Timestamp } from 'firebase/firestore';
 import type { MatchPrediction } from '@/ai/schemas/prediction-schemas';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 type PredictionCategoryDoc = {
     id: string;
     predictions: MatchPrediction[];
+    date?: Timestamp; // Add date field for querying
 };
 
 type ProcessedPrediction = MatchPrediction & {
@@ -126,7 +127,7 @@ export default function CheckResultsPage() {
             return;
         }
         
-        const allPredictions = categories.flatMap(cat => cat.predictions.map(p => ({...p, categoryId: cat.id})));
+        const allPredictions = categories.flatMap(cat => cat.predictions.map(p => ({...p, categoryId: cat.id, date: cat.date})));
         
         const processedResults = await Promise.all(
             allPredictions.map(async (p) => {
@@ -181,7 +182,7 @@ export default function CheckResultsPage() {
                 const newPredictionsArray = categoryPredictions.map(p => {
                     if (updatedPredictionsMap.has(p.fixture_id)) {
                         const updatedPrediction = updatedPredictionsMap.get(p.fixture_id)!;
-                        return { ...p, status: updatedPrediction.status, finalScore: updatedPrediction.finalScore };
+                        return { ...p, status: updatedPrediction.status, finalScore: updatedPrediction.finalScore, date: Timestamp.now() };
                     }
                     return p;
                 });
