@@ -19,23 +19,21 @@ import { Badge } from '@/components/ui/badge';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// Custom hook to get real-time VIP status
+// Custom hook to get real-time VIP status, simplified and more robust.
 const useVipStatus = (user: any) => {
+  const firestore = useFirestore();
   const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(true);
-  const firestore = useFirestore();
 
   const userQuery = useMemo(() => {
     if (!user || !firestore) return null;
     return query(collection(firestore, 'users'), where('uid', '==', user.uid));
   }, [user, firestore]);
-  
+
   const { data: userData, loading: userLoadingHook } = useCollection<{ isVip?: boolean }>(userQuery);
 
   useEffect(() => {
-    if (userLoadingHook) {
-      setLoading(true);
-    } else {
+    if (!userLoadingHook) {
       setIsVip(!!userData?.[0]?.isVip);
       setLoading(false);
     }
@@ -43,6 +41,7 @@ const useVipStatus = (user: any) => {
 
   return { isVip, loading };
 };
+
 
 type PredictionCategoryDoc = {
     id: string;
@@ -97,54 +96,26 @@ const LockedVipCard = ({ title }: { title: string }) => (
     </Card>
 );
 
-const VipSectionSkeleton = () => (
-    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-yellow-500/30 bg-yellow-400/5">
-            <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-            </CardContent>
-        </Card>
-        <Card className="border-yellow-500/30 bg-yellow-400/5">
-            <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent className="space-y-2">
-                <Skeleton className="h-10 w-full" />
-            </CardContent>
-        </Card>
-        <Card className="border-yellow-500/30 bg-yellow-400/5">
-            <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-            </CardHeader>
-            <CardContent className="space-y-2">
-                 <Skeleton className="h-10 w-full" />
-                 <Skeleton className="h-10 w-full" />
-            </CardContent>
-        </Card>
-    </div>
-);
-
-const PaidSectionContent = ({ predictions, isVip, isLoading }: { predictions: any, isVip: boolean, isLoading: boolean }) => {
-    if (isLoading) {
-        return <VipSectionSkeleton />;
-    }
-
+const PaidSectionContent = ({ predictions, isVip }: { predictions: any, isVip: boolean }) => {
     if (!isVip) {
         return (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {predictions.exclusive_vip_1.length > 0 && <LockedVipCard title="Exclusive VIP 1" />}
-                {predictions.exclusive_vip_2.length > 0 && <LockedVipCard title="Exclusive VIP 2" />}
-                {predictions.exclusive_vip_3.length > 0 && <LockedVipCard title="Exclusive VIP 3" />}
+                <LockedVipCard title="Exclusive VIP 1" />
+                <LockedVipCard title="Exclusive VIP 2" />
+                <LockedVipCard title="Exclusive VIP 3" />
             </div>
         );
     }
+
+    const hasVipPredictions = predictions.exclusive_vip_1.length > 0 ||
+                              predictions.exclusive_vip_2.length > 0 ||
+                              predictions.exclusive_vip_3.length > 0 ||
+                              predictions.individual_vip.length > 0;
+
+    if (!hasVipPredictions) {
+        return null; // Don't render the section if there are no VIP predictions today.
+    }
+
 
     return (
         <>
@@ -196,55 +167,42 @@ export default function PredictionsPage() {
     }
   }, [user, userLoading, router]);
 
+  // Unified loading state
   const isLoading = userLoading || vipLoading || predictionsLoading;
 
   const predictions = useMemo(() => {
-    const structuredData: {
-      secure_trial: MatchPrediction[];
-      exclusive_vip_1: MatchPrediction[];
-      exclusive_vip_2: MatchPrediction[];
-      exclusive_vip_3: MatchPrediction[];
-      individual_vip: MatchPrediction[];
-      free_coupon: MatchPrediction[];
-      free_individual: MatchPrediction[];
-    } = {
+    const structuredData = {
         secure_trial: [], exclusive_vip_1: [], exclusive_vip_2: [], exclusive_vip_3: [],
         individual_vip: [], free_coupon: [], free_individual: [],
-    };
+    } as Record<string, MatchPrediction[]>;
+
     if (!publishedCategories) return structuredData;
 
     publishedCategories.forEach(cat => {
-        if (cat.id === 'secure_trial') structuredData.secure_trial = cat.predictions;
-        if (cat.id === 'free_coupon') structuredData.free_coupon = cat.predictions;
-        if (cat.id === 'free_individual') structuredData.free_individual = cat.predictions;
-        if (cat.id === 'exclusive_vip_1') structuredData.exclusive_vip_1 = cat.predictions;
-        if (cat.id === 'exclusive_vip_2') structuredData.exclusive_vip_2 = cat.predictions;
-        if (cat.id === 'exclusive_vip_3') structuredData.exclusive_vip_3 = cat.predictions;
-        if (cat.id === 'individual_vip') structuredData.individual_vip = cat.predictions;
+        if (structuredData[cat.id] !== undefined) {
+            structuredData[cat.id] = cat.predictions;
+        }
     });
     return structuredData;
   }, [publishedCategories]);
 
-  if (userLoading || vipLoading) {
-    return (
-      <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
-        <Loader2 className="h-16 w-16 animate-spin text-primary" />
-      </div>
-    );
-  }
   
-  const noPredictionsAvailable = !publishedCategories || publishedCategories.length === 0;
+  const noPredictionsAvailable = !isLoading && (!publishedCategories || publishedCategories.length === 0);
 
   const hasPaidPredictions = 
-    predictions.exclusive_vip_1.length > 0 ||
-    predictions.exclusive_vip_2.length > 0 ||
-    predictions.exclusive_vip_3.length > 0 ||
-    predictions.individual_vip.length > 0;
+    !isLoading && (
+        predictions.exclusive_vip_1.length > 0 ||
+        predictions.exclusive_vip_2.length > 0 ||
+        predictions.exclusive_vip_3.length > 0 ||
+        predictions.individual_vip.length > 0
+    );
 
   const hasFreePredictions = 
-    predictions.secure_trial.length > 0 ||
-    predictions.free_coupon.length > 0 ||
-    predictions.free_individual.length > 0;
+    !isLoading && (
+        predictions.secure_trial.length > 0 ||
+        predictions.free_coupon.length > 0 ||
+        predictions.free_individual.length > 0
+    );
 
 
   return (
@@ -258,20 +216,20 @@ export default function PredictionsPage() {
         </p>
       </div>
 
-       {predictionsLoading && (
+       {isLoading && (
          <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
          </div>
        )}
 
-       {noPredictionsAvailable && !predictionsLoading && (
+       {noPredictionsAvailable && (
         <Card className='text-center p-12'>
             <p className='text-muted-foreground'>No predictions available for today. Check back later.</p>
         </Card>
       )}
 
 
-      {!predictionsLoading && !noPredictionsAvailable && (
+      {!isLoading && !noPredictionsAvailable && (
         <>
             {/* Free Section */}
             {hasFreePredictions && (
@@ -326,7 +284,7 @@ export default function PredictionsPage() {
                       </Link>
                     )}
                 </div>
-                <PaidSectionContent predictions={predictions} isVip={isVip} isLoading={isLoading} />
+                <PaidSectionContent predictions={predictions} isVip={isVip} />
               </section>
             )}
         </>
