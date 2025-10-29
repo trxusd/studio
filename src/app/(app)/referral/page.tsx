@@ -4,7 +4,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { useUser, useFirestore, useCollection } from "@/firebase";
-import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2, ArrowLeft } from "lucide-react";
+import { Gift, Copy, UserPlus, Star, DollarSign, Award, Info, Loader2, ArrowLeft, Link as LinkIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -76,13 +76,14 @@ export default function ReferralPage() {
 
 
     const referralCode = user ? `FBW-${user.uid.substring(0, 8).toUpperCase()}` : '...';
+    const referralLink = `https://footbetwin.com/login?ref=${referralCode}`;
     
     const copyToClipboard = () => {
         if (!user) return;
-        navigator.clipboard.writeText(referralCode);
+        navigator.clipboard.writeText(referralLink);
         toast({
             title: "Copied to clipboard!",
-            description: `Your referral code ${referralCode} is ready to be shared.`,
+            description: `Your referral link has been copied.`,
         });
     };
 
@@ -110,12 +111,13 @@ export default function ReferralPage() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Your Referral Code</CardTitle>
-                    <CardDescription>Share this code with your friends. When they sign up for a VIP plan, you'll start earning rewards.</CardDescription>
+                    <CardTitle>Your Referral Link</CardTitle>
+                    <CardDescription>Share this link with your friends. When they sign up for a VIP plan, you'll start earning rewards.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-center gap-4">
-                    <div className="flex-1 border-2 border-dashed border-primary/50 bg-muted rounded-lg p-4 text-center">
-                        <span className="text-2xl font-bold font-mono tracking-widest">{referralCode}</span>
+                    <div className="flex-1 border-2 border-dashed border-primary/50 bg-muted rounded-lg p-3 text-center flex items-center gap-2">
+                        <LinkIcon className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium font-mono truncate">{referralLink}</span>
                     </div>
                     <Button onClick={copyToClipboard} size="lg">
                         <Copy className="mr-2 h-4 w-4" /> Copy
