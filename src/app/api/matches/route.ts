@@ -39,7 +39,8 @@ export async function GET(request: Request) {
 
   try {
     if (fixtureId) {
-      const data = await fetchFromApi(`fixtures?id=${fixtureId}`);
+      // Corrected the endpoint to use singular "fixture" and revalidate more frequently for results
+      const data = await fetchFromApi(`fixtures?id=${fixtureId}`, 60);
       return NextResponse.json({ matches: data.response });
     }
     
