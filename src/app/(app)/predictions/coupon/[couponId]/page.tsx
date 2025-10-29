@@ -74,7 +74,7 @@ export default function CouponDetailPage() {
         );
     }
     
-    const pageTitle = categoryTitles[category.id] || 'Coupon Details';
+    const pageTitle = category.id ? (categoryTitles[category.id] || 'Coupon Details') : 'Coupon Details';
 
     return (
         <div className="flex-1 space-y-6 p-4 pt-6 md:p-8">

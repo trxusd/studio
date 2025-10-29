@@ -61,11 +61,12 @@ async function fetchFromApi(endpoint: string) {
 
 export default async function TeamDetailsPage({ params }: { params: { teamId: string } }) {
   const teamData = await fetchFromApi(`team=${params.teamId}`);
-  const teamDetails: ApiTeamDetails | null = teamData?.team;
-
-  if (!teamDetails) {
+  
+  if (!teamData || !teamData.team) {
     notFound();
   }
+
+  const teamDetails: ApiTeamDetails = teamData.team;
   
   const [squadData, fixturesData, standingsData] = await Promise.all([
       fetchFromApi(`squad=${params.teamId}`),
