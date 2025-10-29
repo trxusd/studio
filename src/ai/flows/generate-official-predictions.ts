@@ -99,12 +99,12 @@ async function fetchMatchesForAI() {
     const majorLeagues = [
         'Premier League', 'La Liga', 'Serie A', 'Bundesliga', 
         'Ligue 1', 'Champions League', 'Europa League', 
-        'Championship', 'Eredivisie', 'Liga Portugal'
+        'Championship', 'Eredivisie', 'Liga Portugal', 'Copa Libertadores', 'Copa Sudamericana', 'MLS'
     ];
   
     const filteredMatches = data.response
       .filter((match: any) => majorLeagues.some(league => 
-        match.league.name.includes(league)
+        match.league.name.includes(league) || match.league.country === 'Brazil' || match.league.country === 'Argentina'
       ))
       .slice(0, 100) // Limit to 100 matches to keep prompt reasonable
       .map((match: any) => ({

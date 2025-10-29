@@ -2,39 +2,38 @@
 'use client';
 import { MatchCard } from "@/components/match-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { matches } from "@/lib/data";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Crown, Lock, Loader2, ArrowLeft } from "lucide-react";
 import Link from 'next/link';
-import { useUser } from '@/firebase';
+import { useUser, useFirestore, useCollection } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
+import { collection, query, where, doc } from 'firebase/firestore';
+import type { MatchPrediction } from "@/ai/schemas/prediction-schemas";
 
-// Mock subscription status. In a real app, this would come from your database.
+type PredictionCategoryDoc = {
+    id: string;
+    predictions: MatchPrediction[];
+    status: 'published' | 'unpublished';
+};
+
+
 const useVipStatus = (user: any) => {
   const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+
+  const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
+  const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean }>(userQuery);
 
   useEffect(() => {
-    // Simulate fetching subscription status
-    if (user) {
-      // In a real app, you'd fetch this from Firestore:
-      // const userDoc = await getDoc(doc(firestore, "users", user.uid));
-      // setIsVip(userDoc.data()?.isVip || false);
-      
-      // For now, we'll just mock it.
-      // Let's say every other user is a VIP for demonstration.
-      // A simple mock logic:
-      const isUserVip = true; // you can change this to false to see the locked state
-      setIsVip(isUserVip);
-
-    } else {
-      setIsVip(false);
+    if (!userDataLoading) {
+      setIsVip(userData?.[0]?.isVip || false);
+      setLoading(false);
     }
-    setLoading(false);
-  }, [user]);
+  }, [userData, userDataLoading]);
 
-  return { isVip, loading: loading };
+  return { isVip, loading };
 };
 
 
@@ -42,14 +41,26 @@ export default function VipPredictionsPage() {
   const { user, loading: userLoading } = useUser();
   const { isVip, loading: vipLoading } = useVipStatus(user);
   const router = useRouter();
+  const firestore = useFirestore();
   
+  const today = new Date().toISOString().split('T')[0];
+  const vipPredictionsQuery = firestore ? doc(firestore, `predictions/${today}/categories/individual_vip`) : null;
+  
+  const { data: vipCategory, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(
+      firestore ? query(collection(firestore, `predictions/${today}/categories`), where('id', '==', 'individual_vip'), where('status', '==', 'published')) : null
+  );
+
+  const vipPredictions = useMemo(() => vipCategory?.[0]?.predictions || [], [vipCategory]);
+
   useEffect(() => {
     if (!userLoading && !user) {
       router.push('/login');
     }
   }, [user, userLoading, router]);
   
-  if (userLoading || vipLoading || !user) {
+  const isLoading = userLoading || vipLoading || predictionsLoading;
+  
+  if (isLoading || !user) {
     return (
       <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
         <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -75,11 +86,19 @@ export default function VipPredictionsPage() {
       </p>
       
       {isVip ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {matches.map((match) => (
-            <MatchCard key={match.fixture_id} match={match} isVip />
-          ))}
-        </div>
+        vipPredictions.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {vipPredictions.map((match) => (
+              <MatchCard key={match.fixture_id} match={match} isVip />
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="p-12 text-center text-muted-foreground">
+              No VIP predictions available for today. Please check back later.
+            </CardContent>
+          </Card>
+        )
       ) : (
         <Card className="mt-8 border-yellow-500/50 bg-gradient-to-br from-yellow-300/20 to-transparent">
             <CardContent className="flex flex-col items-center justify-center p-12 text-center">
