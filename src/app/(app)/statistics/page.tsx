@@ -4,8 +4,8 @@
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFirestore } from '@/firebase';
-import { collectionGroup, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { subDays, startOfDay, endOfDay } from 'date-fns';
+import { collection, query, getDocs, Timestamp, collectionGroup } from 'firebase/firestore';
+import { subDays, startOfDay, endOfDay, format as formatDateFns } from 'date-fns';
 import { Loader2, TrendingUp, TrendingDown, Percent, BarChart, XCircle } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { StatisticsChart } from '@/components/statistics-chart';
@@ -19,7 +19,6 @@ type MatchResult = {
 
 type PredictionDoc = {
     predictions: MatchResult[];
-    date: Timestamp;
 };
 
 
@@ -45,55 +44,59 @@ const periodLabels: Record<Period, string> = {
 };
 
 async function fetchPredictionStats(firestore: any, period: Period): Promise<Stats & { dailyData: DailyStat[] }> {
-    let startDate: Date;
-    let endDate: Date = new Date();
-
     const now = new Date();
+    let daysToFetch: Date[] = [];
+
     switch (period) {
         case 'yesterday':
-            startDate = startOfDay(subDays(now, 1));
-            endDate = endOfDay(subDays(now, 1));
+            daysToFetch.push(subDays(now, 1));
             break;
         case '7d':
-            startDate = startOfDay(subDays(now, 7));
+            for (let i = 0; i < 7; i++) daysToFetch.push(subDays(now, i));
             break;
         case '15d':
-            startDate = startOfDay(subDays(now, 15));
+            for (let i = 0; i < 15; i++) daysToFetch.push(subDays(now, i));
             break;
         case '30d':
-            startDate = startOfDay(subDays(now, 30));
+            for (let i = 0; i < 30; i++) daysToFetch.push(subDays(now, i));
             break;
     }
 
     const predictionsByDate: Record<string, { wins: number, losses: number }> = {};
-
-    const q = query(
-        collectionGroup(firestore, 'categories'),
-        where('date', '>=', Timestamp.fromDate(startDate)),
-        where('date', '<=', Timestamp.fromDate(endDate))
-    );
     
-    const querySnapshot = await getDocs(q);
-    
-    querySnapshot.docs.forEach(doc => {
-        const data = doc.data() as PredictionDoc;
-        if (data && Array.isArray(data.predictions)) {
-            const docDate = data.date.toDate();
-            const dateKey = docDate.toISOString().split('T')[0];
+    // Fetch predictions for each day individually
+    for (const date of daysToFetch) {
+        const dateString = formatDateFns(date, 'yyyy-MM-dd');
+        const categoriesColRef = collection(firestore, `predictions/${dateString}/categories`);
+        
+        try {
+            const querySnapshot = await getDocs(categoriesColRef);
+            
+            querySnapshot.forEach(doc => {
+                const data = doc.data() as PredictionDoc;
+                if (data && Array.isArray(data.predictions)) {
+                    const dateKey = date.toISOString().split('T')[0];
 
-            if (!predictionsByDate[dateKey]) {
-                predictionsByDate[dateKey] = { wins: 0, losses: 0 };
-            }
-
-            data.predictions.forEach(prediction => {
-                if (prediction.status === 'Win') {
-                    predictionsByDate[dateKey].wins++;
-                } else if (prediction.status === 'Loss') {
-                    predictionsByDate[dateKey].losses++;
+                    if (!predictionsByDate[dateKey]) {
+                        predictionsByDate[dateKey] = { wins: 0, losses: 0 };
+                    }
+                    
+                    // Filter for resolved predictions client-side
+                    data.predictions.forEach(prediction => {
+                        if (prediction.status === 'Win') {
+                            predictionsByDate[dateKey].wins++;
+                        } else if (prediction.status === 'Loss') {
+                            predictionsByDate[dateKey].losses++;
+                        }
+                    });
                 }
             });
+        } catch (e) {
+            // This might happen if a day has no predictions, which is fine.
+            // console.log(`No predictions found for ${dateString}`);
         }
-    });
+    }
+
 
     let totalWins = 0;
     let totalLosses = 0;
@@ -108,7 +111,7 @@ async function fetchPredictionStats(firestore: any, period: Period): Promise<Sta
             losses: counts.losses,
             accuracy: dailyTotal > 0 ? parseFloat(((counts.wins / dailyTotal) * 100).toFixed(1)) : 0,
         };
-    }).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
 
     const total = totalWins + totalLosses;
