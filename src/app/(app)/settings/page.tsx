@@ -8,12 +8,14 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUser, useAuth } from "@/firebase"
-import { updateProfile, reauthenticateWithCredential, EmailAuthProvider } from "firebase/auth";
+import { updateProfile, reauthenticateWithCredential, EmailAuthProvider, signOut } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+
 
 export default function SettingsPage() {
   const { user, loading: userLoading } = useUser();
@@ -91,6 +93,21 @@ export default function SettingsPage() {
         setNewPassword('');
     }
   }
+  
+  const handleSignOut = async () => {
+    if (!auth) return;
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error("Error signing out:", error);
+      toast({
+          title: "Logout Failed",
+          description: "An error occurred while trying to log out.",
+          variant: "destructive"
+      });
+    }
+  };
 
   if (userLoading || !user) {
     return (
@@ -203,6 +220,37 @@ export default function SettingsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      
+      <Card className="border-destructive">
+          <CardHeader>
+            <CardTitle className="text-destructive">Logout</CardTitle>
+            <CardDescription>
+              This will log you out of your account on this device.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+             <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <LogOut className="mr-2 h-4 w-4" /> Logout
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    You will be returned to the login page.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleSignOut}>Logout</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardContent>
+        </Card>
+
     </div>
   )
 }
