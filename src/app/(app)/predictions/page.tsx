@@ -103,16 +103,16 @@ export default function PredictionsPage() {
   
   const renderMatch = (match: MatchPrediction, index: number) => (
     <div key={index} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted/50">
-        <span>{match.match}</span>
+        <span className="truncate pr-2">{match.match}</span>
         <Badge variant="secondary">{match.prediction}</Badge>
     </div>
   );
   
   const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[]) => {
-      if (matches.length === 0) return null;
+      if (!matches || matches.length === 0) return null;
       return (
-          <Link href={`/predictions/coupon/${id}`} passHref>
-              <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full">
+          <Link href={`/predictions/coupon/${id}`} passHref className="h-full">
+              <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full cursor-pointer">
                   <CardHeader>
                       <CardTitle className="flex items-center gap-3">
                           {icon}
@@ -120,7 +120,7 @@ export default function PredictionsPage() {
                       </CardTitle>
                       <CardDescription>{description}</CardDescription>
                   </CardHeader>
-                  <CardContent className="flex-grow">
+                  <CardContent className="flex-grow space-y-1">
                       {matches.slice(0, 2).map(renderMatch)}
                       {matches.length > 2 && <p className="text-xs text-muted-foreground text-center pt-2">... and {matches.length - 2} more.</p>}
                   </CardContent>
@@ -131,7 +131,7 @@ export default function PredictionsPage() {
 
 
   const renderLocked = () => (
-    <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
+    <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground h-full">
         <Lock className="h-6 w-6 mb-2"/>
         <p className="text-sm">This section is for VIP members only.</p>
         <Button asChild variant="link" className="text-primary h-auto p-0 mt-1">
@@ -278,3 +278,5 @@ export default function PredictionsPage() {
     </div>
   );
 }
+
+    
