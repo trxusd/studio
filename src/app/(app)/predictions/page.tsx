@@ -25,6 +25,12 @@ type UserProfile = {
   createdAt?: Timestamp;
 };
 
+type PredictionCategoryDoc = {
+    id: string;
+    predictions: MatchPrediction[];
+    status: 'published' | 'unpublished';
+};
+
 
 // Custom hook to fetch user profile data including VIP status and creation date
 const useUserProfile = (user: any) => {
@@ -49,30 +55,34 @@ const useUserProfile = (user: any) => {
 const renderMatch = (match: MatchPrediction, index: number) => {
   if (!match) return null;
   return (
-    <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-muted/50">
+    <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-black/10">
       <div className="flex-1 truncate pr-2">
         <p className="font-medium truncate">{match.match}</p>
-        <p className="text-muted-foreground">{match.prediction}</p>
+        <p className="text-black/70">{match.prediction}</p>
       </div>
-      <Badge variant="secondary" className="font-bold">{match.odds?.toFixed(2)}</Badge>
+      <Badge variant="secondary" className="font-bold bg-black/10 text-black">{match.odds?.toFixed(2)}</Badge>
     </div>
   );
 };
 
 const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[], isVipCard = false) => {
     if (!matches || matches.length === 0) return null;
+    
+    const cardClasses = isVipCard 
+        ? 'bg-yellow-500 text-black border-yellow-600' 
+        : 'hover:border-primary/50 hover:bg-muted/50';
+
+    const descriptionClasses = isVipCard ? 'text-black/80' : '';
+
     return (
         <Link href={`/predictions/coupon/${id}`} passHref className="h-full block">
-            <Card className={
-                `hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full cursor-pointer 
-                ${isVipCard ? 'border-yellow-500/30 bg-yellow-400/5' : ''}`
-            }>
+            <Card className={`transition-colors flex flex-col h-full cursor-pointer ${cardClasses}`}>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3">
                         {icon}
                         <span>{title}</span>
                     </CardTitle>
-                    <CardDescription>{description}</CardDescription>
+                    <CardDescription className={descriptionClasses}>{description}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow space-y-1">
                     {matches.map(renderMatch)}
@@ -124,19 +134,19 @@ const PaidSectionContent = ({ predictions, isVip, canAccessVip }: { predictions:
     return (
         <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_1, true)}
-                {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_2, true)}
-                {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_3, true)}
+                {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6"/>, predictions.exclusive_vip_1, true)}
+                {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6"/>, predictions.exclusive_vip_2, true)}
+                {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6"/>, predictions.exclusive_vip_3, true)}
             </div>
             
             {predictions.individual_vip.length > 0 && (
-              <Card className="border-yellow-500/30 bg-yellow-400/5 mt-6">
+              <Card className="bg-yellow-500 text-black border-yellow-600 mt-6">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3">
-                        <Star className="h-6 w-6 text-yellow-600"/>
+                        <Star className="h-6 w-6"/>
                         VIP Individual List
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className='text-black/80'>
                         Access the complete list of our individual VIP predictions.
                     </CardDescription>
                 </CardHeader>
@@ -163,7 +173,7 @@ export default function PredictionsPage() {
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
     : null;
     
-  const { data: publishedCategories, loading: predictionsLoading } = useCollection<any>(categoriesQuery);
+  const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
 
   const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
   const isUserAdmin = user?.email ? adminEmails.includes(user.email) : false;
@@ -252,7 +262,18 @@ export default function PredictionsPage() {
                          </CardDescription>
                        </CardHeader>
                        <CardContent className='flex-grow space-y-1'>
-                         {predictions.free_individual.map(renderMatch)}
+                         {predictions.free_individual.map((match, index) => {
+                            if (!match) return null;
+                            return (
+                                <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-muted/50">
+                                <div className="flex-1 truncate pr-2">
+                                    <p className="font-medium truncate">{match.match}</p>
+                                    <p className="text-muted-foreground">{match.prediction}</p>
+                                </div>
+                                <Badge variant="secondary" className="font-bold">{match.odds?.toFixed(2)}</Badge>
+                                </div>
+                            );
+                         })}
                        </CardContent>
                      </Card>
                   )}
@@ -281,4 +302,3 @@ export default function PredictionsPage() {
     </div>
   );
 }
-
