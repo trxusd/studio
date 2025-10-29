@@ -96,7 +96,7 @@ export default function VipManagerPage() {
                 {users && users.map(user => (
                     <TableRow key={user.id}>
                         <TableCell>
-                            <div className="font-medium">{user.displayName || 'N/A'}</div>
+                            <div className="font-medium">{user.displayName || user.email}</div>
                             <div className="text-sm text-muted-foreground">{user.email}</div>
                         </TableCell>
                         <TableCell>

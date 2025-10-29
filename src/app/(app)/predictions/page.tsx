@@ -20,17 +20,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
 
 
-// Mock subscription status. In a real app, this would come from your database.
+// Custom hook to get real-time VIP status
 const useVipStatus = (user: any) => {
   const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(true);
   const firestore = useFirestore();
 
+  // This query specifically targets the logged-in user's document
   const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
   const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean }>(userQuery);
 
   useEffect(() => {
     if (!userDataLoading) {
+      // If we have data and the first user in the result has isVip set to true
       setIsVip(userData?.[0]?.isVip || false);
       setLoading(false);
     }
