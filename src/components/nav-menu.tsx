@@ -51,10 +51,9 @@ const menuItems = [
 ];
 
 const socialItems = [
-    { href: '#', icon: Send, label: 'Telegram' },
-    { href: '#', icon: Facebook, label: 'Facebook' },
-    { href: '#', icon: Twitter, label: 'Twitter (X)' },
-    { href: '#', icon: Instagram, label: 'Instagram' },
+    { href: 'https://chat.whatsapp.com/HCxldxTtX6sHtBc8nav2ra?mode=wwt', icon: Send, label: 'WhatsApp' },
+    { href: 'https://www.facebook.com/share/17NAkV8qyF/', icon: Facebook, label: 'Facebook' },
+    { href: 'https://t.me/Predictionfbtwbot', icon: Send, label: 'Telegram' },
 ];
 
 export function NavMenu() {
@@ -92,13 +91,13 @@ export function NavMenu() {
             <div className="flex justify-center gap-4">
                  {socialItems.map(item => (
                     <Button key={item.label} variant="outline" size="icon" className="h-14 w-14 rounded-full" asChild>
-                        <Link href={item.href}>
+                        <Link href={item.href} target="_blank">
                             <item.icon className="h-6 w-6" />
                         </Link>
                     </Button>
                 ))}
                  <Button variant="outline" size="icon" className="h-14 w-14 rounded-full font-bold text-lg" asChild>
-                    <Link href="#">
+                    <Link href="https://1xbet.com?bf=68f9194d20b32_12344064745" target="_blank">
                         1x
                     </Link>
                 </Button>
