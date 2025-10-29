@@ -229,19 +229,21 @@ export default function PredictionsPage() {
                     )}
                 </div>
 
-                {isVip ? (
-                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_1)}
-                        {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_2)}
-                        {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_3)}
-                    </div>
-                ) : (
-                    <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-                        <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
-                        <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
-                        <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
-                    </div>
-                )}
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {isVip ? (
+                    <>
+                      {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_1)}
+                      {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_2)}
+                      {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_3)}
+                    </>
+                  ) : (
+                    <>
+                      <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
+                      <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
+                      <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
+                    </>
+                  )}
+                </div>
                 
                 {predictions.individual_vip.length > 0 && (
                   <Card className="border-yellow-500/30 bg-yellow-400/5">
