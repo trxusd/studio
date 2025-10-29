@@ -29,7 +29,7 @@ export default function DashboardPage() {
   const firestore = useFirestore();
 
   const [stats, setStats] = useState({ wins: 0, accuracy: 0 });
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false); // Set to false initially
 
   // Fetch user's VIP status
   const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
@@ -41,60 +41,60 @@ export default function DashboardPage() {
   const categoriesQuery = firestore ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
-  useEffect(() => {
-    async function fetchStats() {
-      if (!firestore) {
-        setStatsLoading(false);
-        return;
-      };
+  // useEffect(() => {
+  //   async function fetchStats() {
+  //     if (!firestore) {
+  //       setStatsLoading(false);
+  //       return;
+  //     };
 
-      setStatsLoading(true);
-      try {
-          let allPredictions: PredictionResult[] = [];
-          for (let i = 0; i < 7; i++) {
-              const date = new Date();
-              date.setDate(date.getDate() - i);
-              const dateString = date.toISOString().split('T')[0];
+  //     setStatsLoading(true);
+  //     try {
+  //         let allPredictions: PredictionResult[] = [];
+  //         for (let i = 0; i < 7; i++) {
+  //             const date = new Date();
+  //             date.setDate(date.getDate() - i);
+  //             const dateString = date.toISOString().split('T')[0];
 
-              const categoriesColRef = collection(firestore, `predictions/${dateString}/categories`);
-              const querySnapshot = await getDocs(categoriesColRef);
+  //             const categoriesColRef = collection(firestore, `predictions/${dateString}/categories`);
+  //             const querySnapshot = await getDocs(categoriesColRef);
 
-              querySnapshot.forEach(doc => {
-                  const category = doc.data();
-                  // SAFEGUARD: Ensure category and category.predictions exist and is an array
-                  if (category && Array.isArray(category.predictions)) {
-                      allPredictions.push(...category.predictions as PredictionResult[]);
-                  }
-              });
-          }
+  //             querySnapshot.forEach(doc => {
+  //                 const category = doc.data();
+  //                 // SAFEGUARD: Ensure category and category.predictions exist and is an array
+  //                 if (category && Array.isArray(category.predictions)) {
+  //                     allPredictions.push(...category.predictions as PredictionResult[]);
+  //                 }
+  //             });
+  //         }
           
-          let totalWins = 0;
-          let totalResolved = 0;
+  //         let totalWins = 0;
+  //         let totalResolved = 0;
 
-          allPredictions.forEach(pred => {
-              if (pred.status === 'Win') {
-                  totalWins++;
-                  totalResolved++;
-              } else if (pred.status === 'Loss') {
-                  totalResolved++;
-              }
-          });
+  //         allPredictions.forEach(pred => {
+  //             if (pred.status === 'Win') {
+  //                 totalWins++;
+  //                 totalResolved++;
+  //             } else if (pred.status === 'Loss') {
+  //                 totalResolved++;
+  //             }
+  //         });
 
-          const accuracy = totalResolved > 0 ? (totalWins / totalResolved) * 100 : 0;
-          setStats({ wins: totalWins, accuracy: parseFloat(accuracy.toFixed(1)) });
+  //         const accuracy = totalResolved > 0 ? (totalWins / totalResolved) * 100 : 0;
+  //         setStats({ wins: totalWins, accuracy: parseFloat(accuracy.toFixed(1)) });
 
-      } catch (error) {
-          console.error("Error fetching stats:", error);
-          setStats({ wins: 0, accuracy: 0 });
-      } finally {
-          setStatsLoading(false);
-      }
-    }
+  //     } catch (error) {
+  //         console.error("Error fetching stats:", error);
+  //         setStats({ wins: 0, accuracy: 0 });
+  //     } finally {
+  //         setStatsLoading(false);
+  //     }
+  //   }
 
-    if (firestore) {
-        fetchStats();
-    }
-  }, [firestore]);
+  //   if (firestore) {
+  //       fetchStats();
+  //   }
+  // }, [firestore]);
 
 
   const { activePredictionsCount, topEvents } = useMemo(() => {
@@ -131,7 +131,8 @@ export default function DashboardPage() {
         <h2 className="font-headline text-3xl font-bold tracking-tight">Dashboard</h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+        {/*
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Predictions Won</CardTitle>
@@ -163,6 +164,7 @@ export default function DashboardPage() {
             <p className="text-xs text-muted-foreground">In the last 7 days</p>
           </CardContent>
         </Card>
+        */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Predictions</CardTitle>
