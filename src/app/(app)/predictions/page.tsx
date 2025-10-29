@@ -17,39 +17,28 @@ import { useEffect, useState, useMemo } from 'react';
 import { collection, query, where } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
 
 
 // Mock subscription status. In a real app, this would come from your database.
 const useVipStatus = (user: any) => {
   const [isVip, setIsVip] = useState(false);
   const [loading, setLoading] = useState(true);
+  const firestore = useFirestore();
+
+  const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
+  const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean }>(userQuery);
 
   useEffect(() => {
-    // Simulate fetching subscription status
-    if (user) {
-      // In a real app, you'd fetch this from Firestore:
-      // const userDoc = await getDoc(doc(firestore, "users", user.uid));
-      // setIsVip(userDoc.data()?.isVip || false);
-      
-      // For now, we'll just mock it.
-      const isUserVip = true; // you can change this to false to see the locked state
-      setIsVip(isUserVip);
-
-    } else {
-      setIsVip(false);
+    if (!userDataLoading) {
+      setIsVip(userData?.[0]?.isVip || false);
+      setLoading(false);
     }
-    setLoading(false);
-  }, [user]);
+  }, [userData, userDataLoading]);
 
-  return { isVip, loading: loading };
+  return { isVip, loading };
 };
 
-type MatchPrediction = {
-  match: string;
-  prediction: string;
-  odds?: number;
-  confidence?: number;
-};
 
 type PredictionCategoryDoc = {
     id: string;
@@ -118,6 +107,28 @@ export default function PredictionsPage() {
         <Badge variant="secondary">{match.prediction}</Badge>
     </div>
   );
+  
+  const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[]) => {
+      if (matches.length === 0) return null;
+      return (
+          <Link href={`/predictions/${id}`} passHref>
+              <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full">
+                  <CardHeader>
+                      <CardTitle className="flex items-center gap-3">
+                          {icon}
+                          <span>{title}</span>
+                      </CardTitle>
+                      <CardDescription>{description}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow">
+                      {matches.slice(0, 2).map(renderMatch)}
+                      {matches.length > 2 && <p className="text-xs text-muted-foreground text-center pt-2">... and {matches.length - 2} more.</p>}
+                  </CardContent>
+              </Card>
+          </Link>
+      );
+  }
+
 
   const renderLocked = () => (
     <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground">
@@ -165,61 +176,28 @@ export default function PredictionsPage() {
                   Free Section
                 </h3>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {predictions.secure_trial.coupon_1.length > 0 && (
-                    <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col">
-                      <CardHeader>
-                          <CardTitle className="flex items-center gap-3">
-                              <ShieldCheck className="h-6 w-6 text-primary" />
-                              <span>Secure Trial</span>
-                          </CardTitle>
-                        <CardDescription>
-                          Try our predictions risk-free with our secure offer.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className='flex-grow'>
-                        {predictions.secure_trial.coupon_1.map(renderMatch)}
-                      </CardContent>
-                    </Card>
-                  )}
-                  {predictions.free_coupon.coupon_1.length > 0 && (
-                    <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col">
-                      <CardHeader>
-                          <CardTitle className="flex items-center gap-3">
-                              <Ticket className="h-6 w-6 text-primary" />
-                              <span>Free Coupon</span>
-                          </CardTitle>
-                        <CardDescription>
-                          Access free coupons for special predictions.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className='flex-grow'>
-                        {predictions.free_coupon.coupon_1.map(renderMatch)}
-                      </CardContent>
-                    </Card>
-                  )}
+                  {renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial.coupon_1)}
+                  {renderCouponCard('free_coupon', 'Free Coupon', 'Access free coupons for special predictions.', <Ticket className="h-6 w-6 text-primary" />, predictions.free_coupon.coupon_1)}
+                  
                   {predictions.free_individual.length > 0 && (
-                    <Card className="hover/card:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col">
-                      <CardHeader>
-                        <div className="flex items-center justify-between">
-                              <CardTitle className="flex items-center gap-3">
-                                  <List className="h-6 w-6 text-primary" />
-                                  <span>Free Individual List</span>
-                              </CardTitle>
-                              <Link href="/matches" passHref>
-                                  <Button variant="ghost" size="icon">
-                                      <ArrowRight className="h-4 w-4" />
-                                  </Button>
-                              </Link>
-                          </div>
-                        <CardDescription>
-                          See our list of free individual matches for the day.
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className='flex-grow space-y-1'>
-                        {predictions.free_individual.slice(0, 5).map(renderMatch)}
-                        {predictions.free_individual.length > 5 && <p className='text-center text-sm text-muted-foreground pt-2'>... and {predictions.free_individual.length - 5} more.</p>}
-                      </CardContent>
-                    </Card>
+                     <Card className="hover/card:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full">
+                       <CardHeader>
+                         <div className="flex items-center justify-between">
+                               <CardTitle className="flex items-center gap-3">
+                                   <List className="h-6 w-6 text-primary" />
+                                   <span>Free Individual List</span>
+                               </CardTitle>
+                               {/* No link here as it's not a coupon */}
+                           </div>
+                         <CardDescription>
+                           See our list of free individual matches for the day.
+                         </CardDescription>
+                       </CardHeader>
+                       <CardContent className='flex-grow space-y-1'>
+                         {predictions.free_individual.slice(0, 5).map(renderMatch)}
+                         {predictions.free_individual.length > 5 && <p className='text-center text-sm text-muted-foreground pt-2'>... and {predictions.free_individual.length - 5} more.</p>}
+                       </CardContent>
+                     </Card>
                   )}
                 </div>
               </section>
@@ -228,7 +206,7 @@ export default function PredictionsPage() {
             <Separator />
 
             {/* Paid Section */}
-            {(predictions.exclusive_vip.coupon_1.length > 0 || predictions.individual_vip.length > 0) && (
+            {(predictions.exclusive_vip.coupon_1.length > 0 || predictions.exclusive_vip.coupon_2.length > 0 || predictions.exclusive_vip.coupon_3.length > 0 || predictions.individual_vip.length > 0) && (
               <section className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
@@ -249,40 +227,20 @@ export default function PredictionsPage() {
                     )}
                 </div>
 
-                {predictions.exclusive_vip.coupon_1.length > 0 && (
-                  <Card className="border-yellow-500/30 bg-yellow-400/5">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-3">
-                            <Ticket className="h-6 w-6 text-yellow-600"/>
-                            Exclusive VIP Predictions: Coupons
-                        </CardTitle>
-                        <CardDescription>
-                            Use your VIP coupons to unlock these premium predictions.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        {isVip ? (
-                          <Tabs defaultValue="coupon1">
-                            <TabsList className="grid w-full grid-cols-3">
-                              <TabsTrigger value="coupon1">Coupon 1</TabsTrigger>
-                              <TabsTrigger value="coupon2" disabled={predictions.exclusive_vip.coupon_2.length === 0}>Coupon 2</TabsTrigger>
-                              <TabsTrigger value="coupon3" disabled={predictions.exclusive_vip.coupon_3.length === 0}>Coupon 3</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="coupon1" className="pt-4 space-y-1">
-                                {predictions.exclusive_vip.coupon_1.map(renderMatch)}
-                            </TabsContent>
-                            <TabsContent value="coupon2" className="pt-4 space-y-1">
-                                {predictions.exclusive_vip.coupon_2.map(renderMatch)}
-                            </TabsContent>
-                            <TabsContent value="coupon3" className="pt-4 space-y-1">
-                                {predictions.exclusive_vip.coupon_3.map(renderMatch)}
-                            </TabsContent>
-                          </Tabs>
-                        ) : renderLocked()}
-                    </CardContent>
-                  </Card>
+                {isVip ? (
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_1)}
+                        {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_2)}
+                        {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_3)}
+                    </div>
+                ) : (
+                    <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+                        <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
+                        <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
+                        <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
+                    </div>
                 )}
-
+                
                 {predictions.individual_vip.length > 0 && (
                   <Card className="border-yellow-500/30 bg-yellow-400/5">
                     <CardHeader>
@@ -291,11 +249,13 @@ export default function PredictionsPage() {
                                 <Star className="h-6 w-6 text-yellow-600"/>
                                 VIP Individual List
                             </CardTitle>
-                            <Link href="/vip-predictions" passHref>
-                                <Button variant="ghost" size="icon">
-                                    <ArrowRight className="h-4 w-4 text-yellow-600" />
-                                </Button>
-                            </Link>
+                             {isVip && (
+                                <Link href="/vip-predictions" passHref>
+                                    <Button variant="ghost" size="icon">
+                                        <ArrowRight className="h-4 w-4 text-yellow-600" />
+                                    </Button>
+                                </Link>
+                             )}
                         </div>
                         <CardDescription>
                             Access the complete list of our individual VIP predictions.
