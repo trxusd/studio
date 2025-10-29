@@ -52,7 +52,7 @@ const useUserProfile = (user: any) => {
 };
 
 
-const renderMatch = (match: MatchPrediction, index: number) => {
+const renderMatchVip = (match: MatchPrediction, index: number) => {
   if (!match) return null;
   return (
     <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-black/10">
@@ -65,6 +65,19 @@ const renderMatch = (match: MatchPrediction, index: number) => {
   );
 };
 
+const renderMatchFree = (match: MatchPrediction, index: number) => {
+  if (!match) return null;
+  return (
+    <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-muted/50">
+      <div className="flex-1 truncate pr-2">
+        <p className="font-medium truncate">{match.match}</p>
+        <p className="text-muted-foreground">{match.prediction}</p>
+      </div>
+      <Badge variant="secondary" className="font-bold bg-transparent text-primary">{match.odds?.toFixed(2)}</Badge>
+    </div>
+  );
+};
+
 const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[], isVipCard = false) => {
     if (!matches || matches.length === 0) return null;
     
@@ -73,6 +86,7 @@ const renderCouponCard = (id: string, title: string, description: string, icon: 
         : 'hover:border-primary/50 hover:bg-muted/50';
 
     const descriptionClasses = isVipCard ? 'text-black/80' : '';
+    const matchRenderer = isVipCard ? renderMatchVip : renderMatchFree;
 
     return (
         <Link href={`/predictions/coupon/${id}`} passHref className="h-full block">
@@ -85,7 +99,7 @@ const renderCouponCard = (id: string, title: string, description: string, icon: 
                     <CardDescription className={descriptionClasses}>{description}</CardDescription>
                 </CardHeader>
                 <CardContent className="flex-grow space-y-1">
-                    {matches.map(renderMatch)}
+                    {matches.map(matchRenderer)}
                 </CardContent>
             </Card>
         </Link>
@@ -152,7 +166,7 @@ const PaidSectionContent = ({ predictions, isVip, canAccessVip }: { predictions:
                 </CardHeader>
                 <CardContent>
                   <div className='space-y-1'>
-                    {predictions.individual_vip.map(renderMatch)}
+                    {predictions.individual_vip.map(renderMatchVip)}
                   </div>
                 </CardContent>
               </Card>
@@ -262,18 +276,7 @@ export default function PredictionsPage() {
                          </CardDescription>
                        </CardHeader>
                        <CardContent className='flex-grow space-y-1'>
-                         {predictions.free_individual.map((match, index) => {
-                            if (!match) return null;
-                            return (
-                                <div key={index} className="flex items-center justify-between text-xs p-2 rounded-md hover:bg-muted/50">
-                                <div className="flex-1 truncate pr-2">
-                                    <p className="font-medium truncate">{match.match}</p>
-                                    <p className="text-muted-foreground">{match.prediction}</p>
-                                </div>
-                                <Badge variant="secondary" className="font-bold">{match.odds?.toFixed(2)}</Badge>
-                                </div>
-                            );
-                         })}
+                         {predictions.free_individual.map(renderMatchFree)}
                        </CardContent>
                      </Card>
                   )}
@@ -288,10 +291,10 @@ export default function PredictionsPage() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
                         <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2 text-yellow-500">
-                            <Crown /> Paid Section
+                            <Crown /> Subscription Section
                         </h3>
                         <p className="text-muted-foreground max-w-2xl">
-                            Unlock access to our VIP predictions for the best chance to win.
+                            Unlock access to our Subscription predictions for the best chance to win.
                         </p>
                     </div>
                 </div>
