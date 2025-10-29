@@ -103,7 +103,7 @@ export default function LiveMatchesPage() {
                                </h4>
                                <div className='space-y-1'>
                                 {leagueMatches.map(match => (
-                                     <Link href={`/predictions/${match.fixture.id}`} key={match.fixture.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
+                                     <Link href={`/match/${match.fixture.id}`} key={match.fixture.id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
                                          <div className="flex items-center gap-4">
                                             <div className="flex w-12 flex-col items-center justify-center text-xs text-red-500 font-bold">
                                                <span>{match.fixture.status.short}</span>

@@ -111,7 +111,7 @@ export default function PredictionsPage() {
   const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[]) => {
       if (matches.length === 0) return null;
       return (
-          <Link href={`/predictions/${id}`} passHref>
+          <Link href={`/predictions/coupon/${id}`} passHref>
               <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full">
                   <CardHeader>
                       <CardTitle className="flex items-center gap-3">

@@ -46,7 +46,7 @@ export function MatchCard({ match, isVip = false }: MatchCardProps) {
       </CardContent>
       <CardFooter>
         <Button asChild variant="outline" size="sm" className="w-full">
-          <Link href={`/predictions/${match.fixture_id}`}>
+          <Link href={`/match/${match.fixture_id}`}>
             View Predictions <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
         </Button>

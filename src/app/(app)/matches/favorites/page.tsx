@@ -182,7 +182,7 @@ export default function FavoriteMatchesPage() {
                     </h4>
                     <div className='space-y-1'>
                       {leagueMatches.map(match => (
-                        <Link href={`/predictions/${match.fixture_id}`} key={match.fixture_id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
+                        <Link href={`/match/${match.fixture_id}`} key={match.fixture_id} className="flex items-center justify-between p-3 rounded-md hover:bg-muted/50 transition-colors group">
                           <div className="flex items-center gap-4">
                              <div className="flex flex-col gap-2">
                               <div className="flex items-center gap-2">

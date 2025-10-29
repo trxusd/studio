@@ -31,13 +31,13 @@ const categoryTitles: Record<string, string> = {
 export default function CouponDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const categoryId = params.categoryId as string;
+    const couponId = params.couponId as string;
     const { user, loading: userLoading } = useUser();
     const firestore = useFirestore();
 
     const today = new Date().toISOString().split('T')[0];
     
-    const categoryDocRef = firestore ? doc(firestore, `predictions/${today}/categories/${categoryId}`) : null;
+    const categoryDocRef = firestore ? doc(firestore, `predictions/${today}/categories/${couponId}`) : null;
     const { data: category, loading: categoryLoading } = useDoc<PredictionCategoryDoc>(categoryDocRef);
     
     const isLoading = userLoading || categoryLoading;

@@ -32,16 +32,18 @@ export function Header() {
              const isLast = index === pathSegments.length - 1;
              
              // Do not show a link for dynamic routes that are not category pages
-             const isDynamicPredictionPage = segment.startsWith('[') && segment.endsWith(']');
-             const isPredictionCategory = pathSegments[index-1] === 'predictions' && !isDynamicPredictionPage;
+             const isDynamicId = /\[.*\]/.test(segment);
+             const isCouponRoute = pathSegments[index - 1] === 'predictions' && pathSegments[index] === 'coupon';
+             const isMatchRoute = pathSegments[index - 1] === 'app' && pathSegments[index] === 'match';
 
-             if (isDynamicPredictionPage) return null;
+             if (isDynamicId || segment === 'app' || segment === 'predictions' || isCouponRoute || isMatchRoute) return null;
+
 
              return (
                  <span key={segment} className="flex items-center gap-2">
                     <span>/</span>
                     <Link href={href} className={cn(isLast ? "text-foreground font-semibold" : "hover:text-foreground")}>
-                        {isPredictionCategory ? "Coupon Details" : segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')}
+                        {segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')}
                     </Link>
                  </span>
              )
