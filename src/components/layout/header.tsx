@@ -17,28 +17,21 @@ export function Header() {
     return null;
   }
 
+  const breadcrumbs = pathSegments.length > 1 && pathSegments[0] === 'dashboard' ? pathSegments.slice(1) : pathSegments;
+
+
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:h-16 md:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between gap-4 border-b bg-background/80 px-4 backdrop-blur-sm md:h-16 md:px-6">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden" />
-        <Link href="/dashboard" className="flex items-center gap-2 font-semibold md:hidden">
-            <AppLogo className="h-6 w-6 text-primary" />
-            <span className="font-headline">FOOTBET-WIN</span>
-        </Link>
         <div className="hidden md:flex items-center gap-2 text-sm text-muted-foreground">
           <Link href="/dashboard" className="font-semibold text-foreground">Home</Link>
-          {pathSegments.map((segment, index) => {
-             const href = '/' + pathSegments.slice(0, index + 1).join('/');
-             const isLast = index === pathSegments.length - 1;
+          {breadcrumbs.map((segment, index) => {
+             const href = '/' + breadcrumbs.slice(0, index + 1).join('/');
+             const isLast = index === breadcrumbs.length - 1;
              
-             // Do not show a link for dynamic routes that are not category pages
-             const isDynamicId = /\[.*\]/.test(segment);
-             const isCouponRoute = pathSegments[index - 1] === 'predictions' && pathSegments[index] === 'coupon';
-             const isMatchRoute = pathSegments[index - 1] === 'app' && pathSegments[index] === 'match';
-
-             if (isDynamicId || segment === 'app' || segment === 'predictions' || isCouponRoute || isMatchRoute) return null;
-
-
+             if (segment === 'app' || segment === 'dashboard') return null;
+             
              return (
                  <span key={segment} className="flex items-center gap-2">
                     <span>/</span>
@@ -50,7 +43,14 @@ export function Header() {
           })}
         </div>
       </div>
-      <div className="ml-auto flex items-center gap-4">
+
+      <div className="absolute left-1/2 -translate-x-1/2">
+        <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+          <AppLogo className="h-7 w-7 text-primary" />
+        </Link>
+      </div>
+
+      <div className="flex items-center gap-4">
         <Select defaultValue="en">
           <SelectTrigger className="w-28 h-9 text-xs">
             <SelectValue placeholder="Language" />
@@ -69,3 +69,4 @@ export function Header() {
     </header>
   );
 }
+
