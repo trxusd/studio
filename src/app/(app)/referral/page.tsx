@@ -43,7 +43,8 @@ export default function ReferralPage() {
         };
         if (referrals) {
             referrals.forEach(ref => {
-                if (ref && ref.referredUserPlan) { // Check if ref and referredUserPlan exist
+                // Ensure ref and referredUserPlan are valid before processing
+                if (ref && typeof ref.referredUserPlan === 'string') {
                     if (ref.referredUserPlan.includes('Month') && !ref.referredUserPlan.includes('3') && !ref.referredUserPlan.includes('6')) {
                         progress['VIP 1 (1 Month)']++;
                     }
@@ -110,7 +111,7 @@ export default function ReferralPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Your Referral Code</CardTitle>
-                    <CardDescription>Share this code with your friends. When they sign up, you'll start earning commissions.</CardDescription>
+                    <CardDescription>Share this code with your friends. When they sign up for a VIP plan, you'll start earning rewards.</CardDescription>
                 </CardHeader>
                 <CardContent className="flex items-center gap-4">
                     <div className="flex-1 border-2 border-dashed border-primary/50 bg-muted rounded-lg p-4 text-center">
@@ -124,8 +125,8 @@ export default function ReferralPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle>How does it work?</CardTitle>
-                    <CardDescription>It's simple! Invite 10 friends to a VIP plan to get your reward. Each tier is a one-time reward.</CardDescription>
+                    <CardTitle>How It Works</CardTitle>
+                    <CardDescription>It's simple! Invite 10 friends to a specific VIP plan to get your one-time reward for that tier.</CardDescription>
                 </CardHeader>
                 <CardContent>
                    {referralsLoading ? (
