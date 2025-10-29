@@ -26,13 +26,24 @@ type ProcessedPrediction = MatchPrediction & {
 
 // This function checks a prediction against a final score.
 function checkPredictionStatus(prediction: MatchPrediction, finalScore: string | null): 'Win' | 'Loss' | 'Pending' {
-    if (!finalScore || ['NS', 'PST', 'CANC', 'TBD', 'ABD'].includes(finalScore)) return 'Pending';
+    if (!finalScore || ['NS', 'PST', 'CANC', 'TBD', 'ABD', '1H', '2H', 'HT'].includes(finalScore)) return 'Pending';
     
     const parts = finalScore.split('-').map(s => parseInt(s.trim(), 10));
     if (parts.some(isNaN) || parts.length < 2) return 'Pending';
     const [homeScore, awayScore] = parts;
 
     const predictionText = prediction.prediction.toLowerCase().replace(/\s+/g, '');
+
+    // Double Chance (Must be checked before single bets)
+    if (predictionText.includes('1x') || predictionText.includes('homewinordraw')) {
+        return homeScore >= awayScore ? 'Win' : 'Loss';
+    }
+    if (predictionText.includes('x2') || predictionText.includes('awaywinordraw')) {
+        return awayScore >= homeScore ? 'Win' : 'Loss';
+    }
+    if (predictionText.includes('12') || predictionText.includes('homeorawaywin')) {
+        return homeScore !== awayScore ? 'Win' : 'Loss';
+    }
 
     // 1X2 Predictions
     if (predictionText.includes('homewin') || predictionText === '1') {
@@ -58,17 +69,6 @@ function checkPredictionStatus(prediction: MatchPrediction, finalScore: string |
     // Both Teams to Score (BTTS)
     if (predictionText.includes('btts') || predictionText.includes('gg')) {
         return homeScore > 0 && awayScore > 0 ? 'Win' : 'Loss';
-    }
-
-    // Double Chance Predictions
-    if (predictionText.includes('1x') || predictionText.includes('homeordraw')) {
-        return homeScore >= awayScore ? 'Win' : 'Loss';
-    }
-    if (predictionText.includes('x2') || predictionText.includes('awayordraw')) {
-        return awayScore >= homeScore ? 'Win' : 'Loss';
-    }
-    if (predictionText.includes('12') || predictionText.includes('homeoraway')) {
-        return homeScore !== awayScore ? 'Win' : 'Loss';
     }
     
     // Correct Score (assuming format '1-0', '2-1', etc.)
