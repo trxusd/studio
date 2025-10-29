@@ -285,7 +285,8 @@ export default function PaymentsPage() {
                   )}
                 </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex justify-end gap-4">
+                 <Button variant="outline" onClick={prevStep}>Back</Button>
                  <Button className="w-full" onClick={nextStep}>Next: Verify Payment</Button>
             </CardFooter>
           </Card>
@@ -328,7 +329,8 @@ export default function PaymentsPage() {
                     </div>
                 </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex justify-end gap-4">
+               <Button variant="outline" onClick={prevStep}>Back</Button>
               <Button className="w-full font-bold" onClick={handleVerification} disabled={isVerifying}>
                 {isVerifying ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 Submit Verification
