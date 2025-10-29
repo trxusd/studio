@@ -1,7 +1,7 @@
 
 'use client';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { DollarSign, Users, BarChart, Activity, Bot, Trophy, CheckCheck, ArrowRight, Loader2 } from "lucide-react";
+import { DollarSign, Users, BarChart, Activity, Bot, Trophy, CheckCheck, ArrowRight, Loader2, UserCog, Ticket, LineChart } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useFirestore, useCollection } from "@/firebase";
@@ -24,6 +24,16 @@ type PredictionCategory = {
     id: string;
     predictions: any[];
 };
+
+const managementTools = [
+    { href: "/admin/official-predictions", icon: Bot, label: "Official Predictions" },
+    { href: "/admin/payment-verification", icon: CheckCheck, label: "Payment Verification" },
+    { href: "/admin/check-results", icon: Trophy, label: "Check Results" },
+    { href: "/admin/users", icon: Users, label: "Users" },
+    { href: "/admin/vip-manager", icon: UserCog, label: "VIP Manager" },
+    { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
+    { href: "/admin/analytics", icon: LineChart, label: "Analytics" },
+];
 
 export default function AdminDashboardPage() {
     const firestore = useFirestore();
@@ -125,46 +135,22 @@ export default function AdminDashboardPage() {
             
             <div className="mt-8">
                 <h2 className="text-xl font-semibold tracking-tight font-headline mb-4">Management Tools</h2>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Bot /> Official Predictions</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <CardDescription>Manually trigger the daily AI prediction generation process.</CardDescription>
-                        </CardContent>
-                        <CardFooter>
-                            <Button asChild variant="outline" size="sm">
-                                <Link href="/admin/official-predictions">Go to predictions <ArrowRight className="ml-2 h-4 w-4" /></Link>
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><CheckCheck /> Payment Verification</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <CardDescription>Review and approve or reject user payment submissions.</CardDescription>
-                        </CardContent>
-                        <CardFooter>
-                            <Button asChild variant="outline" size="sm">
-                                <Link href="/admin/payment-verification">Review payments <ArrowRight className="ml-2 h-4 w-4" /></Link>
-                            </Button>
-                        </CardFooter>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2"><Trophy /> Check Results</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <CardDescription>Automatically check prediction outcomes against final scores.</CardDescription>
-                        </CardContent>
-                        <CardFooter>
-                            <Button asChild variant="outline" size="sm">
-                                <Link href="/admin/check-results">View results <ArrowRight className="ml-2 h-4 w-4" /></Link>
-                            </Button>
-                        </CardFooter>
-                    </Card>
+                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {managementTools.map((tool) => (
+                        <Button
+                            key={tool.label}
+                            variant="ghost"
+                            className="flex flex-col items-center justify-center h-28 gap-2 text-center bg-card rounded-lg shadow-md hover:bg-accent transition-all"
+                            asChild
+                        >
+                            <Link href={tool.href}>
+                                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary">
+                                    <tool.icon className="h-6 w-6" />
+                                </div>
+                                <span className="text-xs font-semibold uppercase tracking-wider text-center">{tool.label}</span>
+                            </Link>
+                        </Button>
+                    ))}
                 </div>
             </div>
 

@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppLogo } from "@/components/icons";
-import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft, Bot, Loader2 } from "lucide-react";
+import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft, Bot, Loader2, UserCog } from "lucide-react";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -14,7 +14,7 @@ const navItems = [
     { href: "/admin/dashboard", icon: Home, label: "Dashboard" },
     { href: "/admin/users", icon: Users, label: "Users" },
     { href: "/admin/payment-verification", icon: CheckCheck, label: "Payment Verification" },
-    { href: "/admin/vip-manager", icon: Crown, label: "VIP Manager" },
+    { href: "/admin/vip-manager", icon: UserCog, label: "VIP Manager" },
     { href: "/admin/check-results", icon: Trophy, label: "Check Results" },
     { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
     { href: "/admin/official-predictions", icon: Bot, label: "Official Predictions" },
@@ -59,7 +59,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 <Link key={href} href={href} className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
                                     <Icon className="h-4 w-4" />
                                     {label}
-                                </Link>
+                                 </Link>
                             ))}
                         </nav>
                     </div>
