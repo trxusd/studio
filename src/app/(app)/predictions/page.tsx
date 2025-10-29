@@ -14,28 +14,35 @@ import { Separator } from '@/components/ui/separator';
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
-import { collection, query, where, doc } from 'firebase/firestore';
+import { collection, query, where, doc, Timestamp } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
+import { differenceInDays } from 'date-fns';
 
 
-// Custom hook to fetch and determine VIP status
-const useVipStatus = (user: any) => {
-  const [isVip, setIsVip] = useState(false);
+type UserProfile = {
+  isVip?: boolean;
+  createdAt?: Timestamp;
+};
+
+
+// Custom hook to fetch user profile data including VIP status and creation date
+const useUserProfile = (user: any) => {
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const firestore = useFirestore();
 
   const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
-  const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean }>(userQuery);
+  const { data: userData, loading: userDataLoading } = useCollection<UserProfile>(userQuery);
 
   useEffect(() => {
     if (!userDataLoading) {
-      setIsVip(userData?.[0]?.isVip || false);
+      setProfile(userData?.[0] || null);
       setLoading(false);
     }
   }, [userData, userDataLoading]);
 
-  return { isVip, loading };
+  return { profile, loading };
 };
 
 
@@ -147,7 +154,7 @@ const PaidSectionContent = ({ predictions, isVip, canAccessVip }: { predictions:
 
 export default function PredictionsPage() {
   const { user, loading: userLoading } = useUser();
-  const { isVip, loading: vipLoading } = useVipStatus(user);
+  const { profile, loading: profileLoading } = useUserProfile(user);
   const router = useRouter();
   const firestore = useFirestore();
 
@@ -156,14 +163,19 @@ export default function PredictionsPage() {
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
     : null;
     
-  const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
+  const { data: publishedCategories, loading: predictionsLoading } = useCollection<any>(categoriesQuery);
 
   const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
   const isUserAdmin = user?.email ? adminEmails.includes(user.email) : false;
 
-  const isLoading = userLoading || vipLoading || predictionsLoading;
+  const isLoading = userLoading || profileLoading || predictionsLoading;
 
+  const isVip = profile?.isVip || false;
   const canAccessVip = isUserAdmin || isVip;
+
+  const accountAgeInDays = user?.metadata.creationTime ? differenceInDays(new Date(), new Date(user.metadata.creationTime)) : Infinity;
+  const canAccessSecureTrial = isUserAdmin || isVip || accountAgeInDays < 10;
+
 
   const predictions = useMemo(() => {
     const structuredData = {
@@ -186,7 +198,7 @@ export default function PredictionsPage() {
 
   const hasFreePredictions = 
     !isLoading && (
-        predictions.secure_trial.length > 0 ||
+        (canAccessSecureTrial && predictions.secure_trial.length > 0) ||
         predictions.free_coupon.length > 0 ||
         predictions.free_individual.length > 0
     );
@@ -225,7 +237,7 @@ export default function PredictionsPage() {
                   Free Section
                 </h3>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial)}
+                  {canAccessSecureTrial && renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial)}
                   {renderCouponCard('free_coupon', 'Free Coupon', 'Access free coupons for special predictions.', <Ticket className="h-6 w-6 text-primary" />, predictions.free_coupon)}
                   
                   {predictions.free_individual.length > 0 && (
@@ -269,3 +281,4 @@ export default function PredictionsPage() {
     </div>
   );
 }
+
