@@ -44,13 +44,16 @@ export default function VipPredictionsPage() {
   const firestore = useFirestore();
   
   const today = new Date().toISOString().split('T')[0];
-  const vipPredictionsQuery = firestore ? doc(firestore, `predictions/${today}/categories/individual_vip`) : null;
   
   const { data: vipCategory, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(
-      firestore ? query(collection(firestore, `predictions/${today}/categories`), where('id', '==', 'individual_vip'), where('status', '==', 'published')) : null
+      firestore ? query(collection(firestore, `predictions/${today}/categories`), where('id', 'in', ['individual_vip', 'exclusive_vip_1', 'exclusive_vip_2', 'exclusive_vip_3', 'secure_trial']), where('status', '==', 'published')) : null
   );
 
-  const vipPredictions = useMemo(() => vipCategory?.[0]?.predictions || [], [vipCategory]);
+  const vipPredictions = useMemo(() => {
+    if (!vipCategory) return [];
+    // Flatten predictions from all fetched VIP categories
+    return vipCategory.flatMap(cat => cat.predictions);
+  }, [vipCategory]);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -121,3 +124,5 @@ export default function VipPredictionsPage() {
     </div>
   );
 }
+
+    

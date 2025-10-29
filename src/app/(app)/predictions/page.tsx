@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Ticket, ShieldCheck, List, Crown, Lock, Loader2, Star } from 'lucide-react';
+import { Ticket, ShieldCheck, List, Crown, Lock, Loader2, Star } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { useUser, useFirestore, useCollection } from '@/firebase';
@@ -25,14 +25,12 @@ const useVipStatus = (user: any) => {
   const [loading, setLoading] = useState(true);
   const firestore = useFirestore();
 
-  // This query specifically targets the logged-in user's document
   const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
   const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean }>(userQuery);
 
   useEffect(() => {
     if (!userDataLoading) {
-      // If we have data and the first user in the result has isVip set to true
-      setIsVip(userData?.[0]?.isVip || false);
+      setIsVip(!!userData?.[0]?.isVip);
       setLoading(false);
     }
   }, [userData, userDataLoading]);
@@ -73,21 +71,31 @@ export default function PredictionsPage() {
   const predictions = useMemo(() => {
     if (!publishedCategories) return null;
 
-    const structuredData = {
-        secure_trial: { coupon_1: [] as MatchPrediction[] },
-        exclusive_vip: { coupon_1: [] as MatchPrediction[], coupon_2: [] as MatchPrediction[], coupon_3: [] as MatchPrediction[] },
-        individual_vip: [] as MatchPrediction[],
-        free_coupon: { coupon_1: [] as MatchPrediction[] },
-        free_individual: [] as MatchPrediction[],
+    const structuredData: {
+      secure_trial: MatchPrediction[],
+      exclusive_vip_1: MatchPrediction[],
+      exclusive_vip_2: MatchPrediction[],
+      exclusive_vip_3: MatchPrediction[],
+      individual_vip: MatchPrediction[],
+      free_coupon: MatchPrediction[],
+      free_individual: MatchPrediction[],
+    } = {
+        secure_trial: [],
+        exclusive_vip_1: [],
+        exclusive_vip_2: [],
+        exclusive_vip_3: [],
+        individual_vip: [],
+        free_coupon: [],
+        free_individual: [],
     };
 
     publishedCategories.forEach(cat => {
-        if (cat.id === 'secure_trial') structuredData.secure_trial.coupon_1 = cat.predictions;
-        if (cat.id === 'free_coupon') structuredData.free_coupon.coupon_1 = cat.predictions;
+        if (cat.id === 'secure_trial') structuredData.secure_trial = cat.predictions;
+        if (cat.id === 'free_coupon') structuredData.free_coupon = cat.predictions;
         if (cat.id === 'free_individual') structuredData.free_individual = cat.predictions;
-        if (cat.id === 'exclusive_vip_1') structuredData.exclusive_vip.coupon_1 = cat.predictions;
-        if (cat.id === 'exclusive_vip_2') structuredData.exclusive_vip.coupon_2 = cat.predictions;
-        if (cat.id === 'exclusive_vip_3') structuredData.exclusive_vip.coupon_3 = cat.predictions;
+        if (cat.id === 'exclusive_vip_1') structuredData.exclusive_vip_1 = cat.predictions;
+        if (cat.id === 'exclusive_vip_2') structuredData.exclusive_vip_2 = cat.predictions;
+        if (cat.id === 'exclusive_vip_3') structuredData.exclusive_vip_3 = cat.predictions;
         if (cat.id === 'individual_vip') structuredData.individual_vip = cat.predictions;
     });
 
@@ -150,12 +158,12 @@ export default function PredictionsPage() {
   )
 
   const noPredictionsAvailable = !predictions || (
-      !predictions.secure_trial.coupon_1.length &&
-      !predictions.free_coupon.coupon_1.length &&
+      !predictions.secure_trial.length &&
+      !predictions.free_coupon.length &&
       !predictions.free_individual.length &&
-      !predictions.exclusive_vip.coupon_1.length &&
-      !predictions.exclusive_vip.coupon_2.length &&
-      !predictions.exclusive_vip.coupon_3.length &&
+      !predictions.exclusive_vip_1.length &&
+      !predictions.exclusive_vip_2.length &&
+      !predictions.exclusive_vip_3.length &&
       !predictions.individual_vip.length
   );
 
@@ -181,14 +189,14 @@ export default function PredictionsPage() {
       {predictions && !noPredictionsAvailable && (
         <>
             {/* Free Section */}
-            {(predictions.secure_trial.coupon_1.length > 0 || predictions.free_coupon.coupon_1.length > 0 || predictions.free_individual.length > 0) && (
+            {(predictions.secure_trial.length > 0 || predictions.free_coupon.length > 0 || predictions.free_individual.length > 0) && (
               <section className="space-y-4">
                 <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
                   Free Section
                 </h3>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial.coupon_1)}
-                  {renderCouponCard('free_coupon', 'Free Coupon', 'Access free coupons for special predictions.', <Ticket className="h-6 w-6 text-primary" />, predictions.free_coupon.coupon_1)}
+                  {renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial)}
+                  {renderCouponCard('free_coupon', 'Free Coupon', 'Access free coupons for special predictions.', <Ticket className="h-6 w-6 text-primary" />, predictions.free_coupon)}
                   
                   {predictions.free_individual.length > 0 && (
                      <Card className="hover/card:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full">
@@ -215,7 +223,7 @@ export default function PredictionsPage() {
             <Separator />
 
             {/* Paid Section */}
-            {(predictions.exclusive_vip.coupon_1.length > 0 || predictions.exclusive_vip.coupon_2.length > 0 || predictions.exclusive_vip.coupon_3.length > 0 || predictions.individual_vip.length > 0) && (
+            {(predictions.exclusive_vip_1.length > 0 || predictions.exclusive_vip_2.length > 0 || predictions.exclusive_vip_3.length > 0 || predictions.individual_vip.length > 0) && (
               <section className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
@@ -239,21 +247,21 @@ export default function PredictionsPage() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {isVip ? (
                     <>
-                      {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_1, true)}
-                      {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_2, true)}
-                      {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_3, true)}
+                      {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_1, true)}
+                      {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_2, true)}
+                      {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip_3, true)}
                     </>
                   ) : (
                     <>
-                      {renderLocked('Exclusive VIP 1')}
-                      {renderLocked('Exclusive VIP 2')}
-                      {renderLocked('Exclusive VIP 3')}
+                      {predictions.exclusive_vip_1.length > 0 && renderLocked('Exclusive VIP 1')}
+                      {predictions.exclusive_vip_2.length > 0 && renderLocked('Exclusive VIP 2')}
+                      {predictions.exclusive_vip_3.length > 0 && renderLocked('Exclusive VIP 3')}
                     </>
                   )}
                 </div>
                 
                 {predictions.individual_vip.length > 0 && (
-                  <Card className="border-yellow-500/30 bg-yellow-400/5">
+                  <Card className={isVip ? "border-yellow-500/30 bg-yellow-400/5" : ""}>
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <CardTitle className="flex items-center gap-3">
@@ -281,3 +289,5 @@ export default function PredictionsPage() {
     </div>
   );
 }
+
+    
