@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
-import { CreditCard, LifeBuoy, LogOut, Settings, User as UserIcon, Loader2 } from "lucide-react"
+import { CreditCard, Headset, LogOut, Settings, User as UserIcon, Loader2 } from "lucide-react"
 import { useAuth, useUser } from "@/firebase";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
@@ -79,7 +79,7 @@ export function UserNav() {
           <DropdownMenuSeparator />
            <SheetTrigger asChild>
             <DropdownMenuItem>
-                <LifeBuoy className="mr-2 h-4 w-4" />
+                <Headset className="mr-2 h-4 w-4" />
                 <span>Support</span>
             </DropdownMenuItem>
            </SheetTrigger>

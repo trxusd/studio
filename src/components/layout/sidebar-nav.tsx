@@ -23,6 +23,7 @@ import {
   Shield,
   LifeBuoy,
   Gift,
+  Headset,
 } from 'lucide-react';
 import { UserNav } from './user-nav';
 import { useUser } from '@/firebase';
@@ -88,7 +89,7 @@ export function SidebarNav() {
                       tooltip={{ children: 'Support', side: 'right' }}
                       className="w-full"
                     >
-                      <MessageSquare />
+                      <Headset />
                       <span>Support</span>
                     </SidebarMenuButton>
                  </SheetTrigger>

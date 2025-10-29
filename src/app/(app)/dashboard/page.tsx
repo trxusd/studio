@@ -12,6 +12,7 @@ import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, query, where, Timestamp, getDocs, doc } from 'firebase/firestore';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
 import { useState, useEffect } from 'react';
+import { NavMenu } from '@/components/nav-menu';
 
 type PredictionCategoryDoc = {
     id: string;
@@ -225,7 +226,7 @@ export default function DashboardPage() {
             </ul>
             <div className="mt-6">
                 <h4 className="font-semibold">Your VIP Progress</h4>
-                <Progress value={vipStatus?.isVip ? 100 : 25} className="w-full mt-2 [&>div]:bg-yellow-300 bg-black/20" />
+                <Progress value={vipStatus?.isVip ? 100 : 25} className="w-full mt-2 [&gt;div]:bg-yellow-300 bg-black/20" />
                 <p className="text-xs text-black/80 mt-1">{vipStatus?.isVip ? "You're in the winner's circle!" : "You're one step away from joining."}</p>
             </div>
           </CardContent>
@@ -260,9 +261,9 @@ export default function DashboardPage() {
             </Button>
           </CardFooter>
         </Card>
+        
+        <NavMenu />
 
     </div>
   );
 }
-
-    
