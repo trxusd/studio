@@ -136,21 +136,24 @@ export default function AdminDashboardPage() {
             <div className="mt-8">
                 <h2 className="text-xl font-semibold tracking-tight font-headline mb-4">Management Tools</h2>
                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                    {managementTools.map((tool) => (
-                        <Button
-                            key={tool.label}
-                            variant="ghost"
-                            className="flex flex-col items-center justify-center h-28 gap-2 text-center bg-card rounded-lg shadow-md hover:bg-accent transition-all"
-                            asChild
-                        >
-                            <Link href={tool.href}>
-                                <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary">
-                                    <tool.icon className="h-6 w-6" />
-                                </div>
-                                <span className="text-xs font-semibold uppercase tracking-wider text-center">{tool.label}</span>
-                            </Link>
-                        </Button>
-                    ))}
+                    {managementTools.map((tool) => {
+                        const Icon = tool.icon;
+                        return (
+                            <Button
+                                key={tool.label}
+                                variant="ghost"
+                                className="flex flex-col items-center justify-center h-28 gap-2 text-center bg-card rounded-lg shadow-md hover:bg-accent transition-all"
+                                asChild
+                            >
+                                <Link href={tool.href}>
+                                    <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary">
+                                        <Icon className="h-6 w-6" />
+                                    </div>
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-center">{tool.label}</span>
+                                </Link>
+                            </Button>
+                        );
+                    })}
                 </div>
             </div>
 
