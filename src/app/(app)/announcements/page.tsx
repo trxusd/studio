@@ -33,18 +33,28 @@ export default function AnnouncementsPage() {
     const [visibleAnnouncements, setVisibleAnnouncements] = useState<Announcement[]>([]);
 
     useEffect(() => {
-        if (loading || !user || !allAnnouncements) {
+        if (loading || !allAnnouncements) {
             if (allAnnouncements) {
                  // For users not logged in, show 'all' announcements
                 setVisibleAnnouncements(allAnnouncements.filter(a => a.target === 'all'));
             }
             return;
-        };
+        }
+
+        if (!user) {
+            setVisibleAnnouncements(allAnnouncements.filter(ann => ann.target === 'all'));
+            return;
+        }
 
         // This logic needs to be in a hook that depends on user data, for now a simple filter
         const filterAnnouncements = async () => {
-             const userDoc = await firestore.collection('users').doc(user.uid).get();
-             const isVip = userDoc.data()?.isVip || false;
+             // In a real app, user's VIP status would be fetched from a reliable source like a custom claim or a user profile document
+             // For now, we'll assume a simplified check.
+             // const userDoc = await firestore.collection('users').doc(user.uid).get();
+             // const isVip = userDoc.data()?.isVip || false;
+             
+             // This is a placeholder. You should replace this with your actual VIP logic.
+             const isVip = false; 
 
              const filtered = allAnnouncements.filter(ann => {
                 if (ann.target === 'all') return true;
@@ -127,7 +137,6 @@ export default function AnnouncementsPage() {
                                     </CardFooter>
                                 )}
                             </Card>
-                        </Card>
                         )
                     })}
                 </div>
