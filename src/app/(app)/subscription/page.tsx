@@ -37,7 +37,7 @@ const useVipStatus = (user: any) => {
 };
 
 
-export default function VipPredictionsPage() {
+export default function SubscriptionPage() {
   const { user, loading: userLoading } = useUser();
   const { isVip, loading: vipLoading } = useVipStatus(user);
   const router = useRouter();
@@ -81,11 +81,11 @@ export default function VipPredictionsPage() {
         </Button>
         <div className="flex items-center gap-2">
             <Crown className="h-8 w-8 text-yellow-500" />
-            <h2 className="font-headline text-3xl font-bold tracking-tight text-yellow-700 dark:text-yellow-400">VIP Predictions</h2>
+            <h2 className="font-headline text-3xl font-bold tracking-tight text-yellow-700 dark:text-yellow-400">Subscription Predictions</h2>
         </div>
       </div>
       <p className="text-muted-foreground">
-        Access our highest-accuracy predictions, available only to VIP members.
+        Access our highest-accuracy predictions, available only to subscribers.
       </p>
       
       {isVip ? (
@@ -98,7 +98,7 @@ export default function VipPredictionsPage() {
         ) : (
           <Card>
             <CardContent className="p-12 text-center text-muted-foreground">
-              No VIP predictions available for today. Please check back later.
+              No premium predictions available for today. Please check back later.
             </CardContent>
           </Card>
         )
@@ -110,11 +110,11 @@ export default function VipPredictionsPage() {
                 </div>
                 <h3 className="mt-6 font-headline text-2xl font-bold text-yellow-800">This Content is Locked</h3>
                 <p className="mt-2 max-w-md text-yellow-700/80">
-                    You must be a VIP member to view these premium predictions. Upgrade your plan to unlock instant access.
+                    You must have an active subscription to view these premium predictions. Upgrade your plan to unlock instant access.
                 </p>
                 <Button asChild className="mt-6 bg-yellow-600 hover:bg-yellow-700 text-white font-bold shadow-lg">
                     <Link href="/payments">
-                        Upgrade to VIP
+                        Upgrade
                         <Crown className="ml-2 h-4 w-4"/>
                     </Link>
                 </Button>
@@ -124,5 +124,3 @@ export default function VipPredictionsPage() {
     </div>
   );
 }
-
-    

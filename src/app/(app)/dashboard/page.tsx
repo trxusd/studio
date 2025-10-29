@@ -177,11 +177,11 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">VIP Status</CardTitle>
+            <CardTitle className="text-sm font-medium">Subscription Status</CardTitle>
             <Crown className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{vipStatus?.isVip ? vipStatus.vipPlan || 'VIP' : 'Free Plan'}</div>
+            <div className="text-2xl font-bold">{vipStatus?.isVip ? vipStatus.vipPlan || 'Active' : 'Free Plan'}</div>
             <p className="text-xs text-muted-foreground">{vipStatus?.isVip ? 'You have full access' : 'Upgrade for premium predictions'}</p>
           </CardContent>
         </Card>
@@ -214,7 +214,7 @@ export default function DashboardPage() {
            <CardHeader>
              <div className="flex items-center gap-2">
                 <Crown />
-                <CardTitle className="font-headline">Unlock VIP Access</CardTitle>
+                <CardTitle className="font-headline">Unlock Premium Access</CardTitle>
              </div>
             <CardDescription className="text-black/80">
               Get exclusive access to our most accurate, AI-powered predictions and in-depth analysis.
@@ -228,7 +228,7 @@ export default function DashboardPage() {
                 <li>Real-time alerts and betting signals.</li>
             </ul>
             <div className="mt-6">
-                <h4 className="font-semibold">Your VIP Progress</h4>
+                <h4 className="font-semibold">Your Progress</h4>
                 <Progress value={vipStatus?.isVip ? 100 : 25} className="w-full mt-2 [&>div]:bg-yellow-300 bg-black/20" />
                 <p className="text-xs text-black/80 mt-1">{vipStatus?.isVip ? "You're in the winner's circle!" : "You're one step away from joining."}</p>
             </div>
@@ -236,7 +236,7 @@ export default function DashboardPage() {
           <CardFooter>
             <Button asChild className="w-full bg-yellow-300 hover:bg-yellow-400 text-black font-bold shadow-lg" disabled={!!vipStatus?.isVip}>
                 <Link href="/payments">
-                    {vipStatus?.isVip ? 'You are VIP' : 'Go VIP Now'}
+                    {vipStatus?.isVip ? 'Subscription Active' : 'Upgrade Now'}
                     <Crown className="ml-2 h-4 w-4"/>
                 </Link>
             </Button>
@@ -249,5 +249,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

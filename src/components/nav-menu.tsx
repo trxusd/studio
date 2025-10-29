@@ -44,7 +44,7 @@ const menuItems = [
   { href: '/statistics', icon: LineChart, label: 'STATS' },
   { href: '/referral', icon: Gift, label: 'REFERRAL' },
   { href: '/community', icon: Users, label: 'COMMUNITY' },
-  { href: '/vip-predictions', icon: Crown, label: 'VIP' },
+  { href: '/subscription', icon: Crown, label: 'SUBSCRIPTION' },
   { href: '#', icon: Headset, label: 'SUPPORT', isSheetTrigger: true },
   { href: '/settings', icon: Settings, label: 'SETTINGS' },
   { href: '/legal', icon: Scale, label: 'LEGAL' },

@@ -34,7 +34,7 @@ const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/matches', icon: LifeBuoy, label: 'Matches' },
   { href: '/predictions', icon: BarChart2, label: 'Prédictions' },
-  { href: '/vip-predictions', icon: Crown, label: 'VIP' },
+  { href: '/subscription', icon: Crown, label: 'Subscription' },
   { href: '/community', icon: MessageSquare, label: 'Community' },
   { href: '/payments', icon: CreditCard, label: 'Payments' },
   { href: '/referral', icon: Gift, label: 'Referral' },
