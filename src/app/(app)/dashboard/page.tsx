@@ -226,7 +226,7 @@ export default function DashboardPage() {
             </ul>
             <div className="mt-6">
                 <h4 className="font-semibold">Your VIP Progress</h4>
-                <Progress value={vipStatus?.isVip ? 100 : 25} className="w-full mt-2 [&gt;div]:bg-yellow-300 bg-black/20" />
+                <Progress value={vipStatus?.isVip ? 100 : 25} className="w-full mt-2 [&>div]:bg-yellow-300 bg-black/20" />
                 <p className="text-xs text-black/80 mt-1">{vipStatus?.isVip ? "You're in the winner's circle!" : "You're one step away from joining."}</p>
             </div>
           </CardContent>
@@ -240,29 +240,8 @@ export default function DashboardPage() {
           </CardFooter>
         </Card>
       </div>
-
-       <Card className="col-span-full">
-          <CardHeader>
-            <CardTitle className="font-headline flex items-center gap-2">
-              <LifeBuoy className="text-primary"/> All Matches
-            </CardTitle>
-            <CardDescription>
-              Browse all upcoming fixtures and find your next winning bet.
-            </CardDescription>
-          </CardHeader>
-           <CardContent>
-            <p className="text-sm text-muted-foreground">
-                View live scores, upcoming fixtures, and detailed statistics for leagues all around the world.
-            </p>
-          </CardContent>
-          <CardFooter>
-            <Button asChild>
-              <Link href="/matches">Go to Matches <ArrowUpRight className="ml-2 h-4 w-4"/></Link>
-            </Button>
-          </CardFooter>
-        </Card>
         
-        <NavMenu />
+      <NavMenu />
 
     </div>
   );
