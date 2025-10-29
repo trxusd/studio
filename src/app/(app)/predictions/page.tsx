@@ -16,7 +16,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 import { collection, query, where } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
 
 
@@ -113,11 +112,14 @@ export default function PredictionsPage() {
     </div>
   );
   
-  const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[]) => {
+  const renderCouponCard = (id: string, title: string, description: string, icon: React.ReactNode, matches: MatchPrediction[], isVipCard = false) => {
       if (!matches || matches.length === 0) return null;
       return (
           <Link href={`/predictions/coupon/${id}`} passHref className="h-full block">
-              <Card className="hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full cursor-pointer">
+              <Card className={
+                  `hover:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full cursor-pointer 
+                  ${isVipCard ? 'border-yellow-500/30 bg-yellow-400/5' : ''}`
+              }>
                   <CardHeader>
                       <CardTitle className="flex items-center gap-3">
                           {icon}
@@ -134,14 +136,17 @@ export default function PredictionsPage() {
   }
 
 
-  const renderLocked = () => (
-    <div className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground h-full">
-        <Lock className="h-6 w-6 mb-2"/>
-        <p className="text-sm">This section is for VIP members only.</p>
-        <Button asChild variant="link" className="text-primary h-auto p-0 mt-1">
-            <Link href="/payments">Go VIP</Link>
-        </Button>
-    </div>
+  const renderLocked = (title:string) => (
+    <Card className="border-yellow-500/30 bg-yellow-400/5 flex flex-col justify-center">
+        <CardContent className="flex flex-col items-center justify-center p-8 text-center text-muted-foreground h-full">
+            <Lock className="h-6 w-6 mb-2"/>
+            <p className="font-semibold">{title}</p>
+            <p className="text-sm">This section is for VIP members only.</p>
+            <Button asChild variant="link" className="text-primary h-auto p-0 mt-1">
+                <Link href="/payments">Go VIP</Link>
+            </Button>
+        </CardContent>
+    </Card>
   )
 
   const noPredictionsAvailable = !predictions || (
@@ -149,6 +154,8 @@ export default function PredictionsPage() {
       !predictions.free_coupon.coupon_1.length &&
       !predictions.free_individual.length &&
       !predictions.exclusive_vip.coupon_1.length &&
+      !predictions.exclusive_vip.coupon_2.length &&
+      !predictions.exclusive_vip.coupon_3.length &&
       !predictions.individual_vip.length
   );
 
@@ -232,15 +239,15 @@ export default function PredictionsPage() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {isVip ? (
                     <>
-                      {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_1)}
-                      {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_2)}
-                      {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_3)}
+                      {renderCouponCard('exclusive_vip_1', 'Exclusive VIP 1', 'Your first VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_1, true)}
+                      {renderCouponCard('exclusive_vip_2', 'Exclusive VIP 2', 'Your second VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_2, true)}
+                      {renderCouponCard('exclusive_vip_3', 'Exclusive VIP 3', 'Your third VIP coupon.', <Ticket className="h-6 w-6 text-yellow-600"/>, predictions.exclusive_vip.coupon_3, true)}
                     </>
                   ) : (
                     <>
-                      <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
-                      <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
-                      <Card className="border-yellow-500/30 bg-yellow-400/5">{renderLocked()}</Card>
+                      {renderLocked('Exclusive VIP 1')}
+                      {renderLocked('Exclusive VIP 2')}
+                      {renderLocked('Exclusive VIP 3')}
                     </>
                   )}
                 </div>
@@ -253,13 +260,6 @@ export default function PredictionsPage() {
                                 <Star className="h-6 w-6 text-yellow-600"/>
                                 VIP Individual List
                             </CardTitle>
-                             {isVip && (
-                                <Link href="/vip-predictions" passHref>
-                                    <Button variant="ghost" size="icon">
-                                        <ArrowRight className="h-4 w-4 text-yellow-600" />
-                                    </Button>
-                                </Link>
-                             )}
                         </div>
                         <CardDescription>
                             Access the complete list of our individual VIP predictions.
@@ -270,7 +270,7 @@ export default function PredictionsPage() {
                           <div className='space-y-1'>
                             {predictions.individual_vip.map(renderMatch)}
                           </div>
-                        ) : renderLocked()}
+                        ) : renderLocked('VIP Individual List')}
                     </CardContent>
                   </Card>
                 )}
