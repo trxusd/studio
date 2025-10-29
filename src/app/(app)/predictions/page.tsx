@@ -107,16 +107,6 @@ const PaidSectionContent = ({ predictions, isVip }: { predictions: any, isVip: b
         );
     }
 
-    const hasVipPredictions = predictions.exclusive_vip_1.length > 0 ||
-                              predictions.exclusive_vip_2.length > 0 ||
-                              predictions.exclusive_vip_3.length > 0 ||
-                              predictions.individual_vip.length > 0;
-
-    if (!hasVipPredictions) {
-        return null; // Don't render the section if there are no VIP predictions today.
-    }
-
-
     return (
         <>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -159,7 +149,7 @@ export default function PredictionsPage() {
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
     : null;
     
-  const { data: publishedCategories, loading: predictionsLoading, error } = useCollection<PredictionCategoryDoc>(categoriesQuery);
+  const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
 
   useEffect(() => {
     if (!userLoading && !user) {
