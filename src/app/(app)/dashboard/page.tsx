@@ -60,8 +60,9 @@ export default function DashboardPage() {
               const querySnapshot = await getDocs(categoriesColRef);
 
               querySnapshot.forEach(doc => {
-                  const category = doc.data() as PredictionCategoryDoc;
-                  if (category.predictions) {
+                  const category = doc.data();
+                  // SAFEGUARD: Ensure category and category.predictions exist and is an array
+                  if (category && Array.isArray(category.predictions)) {
                       allPredictions.push(...category.predictions as PredictionResult[]);
                   }
               });
