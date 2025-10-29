@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion } fro
 import { Loader2, Megaphone } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 type Announcement = {
     id: string;
@@ -23,6 +24,8 @@ type Announcement = {
 export default function AnnouncementsPage() {
     const firestore = useFirestore();
     const { user } = useUser();
+    const { toast } = useToast();
+    const prevAnnouncementsRef = useRef<Announcement[]>();
     
     // Base query to get all announcements sorted by date
     const announcementsQuery = firestore 
@@ -31,6 +34,35 @@ export default function AnnouncementsPage() {
 
     const { data: allAnnouncements, loading } = useCollection<Announcement>(announcementsQuery);
     const [visibleAnnouncements, setVisibleAnnouncements] = useState<Announcement[]>([]);
+
+    useEffect(() => {
+        if (!loading && allAnnouncements && prevAnnouncementsRef.current) {
+            // Simple check for new announcements. In a more complex app, you might compare IDs.
+            if (allAnnouncements.length > prevAnnouncementsRef.current.length) {
+                const newAnnouncement = allAnnouncements[0]; // The newest is at the top
+                
+                // Check if the new announcement is visible to the current user
+                // This logic is simplified; a real app might need to fetch user profile for VIP status
+                const isVip = false; // Placeholder
+                let isVisible = false;
+                if (newAnnouncement.target === 'all') isVisible = true;
+                if (newAnnouncement.target === 'vip' && isVip) isVisible = true;
+                if (newAnnouncement.target === 'free' && !isVip) isVisible = true;
+                if (!user && newAnnouncement.target === 'all') isVisible = true;
+
+
+                if (isVisible) {
+                    toast({
+                        title: `New Announcement: ${newAnnouncement.title}`,
+                        description: newAnnouncement.message.substring(0, 100) + '...',
+                    });
+                }
+            }
+        }
+        // Update the ref with the current announcements for the next render.
+        prevAnnouncementsRef.current = allAnnouncements || undefined;
+    }, [allAnnouncements, loading, toast, user]);
+
 
     useEffect(() => {
         if (loading || !allAnnouncements) {
