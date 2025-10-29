@@ -81,7 +81,7 @@ const legalContent = {
     disclaimer: {
       title: 'Avis de non-responsabilité',
       content:
-        'FOOTBET-WIN fournit des prédictions statistiques pour le divertissement. Aucun résultat n’est garanti. L’utilisation est interdite dans les pays où les paris sportifs sont illégaux.',
+        'FOOTBET-WIN fournit des prédictions basées sur les statistiques et la forme des équipes. Aucun résultat n’est garanti à 100 %. L’utilisation est interdite dans les pays où les paris sportifs sont illégaux.',
     },
   },
   ht: {
