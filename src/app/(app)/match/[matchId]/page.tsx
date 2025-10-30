@@ -111,10 +111,21 @@ export default async function MatchPredictionPage({ params }: { params: { matchI
         .then(res => res.translatedText)
         .catch(() => prediction.keyStatistics);
 
+  const teamAProb = prediction.teamAWinProbability;
+  const teamBProb = prediction.teamBWinProbability;
+
+  const victoryColor = "hsl(142.1 76.2% 41.2%)"; // green-600
+  const lossColor = "hsl(0 84.2% 60.2%)"; // red-600
+  const drawColor = "hsl(var(--foreground))";
+
+  const teamAColor = teamAProb > teamBProb ? victoryColor : lossColor;
+  const teamBColor = teamBProb > teamAProb ? victoryColor : lossColor;
+
+
   const predictionData = [
-    { name: match.teams.home.name, value: Math.round(prediction.teamAWinProbability * 100), fill: 'hsl(var(--primary))' },
-    { name: 'Draw', value: Math.round(prediction.drawProbability * 100), fill: 'hsl(var(--muted-foreground))' },
-    { name: match.teams.away.name, value: Math.round(prediction.teamBWinProbability * 100), fill: 'hsl(var(--secondary-foreground))' },
+    { name: match.teams.home.name, value: Math.round(teamAProb * 100), fill: teamAColor },
+    { name: 'Draw', value: Math.round(prediction.drawProbability * 100), fill: drawColor },
+    { name: match.teams.away.name, value: Math.round(teamBProb * 100), fill: teamBColor },
   ];
 
   return (
@@ -419,5 +430,6 @@ function LeagueStandings({ standings }: { standings: ApiStandings | null }) {
     
 
     
+
 
 
