@@ -268,7 +268,15 @@ function SignUpTab() {
 function AuthForm() {
     const searchParams = useSearchParams();
     const referralCode = searchParams.get('ref');
-    const defaultTab = referralCode ? 'signup' : 'signin';
+    const [activeTab, setActiveTab] = useState(referralCode ? 'signup' : 'signin');
+
+    useEffect(() => {
+        if (referralCode) {
+            setActiveTab('signup');
+        } else {
+            setActiveTab('signin');
+        }
+    }, [referralCode]);
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -278,7 +286,7 @@ function AuthForm() {
             <span className="font-headline text-2xl font-bold">FOOTBET-WIN</span>
             </Link>
             <Card className="shadow-2xl">
-            <Tabs defaultValue={defaultTab} className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <CardHeader className="text-center">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="signin">Sign In</TabsTrigger>
