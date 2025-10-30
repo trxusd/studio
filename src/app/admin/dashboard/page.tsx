@@ -1,7 +1,7 @@
 
 'use client';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { DollarSign, Users, BarChart, Activity, Bot, Trophy, CheckCheck, ArrowRight, Loader2, UserCog, Ticket, LineChart, Megaphone } from "lucide-react";
+import { DollarSign, Users, BarChart, Activity, Sparkles, Trophy, CheckCheck, ArrowRight, Loader2, UserCog, Ticket, LineChart, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { useFirestore, useCollection } from "@/firebase";
@@ -26,7 +26,7 @@ type PredictionCategory = {
 };
 
 const managementTools = [
-    { href: "/admin/official-predictions", icon: Bot, label: "Official Predictions" },
+    { href: "/admin/official-predictions", icon: Sparkles, label: "Official Predictions" },
     { href: "/admin/announcements", icon: Megaphone, label: "Announcements" },
     { href: "/admin/payment-verification", icon: CheckCheck, label: "Payment Verification" },
     { href: "/admin/check-results", icon: Trophy, label: "Check Results" },
