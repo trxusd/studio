@@ -142,12 +142,12 @@ export default function AdminDashboardPage() {
                             <Button
                                 key={tool.label}
                                 variant="ghost"
-                                className="flex flex-col items-center justify-center h-28 gap-2 text-center bg-card rounded-lg shadow-md hover:bg-accent transition-all"
+                                className="flex flex-col items-center justify-center h-32 gap-2 text-center bg-card rounded-lg shadow-md hover:bg-accent transition-all"
                                 asChild
                             >
                                 <Link href={tool.href}>
-                                    <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary">
-                                        <Icon className="h-6 w-6" />
+                                    <div className="flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary">
+                                        <Icon className="h-8 w-8" />
                                     </div>
                                     <span className="text-xs font-semibold uppercase tracking-wider text-center">{tool.label}</span>
                                 </Link>
