@@ -115,21 +115,14 @@ function MatchesPageContent() {
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [searchResults, setSearchResults] = React.useState<ApiTeam[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
+  const [isInitialLoad, setIsInitialLoad] = React.useState(true);
+
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateFromParams = searchParams.get('date');
   
-  const [selectedDate, setSelectedDate] = React.useState(dateFromParams);
-
-  React.useEffect(() => {
-    // This effect ensures that the state is synchronized with the URL parameters on the client side,
-    // avoiding hydration mismatches.
-    const newDate = dateFromParams || new Date().toISOString().split('T')[0];
-    if (newDate !== selectedDate) {
-      setSelectedDate(newDate);
-    }
-  }, [dateFromParams]);
+  const selectedDate = dateFromParams || (isInitialLoad ? null : new Date().toISOString().split('T')[0]);
 
 
   const { user } = useUser();
@@ -141,7 +134,10 @@ function MatchesPageContent() {
   const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
 
   React.useEffect(() => {
-    // This effect fetches data when selectedDate is confirmed and set.
+    setIsInitialLoad(false); // Component has mounted, subsequent renders are not initial
+  }, []);
+
+  React.useEffect(() => {
     async function fetchMatches(date: string) {
       setIsLoading(true);
       setSearchQuery('');
