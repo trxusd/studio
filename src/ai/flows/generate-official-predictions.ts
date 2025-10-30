@@ -155,7 +155,7 @@ RÈGLES IMPÉRATIVES:
 ✅ Pour chaque prédiction, INCLUS OBLIGATOIREMENT le 'fixture_id' du match correspondant.
 ✅ Si moins de 50 matchs de qualité sont disponibles, PRIORISE le remplissage des catégories payantes (Exclusive VIP, Individual VIP) avant les catégories gratuites.
 ✅ Distribution IDÉALE (si 50 matchs trouvés): Secure Trial (4), Exclusive VIP (12, split 4-4-4), Individual VIP (15), Free Coupon (4), Free Individual (15).
-✅ Si le nombre de matchs de qualité est faible, voici la distribution prioritaire pour les sections payantes: Exclusive VIP (9 matchs, répartis en 3-3-3), Individual VIP (5 matchs).
+✅ Si le nombre de matchs de qualité est faible, voici la distribution prioritaire pour les sections payantes: Exclusive VIP (12 matchs, répartis en 4-4-4), Individual VIP (5 matchs).
 ✅ Varie les types de paris.
 ✅ Retourne UNIQUEMENT du JSON valide. Ne retourne aucun texte en dehors de l'objet JSON.`;
 
