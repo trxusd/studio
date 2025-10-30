@@ -5,18 +5,19 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Loader2, RefreshCw, ArrowLeft, Trophy } from 'lucide-react';
 import { useFirestore, useCollection } from '@/firebase';
 import { collection, query, where, doc, writeBatch, Timestamp } from 'firebase/firestore';
 import type { MatchPrediction } from '@/ai/schemas/prediction-schemas';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 type PredictionCategoryDoc = {
     id: string;
     predictions: MatchPrediction[];
-    generated_at: Timestamp; // Changed to Timestamp
+    generated_at: Timestamp;
 };
 
 type ProcessedPrediction = MatchPrediction & {
@@ -24,6 +25,19 @@ type ProcessedPrediction = MatchPrediction & {
     finalScore: string;
     categoryId: string;
 };
+
+type GroupedResults = Record<string, ProcessedPrediction[]>;
+
+const categoryTitles: Record<string, string> = {
+    secure_trial: 'Secure Trial',
+    free_coupon: 'Free Coupon',
+    free_individual: 'Free Individual',
+    exclusive_vip_1: 'Exclusive VIP Coupon 1',
+    exclusive_vip_2: 'Exclusive VIP Coupon 2',
+    exclusive_vip_3: 'Exclusive VIP Coupon 3',
+    individual_vip: 'Individual VIP',
+};
+
 
 // This function checks a prediction against a final score.
 function checkPredictionStatus(prediction: MatchPrediction, finalScore: string | null): 'Win' | 'Loss' | 'Pending' {
@@ -112,7 +126,7 @@ async function fetchMatchResult(fixtureId: number): Promise<string | null> {
 export default function CheckResultsPage() {
     const firestore = useFirestore();
     const { toast } = useToast();
-    const [results, setResults] = React.useState<ProcessedPrediction[]>([]);
+    const [groupedResults, setGroupedResults] = React.useState<GroupedResults>({});
     const [isLoading, setIsLoading] = React.useState(true);
     const [isSaving, setIsSaving] = React.useState(false);
 
@@ -123,7 +137,7 @@ export default function CheckResultsPage() {
     const processAllPredictions = React.useCallback(async (categories: PredictionCategoryDoc[]) => {
         setIsLoading(true);
         if (!categories || categories.length === 0) {
-            setResults([]);
+            setGroupedResults({});
             setIsLoading(false);
             return;
         }
@@ -138,7 +152,16 @@ export default function CheckResultsPage() {
             })
         );
         
-        setResults(processedResults);
+        const grouped = processedResults.reduce((acc, current) => {
+            const category = current.categoryId;
+            if (!acc[category]) {
+                acc[category] = [];
+            }
+            acc[category].push(current);
+            return acc;
+        }, {} as GroupedResults);
+        
+        setGroupedResults(grouped);
         setIsLoading(false);
     }, []);
 
@@ -149,46 +172,40 @@ export default function CheckResultsPage() {
     }, [publishedCategories, categoriesLoading, processAllPredictions]);
 
     const handleSaveChanges = async () => {
-        if (!firestore || results.length === 0) return;
+        if (!firestore || Object.keys(groupedResults).length === 0) return;
         
         setIsSaving(true);
         const batch = writeBatch(firestore);
-
-        // Group results by category
-        const updatesByCategory = results.reduce((acc, current) => {
-            if (current.status !== 'Pending') { // Only update resolved matches
-                if (!acc[current.categoryId]) {
-                    acc[current.categoryId] = [];
-                }
-                acc[current.categoryId].push(current);
-            }
-            return acc;
-        }, {} as Record<string, ProcessedPrediction[]>);
-
-        if (Object.keys(updatesByCategory).length === 0) {
-            toast({ title: "No changes to save", description: "All resolved predictions seem to be up to date."});
-            setIsSaving(false);
-            return;
-        }
+        let hasChanges = false;
 
         try {
-             for (const categoryId in updatesByCategory) {
+            for (const categoryId in groupedResults) {
+                const resultsForCategory = groupedResults[categoryId];
+                const resolvedPredictions = resultsForCategory.filter(p => p.status !== 'Pending');
+
+                if (resolvedPredictions.length === 0) continue;
+                hasChanges = true;
+
                 const categoryDocRef = doc(firestore, `predictions/${today}/categories/${categoryId}`);
                 const categoryPredictions = publishedCategories?.find(c => c.id === categoryId)?.predictions || [];
                 
-                // Create a map of the updated predictions
-                const updatedPredictionsMap = new Map(updatesByCategory[categoryId].map(p => [p.fixture_id, p]));
+                const updatedPredictionsMap = new Map(resolvedPredictions.map(p => [p.fixture_id, p]));
 
-                // Create the new predictions array
                 const newPredictionsArray = categoryPredictions.map(p => {
                     if (updatedPredictionsMap.has(p.fixture_id)) {
                         const updatedPrediction = updatedPredictionsMap.get(p.fixture_id)!;
-                        return { ...p, status: updatedPrediction.status, finalScore: updatedPrediction.finalScore, generated_at: Timestamp.now() };
+                        return { ...p, status: updatedPrediction.status, finalScore: updatedPrediction.finalScore };
                     }
                     return p;
                 });
                 
                 batch.update(categoryDocRef, { predictions: newPredictionsArray });
+            }
+
+            if (!hasChanges) {
+                toast({ title: "No changes to save", description: "All resolved predictions seem to be up to date."});
+                setIsSaving(false);
+                return;
             }
 
             await batch.commit();
@@ -208,10 +225,11 @@ export default function CheckResultsPage() {
             setIsSaving(false);
         }
     };
-
-
-    const winCount = results.filter(r => r.status === 'Win').length;
-    const resolvedCount = results.filter(r => r.status === 'Win' || r.status === 'Loss').length;
+    
+    const sortedCategories = Object.entries(groupedResults).sort(([a], [b]) => a.localeCompare(b));
+    const allPredictions = Object.values(groupedResults).flat();
+    const winCount = allPredictions.filter(r => r.status === 'Win').length;
+    const resolvedCount = allPredictions.filter(r => r.status === 'Win' || r.status === 'Loss').length;
     const winRate = resolvedCount > 0 ? ((winCount / resolvedCount) * 100).toFixed(1) : 0;
 
 
@@ -239,7 +257,7 @@ export default function CheckResultsPage() {
         </div>
          { !isLoading && resolvedCount > 0 && (
             <div className="pt-4">
-                <p className="text-lg">Win Rate: <span className="font-bold text-primary">{winRate}%</span> ({winCount}/{resolvedCount} won)</p>
+                <p className="text-lg">Overall Win Rate: <span className="font-bold text-primary">{winRate}%</span> ({winCount}/{resolvedCount} won)</p>
             </div>
          )}
       </CardHeader>
@@ -249,38 +267,61 @@ export default function CheckResultsPage() {
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <p className="ml-4 text-muted-foreground">Fetching live scores and checking results...</p>
             </div>
-        ) : results.length === 0 ? (
+        ) : sortedCategories.length === 0 ? (
              <div className="text-center py-12 text-muted-foreground">
                 <p>No published predictions found for today to check.</p>
             </div>
         ) : (
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Match</TableHead>
-                        <TableHead>League</TableHead>
-                        <TableHead>Prediction</TableHead>
-                        <TableHead>Final Score</TableHead>
-                        <TableHead className="text-right">Status</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {results.map((result, index) => (
-                        <TableRow key={`${result.fixture_id}-${index}`}>
-                            <TableCell className="font-medium">{result.match}</TableCell>
-                            <TableCell className="text-muted-foreground">{result.league}</TableCell>
-                            <TableCell><Badge variant="secondary">{result.prediction}</Badge></TableCell>
-                            <TableCell className="font-bold">{result.finalScore}</TableCell>
-                            <TableCell className="text-right">
-                                <Badge variant={result.status === 'Win' ? 'default' : result.status === 'Loss' ? 'destructive' : 'outline'} 
-                                       className={result.status === 'Win' ? 'bg-green-600' : ''}>
-                                    {result.status}
-                                </Badge>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+            <Accordion type="multiple" defaultValue={sortedCategories.map(([key]) => key)} className="w-full">
+                {sortedCategories.map(([categoryId, results]) => {
+                     const categoryWinCount = results.filter(r => r.status === 'Win').length;
+                     const categoryResolvedCount = results.filter(r => r.status === 'Win' || r.status === 'Loss').length;
+                     const categoryWinRate = categoryResolvedCount > 0 ? ((categoryWinCount / categoryResolvedCount) * 100).toFixed(1) : 0;
+
+                    return (
+                        <AccordionItem value={categoryId} key={categoryId}>
+                            <AccordionTrigger className="font-semibold text-lg hover:no-underline">
+                                <div className="flex items-center gap-4">
+                                     <Trophy className="h-5 w-5 text-primary" />
+                                    <span>{categoryTitles[categoryId] || categoryId}</span>
+                                     {categoryResolvedCount > 0 && (
+                                        <Badge variant="outline">
+                                            {categoryWinRate}% ({categoryWinCount}/{categoryResolvedCount})
+                                        </Badge>
+                                     )}
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Match</TableHead>
+                                            <TableHead>Prediction</TableHead>
+                                            <TableHead>Final Score</TableHead>
+                                            <TableHead className="text-right">Status</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {results.map((result, index) => (
+                                            <TableRow key={`${result.fixture_id}-${index}`}>
+                                                <TableCell className="font-medium">{result.match}</TableCell>
+                                                <TableCell><Badge variant="secondary">{result.prediction}</Badge></TableCell>
+                                                <TableCell className="font-bold">{result.finalScore}</TableCell>
+                                                <TableCell className="text-right">
+                                                    <Badge variant={result.status === 'Win' ? 'default' : result.status === 'Loss' ? 'destructive' : 'outline'} 
+                                                        className={result.status === 'Win' ? 'bg-green-600' : ''}>
+                                                        {result.status}
+                                                    </Badge>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </AccordionContent>
+                        </AccordionItem>
+                    )
+                })}
+            </Accordion>
         )}
       </CardContent>
     </Card>
