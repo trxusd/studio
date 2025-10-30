@@ -26,12 +26,15 @@ const API_KEY = process.env.FOOTBALL_API_KEY;
  * It fetches matches, runs AI analysis, validates, and saves the result.
  */
 export async function generateOfficialPredictions(): Promise<OfficialPredictionsOutput> {
-  const firestore = getFirestore(getFirebaseApp());
   const predictions = await generateOfficialPredictionsFlow();
 
   if (!predictions) {
     throw new Error("AI analysis did not return any output.");
   }
+  
+  // The firestore instance must be initialized within the server-side function
+  // that uses it, not at the top level.
+  const firestore = getFirestore(getFirebaseApp());
 
   // Save each category to a separate document in Firestore
   const today = new Date().toISOString().split('T')[0];
@@ -165,12 +168,12 @@ const prompt = ai.definePrompt({
     input: { schema: z.any() },
     output: { schema: OfficialPredictionsOutputSchema },
     system: systemPrompt,
-    prompt: `Analyse les matchs suivants et sélectionne JUSQU'À 50 prédictions selon les critères définis. 
+    prompt: \`Analyse les matchs suivants et sélectionne JUSQU'À 50 prédictions selon les critères définis. 
     Assure-toi d'inclure le 'fixture_id' pour chaque prédiction.
     Priorise les sections payantes si tu ne trouves pas 50 matchs de qualité.
     Retourne UNIQUEMENT le JSON structuré sans texte additionnel:
 
-    Matches: {{{json matches}}}`,
+    Matches: {{{json matches}}}\`,
 });
 
 const generateOfficialPredictionsFlow = ai.defineFlow(
@@ -206,7 +209,7 @@ const generateOfficialPredictionsFlow = ai.defineFlow(
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
     if (total > 50) { 
-        throw new Error(`Validation Error: AI generated ${total} predictions, which is over the 50 limit.`);
+        throw new Error(\`Validation Error: AI generated \${total} predictions, which is over the 50 limit.\`);
     }
     
     return output;
