@@ -1,8 +1,11 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { adminCoupons } from "@/lib/data";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 
 export default function AdminCouponsPage() {
     return (
@@ -13,7 +16,12 @@ export default function AdminCouponsPage() {
                         <CardTitle>Coupons</CardTitle>
                         <CardDescription>Generate and manage promotional coupons for your users.</CardDescription>
                     </div>
-                    <Button>Generate Coupon</Button>
+                     <div className="flex gap-2">
+                        <Button variant="outline" asChild>
+                            <Link href="/admin/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Link>
+                        </Button>
+                        <Button>Generate Coupon</Button>
+                    </div>
                 </div>
             </CardHeader>
             <CardContent>

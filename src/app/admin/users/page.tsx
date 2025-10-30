@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MoreHorizontal, Loader2 } from "lucide-react";
+import { MoreHorizontal, Loader2, ArrowLeft } from "lucide-react";
 import { useFirestore, useCollection } from "@/firebase";
 import { collection, query, where } from 'firebase/firestore';
 import { useMemo } from "react";
 import { format } from 'date-fns';
+import Link from "next/link";
 
 type UserProfile = {
     id: string;
@@ -35,8 +36,15 @@ export default function AdminUsersPage() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>VIP Users</CardTitle>
-                <CardDescription>Manage your VIP users and their subscriptions.</CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>VIP Users</CardTitle>
+                        <CardDescription>Manage your VIP users and their subscriptions.</CardDescription>
+                    </div>
+                    <Button variant="outline" asChild>
+                        <Link href="/admin/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Link>
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent>
                 {loading ? (

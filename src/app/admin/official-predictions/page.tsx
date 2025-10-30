@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, PlayCircle, Terminal, FileJson, UploadCloud } from "lucide-react";
+import { Loader2, PlayCircle, Terminal, FileJson, UploadCloud, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { generateOfficialPredictions } from "@/ai/flows/generate-official-predictions";
@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useCollection } from "@/firebase";
 import { doc, updateDoc, collection } from 'firebase/firestore';
+import Link from 'next/link';
 
 type MatchPrediction = {
     match: string;
@@ -191,7 +192,12 @@ export default function OfficialPredictionsPage() {
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle>Official Predictions Generator</CardTitle>
+                    <div className="flex justify-between items-center">
+                        <CardTitle>Official Predictions Generator</CardTitle>
+                         <Button variant="outline" asChild>
+                            <Link href="/admin/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Link>
+                        </Button>
+                    </div>
                     <CardDescription>Manually trigger the daily football prediction generation process.</CardDescription>
                 </CardHeader>
                 <CardContent>

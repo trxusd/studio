@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { CheckCircle, XCircle, Loader2, Eye } from "lucide-react";
+import { CheckCircle, XCircle, Loader2, Eye, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useCollection } from "@/firebase";
 import { collection, doc, updateDoc, query, where, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
+import Link from "next/link";
 
 type Verification = {
     id: string;
@@ -90,8 +91,15 @@ export default function PaymentVerificationPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Payment Verification Queue</CardTitle>
-        <CardDescription>Review and process pending payment verifications from users.</CardDescription>
+        <div className="flex justify-between items-center">
+            <div>
+                <CardTitle>Payment Verification Queue</CardTitle>
+                <CardDescription>Review and process pending payment verifications from users.</CardDescription>
+            </div>
+            <Button variant="outline" asChild>
+                <Link href="/admin/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Link>
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {loading ? (

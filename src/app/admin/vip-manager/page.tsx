@@ -10,7 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { useFirestore, useCollection } from '@/firebase';
 import { collection, doc, updateDoc } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 type UserProfile = {
     id: string;
@@ -79,8 +81,15 @@ export default function VipManagerPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>VIP Manager</CardTitle>
-        <CardDescription>Manage VIP users and their subscription status.</CardDescription>
+         <div className="flex justify-between items-center">
+            <div>
+                <CardTitle>VIP Manager</CardTitle>
+                <CardDescription>Manage VIP users and their subscription status.</CardDescription>
+            </div>
+            <Button variant="outline" asChild>
+                <Link href="/admin/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Link>
+            </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
