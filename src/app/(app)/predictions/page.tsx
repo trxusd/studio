@@ -73,7 +73,7 @@ const renderMatchFree = (match: MatchPrediction, index: number) => {
         <p className="font-medium truncate">{match.match}</p>
         <p className="text-muted-foreground">{match.prediction}</p>
       </div>
-      <Badge variant="secondary" className="font-bold bg-transparent text-primary">{match.odds?.toFixed(2)}</Badge>
+      <Badge variant="outline" className="font-bold border-primary text-primary">{match.odds?.toFixed(2)}</Badge>
     </div>
   );
 };
