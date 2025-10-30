@@ -17,6 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
+export const dynamic = 'force-dynamic';
 
 function AuthForm() {
   const [email, setEmail] = useState('');
