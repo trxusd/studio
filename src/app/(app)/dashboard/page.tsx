@@ -30,6 +30,13 @@ export default function DashboardPage() {
 
   const [stats, setStats] = useState({ wins: 0, accuracy: 0 });
   const [statsLoading, setStatsLoading] = useState(false); // Set to false initially
+  const [today, setToday] = useState('');
+
+
+  useEffect(() => {
+    // Set date on client-side to avoid hydration mismatch
+    setToday(new Date().toISOString().split('T')[0]);
+  }, []);
 
   // Fetch user's VIP status
   const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
@@ -37,8 +44,7 @@ export default function DashboardPage() {
   const vipStatus = userData?.[0];
 
   // Fetch today's predictions
-  const today = new Date().toISOString().split('T')[0];
-  const categoriesQuery = firestore ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
+  const categoriesQuery = firestore && today ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
   // useEffect(() => {
@@ -115,7 +121,7 @@ export default function DashboardPage() {
 
   }, [publishedCategories]);
 
-  const isLoading = userLoading || userDataLoading || predictionsLoading || statsLoading;
+  const isLoading = userLoading || userDataLoading || predictionsLoading || statsLoading || !today;
 
   if (isLoading) {
     return (
