@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-function SignUpPage() {
+function SignUpForm() {
   const searchParams = useSearchParams();
   const referralCode = searchParams.get('ref');
 
@@ -190,7 +190,7 @@ function SignUpPage() {
 export default function SignupPageContainer() {
   return (
     <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
-        <SignUpPage />
+        <SignUpForm />
     </Suspense>
   )
 }
