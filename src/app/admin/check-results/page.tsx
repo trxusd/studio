@@ -5,12 +5,13 @@ import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, ArrowLeft } from 'lucide-react';
 import { useFirestore, useCollection } from '@/firebase';
 import { collection, query, where, doc, writeBatch, Timestamp } from 'firebase/firestore';
 import type { MatchPrediction } from '@/ai/schemas/prediction-schemas';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 type PredictionCategoryDoc = {
     id: string;
@@ -223,6 +224,9 @@ export default function CheckResultsPage() {
                 <CardDescription>Automatically comparing final scores with predictions to determine Win/Loss status.</CardDescription>
             </div>
              <div className='flex gap-2'>
+                <Button variant="outline" asChild>
+                    <Link href="/admin/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Link>
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => publishedCategories && processAllPredictions(publishedCategories)} disabled={isLoading}>
                     <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                     Refresh
