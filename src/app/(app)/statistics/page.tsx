@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useFirestore } from '@/firebase';
-import { collection, query, getDocs, Timestamp, where, collectionGroup } from 'firebase/firestore';
+import { collection, query, getDocs, Timestamp, where, doc, getDoc } from 'firebase/firestore';
 import { subDays, startOfDay, endOfDay, format as formatDateFns } from 'date-fns';
 import { Loader2, TrendingUp, TrendingDown, Percent, BarChart, XCircle } from 'lucide-react';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -48,48 +48,51 @@ async function fetchPredictionStats(firestore: any, period: Period): Promise<Sta
     const now = new Date();
     let daysToFetch = 1;
     switch (period) {
-        case 'yesterday': daysToFetch = 2; break; // Fetch for yesterday and the day before
+        case 'yesterday': daysToFetch = 1; break; // Only yesterday
         case '7d': daysToFetch = 7; break;
         case '15d': daysToFetch = 15; break;
         case '30d': daysToFetch = 30; break;
     }
     
-    // Set dates for the query range
-    const endDate = endOfDay(subDays(now, 1)); // up to yesterday
-    const startDate = startOfDay(subDays(endDate, daysToFetch -1));
-    
-    const categoriesColGroup = collectionGroup(firestore, 'categories');
-    
-    // Query for all categories within the date range
-    const q = query(
-        categoriesColGroup,
-        where('generated_at', '>=', startDate),
-        where('generated_at', '<=', endDate)
-    );
-
-    const querySnapshot = await getDocs(q);
     const predictionsByDate: Record<string, { wins: number, losses: number }> = {};
+    const datePromises = [];
 
-    querySnapshot.forEach(doc => {
-        const data = doc.data() as PredictionDoc;
-        if (data.generated_at) {
-            const dateKey = formatDateFns(data.generated_at.toDate(), 'yyyy-MM-dd');
+    // Create an array of date strings for the past N days
+    for (let i = 1; i <= daysToFetch; i++) {
+        const targetDate = subDays(now, i);
+        const dateKey = formatDateFns(targetDate, 'yyyy-MM-dd');
+        
+        datePromises.push(async () => {
+            const categoriesColRef = collection(firestore, `predictions/${dateKey}/categories`);
+            const categoriesSnapshot = await getDocs(categoriesColRef);
 
-            if (data && Array.isArray(data.predictions)) {
-                if (!predictionsByDate[dateKey]) {
+            let dailyWins = 0;
+            let dailyLosses = 0;
+
+            categoriesSnapshot.forEach(doc => {
+                const data = doc.data() as PredictionDoc;
+                if (data && Array.isArray(data.predictions)) {
+                    data.predictions.forEach(prediction => {
+                        if (prediction.status === 'Win') {
+                            dailyWins++;
+                        } else if (prediction.status === 'Loss') {
+                            dailyLosses++;
+                        }
+                    });
+                }
+            });
+            
+            if (dailyWins > 0 || dailyLosses > 0) {
+                 if (!predictionsByDate[dateKey]) {
                     predictionsByDate[dateKey] = { wins: 0, losses: 0 };
                 }
-
-                data.predictions.forEach(prediction => {
-                    if (prediction.status === 'Win') {
-                        predictionsByDate[dateKey].wins++;
-                    } else if (prediction.status === 'Loss') {
-                        predictionsByDate[dateKey].losses++;
-                    }
-                });
+                predictionsByDate[dateKey].wins += dailyWins;
+                predictionsByDate[dateKey].losses += dailyLosses;
             }
-        }
-    });
+        });
+    }
+
+    await Promise.all(datePromises.map(p => p()));
 
     let totalWins = 0;
     let totalLosses = 0;
@@ -130,7 +133,7 @@ export default function StatisticsPage() {
             setError(null);
             try {
                 const fetchedStats = await fetchPredictionStats(firestore, selectedPeriod);
-                if (fetchedStats.total < 3) {
+                if (fetchedStats.total < 1) { // Changed threshold to 1
                      setError("Pa gen ase done pou estatistik serye.");
                      setStats(null);
                      setDailyData([]);
