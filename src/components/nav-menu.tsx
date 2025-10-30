@@ -18,7 +18,7 @@ import {
   CreditCard,
   Gift,
   Shield,
-  Settings,
+  User,
   Headset,
   BookOpen,
   Megaphone,
@@ -46,7 +46,7 @@ const menuItems = [
   { href: '/community', icon: Users, label: 'COMMUNITY' },
   { href: '/subscription', icon: Crown, label: 'SUBSCRIPTION' },
   { href: '#', icon: Headset, label: 'SUPPORT', isSheetTrigger: true },
-  { href: '/settings', icon: Settings, label: 'SETTINGS' },
+  { href: '/settings', icon: User, label: 'PROFIL' },
   { href: '/legal', icon: Scale, label: 'LEGAL' },
   { href: '/admin/dashboard', icon: Shield, label: 'ADMIN', adminOnly: true },
 ];
