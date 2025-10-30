@@ -118,8 +118,20 @@ function MatchesPageContent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const selectedDate = searchParams.get('date') || new Date().toISOString().split('T')[0];
+  const dateFromParams = searchParams.get('date');
   
+  const [selectedDate, setSelectedDate] = React.useState(dateFromParams);
+
+  React.useEffect(() => {
+    // This effect ensures that the state is synchronized with the URL parameters on the client side,
+    // avoiding hydration mismatches.
+    const newDate = dateFromParams || new Date().toISOString().split('T')[0];
+    if (newDate !== selectedDate) {
+      setSelectedDate(newDate);
+    }
+  }, [dateFromParams]);
+
+
   const { user } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
@@ -129,8 +141,7 @@ function MatchesPageContent() {
   const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
 
   React.useEffect(() => {
-    // This effect now solely reacts to the selectedDate changing.
-    // The component re-renders when searchParams change.
+    // This effect fetches data when selectedDate is confirmed and set.
     async function fetchMatches(date: string) {
       setIsLoading(true);
       setSearchQuery('');
@@ -153,7 +164,9 @@ function MatchesPageContent() {
       }
     }
     
-    fetchMatches(selectedDate);
+    if (selectedDate) {
+        fetchMatches(selectedDate);
+    }
   }, [selectedDate]);
   
   const groupMatches = (matchesToGroup: ApiMatch[]) => {
@@ -300,6 +313,14 @@ function MatchesPageContent() {
     return "font-medium";
   };
 
+  if (!selectedDate) {
+    // Render a loading state or null while waiting for the client-side effect to run
+    return (
+        <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
