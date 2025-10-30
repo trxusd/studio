@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -11,7 +11,6 @@ import { MatchCard } from "@/components/match-card";
 import { useUser, useFirestore, useCollection } from '@/firebase';
 import { collection, query, where, Timestamp, getDocs, doc } from 'firebase/firestore';
 import { type MatchPrediction } from '@/ai/schemas/prediction-schemas';
-import { useState, useEffect } from 'react';
 import { NavMenu } from '@/components/nav-menu';
 
 type PredictionCategoryDoc = {
@@ -31,7 +30,6 @@ export default function DashboardPage() {
   const [stats, setStats] = useState({ wins: 0, accuracy: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   const [today, setToday] = useState('');
-
 
   useEffect(() => {
     // Set date on client-side to avoid hydration mismatch
@@ -97,6 +95,7 @@ export default function DashboardPage() {
       }
     }
 
+    // Only run fetchStats on the client after the component mounts
     if (firestore) {
         fetchStats();
     }
@@ -156,8 +155,6 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
       )}
-
-      <NavMenu />
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         
@@ -240,6 +237,7 @@ export default function DashboardPage() {
         </Card>
       </div>
 
+      <NavMenu />
     </div>
   );
 }
