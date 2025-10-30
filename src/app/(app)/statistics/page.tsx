@@ -19,6 +19,7 @@ type MatchResult = {
 
 type PredictionDoc = {
     predictions: MatchResult[];
+    generated_at: Timestamp; // Using Firestore Timestamp
 };
 
 
@@ -47,45 +48,46 @@ async function fetchPredictionStats(firestore: any, period: Period): Promise<Sta
     const now = new Date();
     let daysToFetch = 1;
     switch (period) {
-        case 'yesterday': daysToFetch = 1; break;
+        case 'yesterday': daysToFetch = 2; break; // Fetch for yesterday and the day before
         case '7d': daysToFetch = 7; break;
         case '15d': daysToFetch = 15; break;
         case '30d': daysToFetch = 30; break;
     }
     
-    const startDate = startOfDay(subDays(now, daysToFetch));
+    // Set dates for the query range
     const endDate = endOfDay(subDays(now, 1)); // up to yesterday
-
+    const startDate = startOfDay(subDays(endDate, daysToFetch -1));
+    
     const categoriesColGroup = collectionGroup(firestore, 'categories');
     
     // Query for all categories within the date range
     const q = query(
         categoriesColGroup,
-        where('generated_at', '>=', startDate.toISOString()),
-        where('generated_at', '<=', endDate.toISOString())
+        where('generated_at', '>=', startDate),
+        where('generated_at', '<=', endDate)
     );
 
     const querySnapshot = await getDocs(q);
-
     const predictionsByDate: Record<string, { wins: number, losses: number }> = {};
 
     querySnapshot.forEach(doc => {
         const data = doc.data() as PredictionDoc;
-        const generatedAt = (doc.data().generated_at as string);
-        const dateKey = generatedAt.split('T')[0];
+        if (data.generated_at) {
+            const dateKey = formatDateFns(data.generated_at.toDate(), 'yyyy-MM-dd');
 
-        if (data && Array.isArray(data.predictions)) {
-            if (!predictionsByDate[dateKey]) {
-                predictionsByDate[dateKey] = { wins: 0, losses: 0 };
-            }
-
-            data.predictions.forEach(prediction => {
-                if (prediction.status === 'Win') {
-                    predictionsByDate[dateKey].wins++;
-                } else if (prediction.status === 'Loss') {
-                    predictionsByDate[dateKey].losses++;
+            if (data && Array.isArray(data.predictions)) {
+                if (!predictionsByDate[dateKey]) {
+                    predictionsByDate[dateKey] = { wins: 0, losses: 0 };
                 }
-            });
+
+                data.predictions.forEach(prediction => {
+                    if (prediction.status === 'Win') {
+                        predictionsByDate[dateKey].wins++;
+                    } else if (prediction.status === 'Loss') {
+                        predictionsByDate[dateKey].losses++;
+                    }
+                });
+            }
         }
     });
 
@@ -222,5 +224,3 @@ export default function StatisticsPage() {
         </div>
     );
 }
-
-    

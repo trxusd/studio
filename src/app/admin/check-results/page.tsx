@@ -16,7 +16,7 @@ import Link from 'next/link';
 type PredictionCategoryDoc = {
     id: string;
     predictions: MatchPrediction[];
-    date?: Timestamp; // Add date field for querying
+    generated_at: Timestamp; // Changed to Timestamp
 };
 
 type ProcessedPrediction = MatchPrediction & {
@@ -128,7 +128,7 @@ export default function CheckResultsPage() {
             return;
         }
         
-        const allPredictions = categories.flatMap(cat => cat.predictions.map(p => ({...p, categoryId: cat.id, date: cat.date})));
+        const allPredictions = categories.flatMap(cat => cat.predictions.map(p => ({...p, categoryId: cat.id })));
         
         const processedResults = await Promise.all(
             allPredictions.map(async (p) => {
@@ -183,7 +183,7 @@ export default function CheckResultsPage() {
                 const newPredictionsArray = categoryPredictions.map(p => {
                     if (updatedPredictionsMap.has(p.fixture_id)) {
                         const updatedPrediction = updatedPredictionsMap.get(p.fixture_id)!;
-                        return { ...p, status: updatedPrediction.status, finalScore: updatedPrediction.finalScore, date: Timestamp.now() };
+                        return { ...p, status: updatedPrediction.status, finalScore: updatedPrediction.finalScore, generated_at: Timestamp.now() };
                     }
                     return p;
                 });

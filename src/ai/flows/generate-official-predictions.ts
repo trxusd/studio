@@ -12,7 +12,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { doc, writeBatch, getFirestore } from 'firebase/firestore';
+import { doc, writeBatch, getFirestore, serverTimestamp } from 'firebase/firestore';
 import { OfficialPredictionsOutputSchema, type OfficialPredictionsOutput } from '@/ai/schemas/prediction-schemas';
 import { getFirebaseApp } from '@/firebase';
 
@@ -54,7 +54,7 @@ export async function generateOfficialPredictions(): Promise<OfficialPredictions
             predictions: value,
             status: 'unpublished',
             category: key,
-            generated_at: new Date().toISOString(),
+            generated_at: serverTimestamp(),
         });
       }
   }
@@ -64,7 +64,7 @@ export async function generateOfficialPredictions(): Promise<OfficialPredictions
   batch.set(masterDocRef, {
     date: today,
     metadata: {
-      generated_at: new Date().toISOString(),
+      generated_at: serverTimestamp(),
       status: 'generated',
       api_version: 'v2.1'
     }
