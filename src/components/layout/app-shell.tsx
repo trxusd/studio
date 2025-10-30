@@ -3,17 +3,10 @@
 import { Sidebar, SidebarProvider } from "@/components/ui/sidebar";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { Header } from "@/components/layout/header";
-import { usePathname } from "next/navigation";
 import { Chatbot } from "../chatbot";
 import { Sheet } from "../ui/sheet";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  
-  if (pathname.startsWith('/login') || pathname.startsWith('/admin')) {
-    return <>{children}</>;
-  }
-
   return (
     <SidebarProvider>
         <Sheet>
