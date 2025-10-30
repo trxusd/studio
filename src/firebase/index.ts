@@ -1,9 +1,10 @@
 
-'use client'; // Add 'use client' as this file now contains client-side logic.
+'use client';
 
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { initializeAppCheck, ReCaptchaV3Provider, type AppCheck } from 'firebase/app-check';
 import { firebaseConfig } from './config';
 
 // Providers and hooks
@@ -18,6 +19,7 @@ let firebaseInstances: {
   app: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
+  appCheck?: AppCheck;
 } | null = null;
 
 // This is the single, centralized initialization function.
@@ -26,30 +28,30 @@ export function initializeFirebase() {
     return firebaseInstances;
   }
 
-  if (getApps().length > 0) {
-    const app = getApps()[0];
-    const auth = getAuth(app);
-    const firestore = getFirestore(app);
-    firebaseInstances = { app, auth, firestore };
-    return firebaseInstances;
-  }
-
-  // Check for valid config before initializing
-  if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("REPLACE_WITH")) {
-    console.error("Firebase config is not set. Please update src/firebase/config.ts");
-    // Return a dummy object to prevent app crash, but services will not work.
-    return {
-      app: {} as FirebaseApp,
-      auth: {} as Auth,
-      firestore: {} as Firestore,
-    };
-  }
-
-  const app = initializeApp(firebaseConfig);
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
   const auth = getAuth(app);
   const firestore = getFirestore(app);
+  let appCheck: AppCheck | undefined;
 
-  firebaseInstances = { app, auth, firestore };
+  // Conditionally initialize App Check only if the site key is available
+  if (typeof window !== 'undefined') {
+    const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (recaptchaSiteKey) {
+      try {
+        appCheck = initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+          isTokenAutoRefreshEnabled: true,
+        });
+        console.log("Firebase App Check initialized with reCAPTCHA.");
+      } catch (e) {
+        console.error("Failed to initialize Firebase App Check:", e);
+      }
+    } else {
+      console.warn("NEXT_PUBLIC_RECAPTCHA_SITE_KEY is not set. Firebase App Check is disabled.");
+    }
+  }
+
+  firebaseInstances = { app, auth, firestore, appCheck };
   return firebaseInstances;
 }
 
