@@ -137,6 +137,26 @@ export default function DashboardPage() {
         <h2 className="font-headline text-3xl font-bold tracking-tight">Dashboard</h2>
       </div>
 
+      {!vipStatus?.isVip && (
+        <Card className="bg-yellow-500 text-black">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Crown />
+              <div>
+                <h3 className="font-headline font-bold">Unlock Premium Access</h3>
+                <p className="text-xs text-black/80">Get exclusive, high-accuracy predictions.</p>
+              </div>
+            </div>
+            <Button asChild size="sm" className="bg-yellow-300 hover:bg-yellow-400 text-black font-bold shadow-lg shrink-0">
+              <Link href="/payments">
+                Upgrade Now
+                <Crown className="ml-2 h-4 w-4"/>
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <NavMenu />
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
@@ -195,8 +215,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
-        <Card className="lg:col-span-4">
+      <div className="grid grid-cols-1 gap-4">
+        <Card>
           <CardHeader>
             <CardTitle className="font-headline flex items-center gap-2"><Calendar /> Today's Events</CardTitle>
             <CardDescription>
@@ -218,46 +238,8 @@ export default function DashboardPage() {
             </Button>
           </CardFooter>
         </Card>
-        <Card className="lg:col-span-3 bg-yellow-500 text-black">
-           <CardHeader>
-             <div className="flex items-center gap-2">
-                <Crown />
-                <CardTitle className="font-headline">Unlock Premium Access</CardTitle>
-             </div>
-            <CardDescription className="text-black/80">
-              Get exclusive access to our most accurate, AI-powered predictions and in-depth analysis.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="list-disc list-inside space-y-2 text-sm text-black/90">
-                <li>Premium match predictions with higher accuracy.</li>
-                <li>In-depth statistical analysis and insights.</li>
-                <li>Access to the exclusive VIP community chat.</li>
-                <li>Real-time alerts and betting signals.</li>
-            </ul>
-            <div className="mt-6">
-                <h4 className="font-semibold">Your Progress</h4>
-                <Progress value={vipStatus?.isVip ? 100 : 25} className="w-full mt-2 [&>div]:bg-yellow-300 bg-black/20" />
-                <p className="text-xs text-black/80 mt-1">{vipStatus?.isVip ? "You're in the winner's circle!" : "You're one step away from joining."}</p>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button asChild className="w-full bg-yellow-300 hover:bg-yellow-400 text-black font-bold shadow-lg" disabled={!!vipStatus?.isVip}>
-                <Link href="/payments">
-                    {vipStatus?.isVip ? 'Subscription Active' : 'Upgrade Now'}
-                    <Crown className="ml-2 h-4 w-4"/>
-                </Link>
-            </Button>
-          </CardFooter>
-        </Card>
       </div>
 
     </div>
   );
 }
-
-    
-
-    
-
-    
