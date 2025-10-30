@@ -15,7 +15,18 @@ let firebaseApp: FirebaseApp;
 let auth: Auth;
 let firestore: Firestore;
 
+// This function is the key to fixing the reCAPTCHA issue.
+// It makes the reCAPTCHA config available globally for Firebase.
+function initializeRecaptcha() {
+    if (typeof window !== 'undefined') {
+        (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = process.env.NODE_ENV === 'development';
+        (window as any).self = window;
+    }
+}
+
 function initialize() {
+  initializeRecaptcha();
+
   if (getApps().length === 0) {
     if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "REPLACE_WITH_YOUR_API_KEY") {
       console.error("Firebase config is not set. Please update src/firebase/config.ts");
