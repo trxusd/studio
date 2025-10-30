@@ -1,7 +1,10 @@
 
+'use client'; // Add 'use client' as this file now contains client-side logic.
+
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
+import { initializeAppCheck, ReCaptchaV3Provider, type AppCheck } from 'firebase/app-check';
 import { firebaseConfig } from './config';
 
 // Providers and hooks
@@ -11,35 +14,62 @@ export { useUser } from './auth/use-user';
 export { useCollection } from './firestore/use-collection';
 export { useDoc } from './firestore/use-doc';
 
-let firebaseApp: FirebaseApp;
-let auth: Auth;
-let firestore: Firestore;
+// This structure will hold the initialized instances.
+let firebaseInstances: {
+  app: FirebaseApp;
+  auth: Auth;
+  firestore: Firestore;
+  appCheck?: AppCheck;
+} | null = null;
 
-
-function initialize() {
-  if (getApps().length === 0) {
-    if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "REPLACE_WITH_YOUR_API_KEY") {
-      console.error("Firebase config is not set. Please update src/firebase/config.ts");
-       // Return dummy objects or throw an error to prevent the app from crashing
-       return {
-         firebaseApp: {} as FirebaseApp,
-         auth: {} as Auth,
-         firestore: {} as Firestore
-       };
-    }
-    firebaseApp = initializeApp(firebaseConfig);
-  } else {
-    firebaseApp = getApps()[0];
+// This is the single, centralized initialization function.
+export function initializeFirebase() {
+  if (firebaseInstances) {
+    return firebaseInstances;
   }
 
-  auth = getAuth(firebaseApp);
-  firestore = getFirestore(firebaseApp);
-  
-  return { firebaseApp, auth, firestore };
+  if (getApps().length > 0) {
+    const app = getApps()[0];
+    const auth = getAuth(app);
+    const firestore = getFirestore(app);
+    firebaseInstances = { app, auth, firestore };
+    return firebaseInstances;
+  }
+
+  // Check for valid config before initializing
+  if (!firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("REPLACE_WITH")) {
+    console.error("Firebase config is not set. Please update src/firebase/config.ts");
+    // Return a dummy object to prevent app crash, but services will not work.
+    return {
+      app: {} as FirebaseApp,
+      auth: {} as Auth,
+      firestore: {} as Firestore,
+    };
+  }
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const firestore = getFirestore(app);
+
+  let appCheck: AppCheck | undefined;
+  if (typeof window !== 'undefined') {
+    // Ensure you have the site key in your environment variables
+    const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (recaptchaSiteKey) {
+        appCheck = initializeAppCheck(app, {
+          provider: new ReCaptchaV3Provider(recaptchaSiteKey),
+          isTokenAutoRefreshEnabled: true,
+        });
+    } else {
+        console.warn("reCAPTCHA site key not found. App Check will not be initialized.");
+    }
+  }
+
+  firebaseInstances = { app, auth, firestore, appCheck };
+  return firebaseInstances;
 }
 
-const instances = initialize();
-
-export const getFirebaseApp = () => instances.firebaseApp;
-export const getAuthInstance = () => instances.auth;
-export const getFirestoreInstance = () => instances.firestore;
+// These are now simple getters that call the main initializer.
+export const getFirebaseApp = () => initializeFirebase().app;
+export const getAuthInstance = () => initializeFirebase().auth;
+export const getFirestoreInstance = () => initializeFirebase().firestore;

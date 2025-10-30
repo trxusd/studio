@@ -2,13 +2,13 @@
 'use client';
 
 import { useState, useEffect, type ReactNode } from 'react';
-import { getFirebaseApp, getAuthInstance, getFirestoreInstance, FirebaseProvider } from '@/firebase';
+import { initializeFirebase, FirebaseProvider } from '@/firebase';
 import { type FirebaseApp } from 'firebase/app';
 import { type Auth } from 'firebase/auth';
 import { type Firestore } from 'firebase/firestore';
 
 export function FirebaseClientProvider({ children }: { children: ReactNode }) {
-  // We initialize the state with null, and they will be populated on the client side.
+  // The state now holds the entire object returned by initializeFirebase
   const [firebase, setFirebase] = useState<{
     app: FirebaseApp | null;
     auth: Auth | null;
@@ -17,14 +17,12 @@ export function FirebaseClientProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // This ensures that Firebase is initialized only on the client side.
-    const app = getFirebaseApp();
-    const auth = getAuthInstance();
-    const firestore = getFirestoreInstance();
+    // It now calls the single, centralized function.
+    const { app, auth, firestore } = initializeFirebase();
     setFirebase({ app, auth, firestore });
   }, []);
 
-  // We always render the provider, but the context values will be null until
-  // the useEffect runs on the client. Hooks like useAuth will handle this null value gracefully.
+  // The provider receives the initialized instances.
   return (
     <FirebaseProvider
       app={firebase.app}
