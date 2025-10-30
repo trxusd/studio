@@ -19,7 +19,6 @@ const navItems = [
     { href: "/admin/check-results", icon: Trophy, label: "Check Results" },
     { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
     { href: "/admin/official-predictions", icon: Bot, label: "Official Predictions" },
-    { href: "/admin/analytics", icon: LineChart, label: "Analytics" },
 ];
 
 const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];

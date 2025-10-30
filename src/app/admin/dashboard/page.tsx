@@ -33,7 +33,6 @@ const managementTools = [
     { href: "/admin/users", icon: Users, label: "Users" },
     { href: "/admin/vip-manager", icon: UserCog, label: "VIP Manager" },
     { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
-    { href: "/admin/analytics", icon: LineChart, label: "Analytics" },
 ];
 
 export default function AdminDashboardPage() {
