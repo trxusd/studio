@@ -24,20 +24,27 @@ type MatchFilterControlsProps = {
 export function MatchFilterControls({ selectedDate, isVip }: MatchFilterControlsProps) {
     const router = useRouter();
     const [popoverOpen, setPopoverOpen] = React.useState(false);
+    const [date, setDate] = React.useState<Date | undefined>(() => {
+        const initialDate = new Date(selectedDate);
+        const timezoneOffset = initialDate.getTimezoneOffset() * 60000;
+        return new Date(initialDate.getTime() + timezoneOffset);
+    });
+    
+    // This state ensures the calendar is only rendered on the client
+    const [isClient, setIsClient] = React.useState(false);
+    React.useEffect(() => {
+      setIsClient(true);
+    }, []);
 
-    const handleDateSelect = (selectedDate: Date | undefined) => {
-        if (selectedDate) {
-            const dateString = selectedDate.toISOString().split('T')[0];
+
+    const handleDateSelect = (selectedDay: Date | undefined) => {
+        if (selectedDay) {
+            const dateString = selectedDay.toISOString().split('T')[0];
             router.push(`/matches?date=${dateString}`);
+            setDate(selectedDay);
         }
         setPopoverOpen(false);
     };
-
-    const date = new Date(selectedDate);
-    // Adjust for timezone offset to show the correct calendar day
-    const timezoneOffset = date.getTimezoneOffset() * 60000;
-    const adjustedDate = new Date(date.getTime() + timezoneOffset);
-
 
     return (
         <div className="flex items-center gap-2">
@@ -53,21 +60,23 @@ export function MatchFilterControls({ selectedDate, isVip }: MatchFilterControls
                     <Star className="h-4 w-4 text-yellow-400" />
                 </Link>
             </Button>
-            <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-                <PopoverTrigger asChild>
-                <Button variant="outline" size="icon" className={cn(!date && 'text-muted-foreground')}>
-                    <CalendarIcon className="h-4 w-4" />
-                </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                    mode="single"
-                    selected={adjustedDate}
-                    onSelect={handleDateSelect}
-                    initialFocus
-                />
-                </PopoverContent>
-            </Popover>
+            {isClient && (
+                 <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+                    <PopoverTrigger asChild>
+                    <Button variant="outline" size="icon" className={cn(!date && 'text-muted-foreground')}>
+                        <CalendarIcon className="h-4 w-4" />
+                    </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={handleDateSelect}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+            )}
             {!isVip && (
                 <Button asChild className="bg-yellow-500 hover:bg-yellow-600 text-primary-foreground">
                     <Link href="/payments">
