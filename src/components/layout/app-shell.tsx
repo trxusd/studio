@@ -12,7 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <Sheet>
             <div className="relative flex min-h-screen">
                 <Sidebar>
-                <SidebarNav />
+                  <SidebarNav />
                 </Sidebar>
                 <div className="flex-1 flex flex-col">
                     <Header />
