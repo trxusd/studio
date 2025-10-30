@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function LoginForm() {
+  const searchParams = useSearchParams();
+  const referralCode = searchParams.get('ref');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
@@ -30,10 +33,7 @@ function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('signin');
-  
-  const searchParams = useSearchParams();
-  const referralCode = searchParams.get('ref');
+  const [activeTab, setActiveTab] = useState(referralCode ? 'signup' : 'signin');
   const [referralId, setReferralId] = useState(referralCode || '');
 
 
