@@ -18,6 +18,7 @@ import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+// The entire logic is now in one component, rendered via Suspense in the main export.
 function SignupForm() {
   const searchParams = useSearchParams();
   const referralCode = searchParams.get('ref');
@@ -60,12 +61,10 @@ function SignupForm() {
         if (referralId && referralId.startsWith('FBW-')) {
             const uidPart = referralId.substring(4);
             if(uidPart) {
-                // We just store the potential referrer UID, validation can happen on the backend or later
                 referredBy = uidPart;
             }
         }
 
-        // Create user document in Firestore
         const userDocRef = doc(firestore, 'users', user.uid);
         await setDoc(userDocRef, {
             uid: user.uid,
@@ -185,6 +184,7 @@ function SignupForm() {
     </div>
   );
 }
+
 
 export default function SignupPage() {
     return (
