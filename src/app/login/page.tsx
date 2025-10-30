@@ -17,7 +17,7 @@ import {
   sendPasswordResetEmail,
   updateProfile
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -64,11 +64,14 @@ function LoginForm() {
         const user = userCredential.user;
 
         await updateProfile(user, { displayName: fullName });
-
+        
         let referredBy = null;
-        if (referralId.startsWith('FWIN-')) {
-            const uidPart = referralId.substring(5);
-            referredBy = uidPart; 
+        if (referralId && referralId.startsWith('FBW-')) {
+            const uidPart = referralId.substring(4, 12);
+            if(uidPart) {
+                // We just store the potential referrer UID, validation can happen on the backend or later
+                referredBy = uidPart;
+            }
         }
 
         // Create user document in Firestore

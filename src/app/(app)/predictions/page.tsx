@@ -114,7 +114,7 @@ const PaidSectionContent = ({ predictions, isVip, canAccessVip }: { predictions:
                     <div className="rounded-full bg-yellow-500/20 p-4">
                         <Lock className="h-12 w-12 text-yellow-600"/>
                     </div>
-                    <h3 className="mt-6 font-headline text-2xl font-bold text-yellow-800">This Content is Locked</h3>
+                    <h3 className="font-headline text-2xl font-bold text-yellow-800">This Content is Locked</h3>
                     <p className="mt-2 max-w-md text-yellow-700/80">
                         You must be a VIP member to view these premium predictions. Upgrade your plan to unlock instant access.
                     </p>
@@ -182,6 +182,9 @@ export default function PredictionsPage() {
   const router = useRouter();
   const firestore = useFirestore();
 
+  const [canAccessSecureTrial, setCanAccessSecureTrial] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
   const today = new Date().toISOString().split('T')[0];
   const categoriesQuery = firestore 
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
@@ -192,13 +195,23 @@ export default function PredictionsPage() {
   const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
   const isUserAdmin = user?.email ? adminEmails.includes(user.email) : false;
 
-  const isLoading = userLoading || profileLoading || predictionsLoading;
+  const isLoading = userLoading || profileLoading || predictionsLoading || !isClient;
 
   const isVip = profile?.isVip || false;
   const canAccessVip = isUserAdmin || isVip;
+  
+  useEffect(() => {
+    setIsClient(true);
+    if(user?.metadata.creationTime) {
+      const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
+      setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
+    } else if (isUserAdmin || isVip) {
+      setCanAccessSecureTrial(true);
+    } else {
+       setCanAccessSecureTrial(false);
+    }
+  }, [user, isUserAdmin, isVip]);
 
-  const accountAgeInDays = user?.metadata.creationTime ? differenceInDays(new Date(), new Date(user.metadata.creationTime)) : Infinity;
-  const canAccessSecureTrial = isUserAdmin || isVip || accountAgeInDays < 10;
 
 
   const predictions = useMemo(() => {
