@@ -115,14 +115,18 @@ function MatchesPageContent() {
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [searchResults, setSearchResults] = React.useState<ApiTeam[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
-  const [isInitialLoad, setIsInitialLoad] = React.useState(true);
-
-
-  const router = useRouter();
+  
   const searchParams = useSearchParams();
   const dateFromParams = searchParams.get('date');
-  
-  const selectedDate = dateFromParams || (isInitialLoad ? null : new Date().toISOString().split('T')[0]);
+
+  // We need a state that is only set on the client.
+  const [selectedDate, setSelectedDate] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    // This effect runs only on the client, after hydration.
+    // It sets the date to either the one from the URL or today's date.
+    setSelectedDate(dateFromParams || new Date().toISOString().split('T')[0]);
+  }, [dateFromParams]);
 
 
   const { user } = useUser();
@@ -132,10 +136,26 @@ function MatchesPageContent() {
   const favoritesQuery = firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null;
   const { data: favorites } = useCollection<Favorite>(favoritesQuery);
   const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
+  
+  const groupMatches = (matchesToGroup: ApiMatch[]) => {
+      const grouped = matchesToGroup.reduce(
+          (acc: GroupedMatches, match: ApiMatch) => {
+            const country = match.league.country || 'Global';
+            const leagueName = match.league.name;
 
-  React.useEffect(() => {
-    setIsInitialLoad(false); // Component has mounted, subsequent renders are not initial
-  }, []);
+            if (!acc[country]) {
+              acc[country] = {};
+            }
+            if (!acc[country][leagueName]) {
+              acc[country][leagueName] = [];
+            }
+            acc[country][leagueName].push(match);
+            return acc;
+          },
+          {} as GroupedMatches
+      );
+      setGroupedMatches(grouped);
+  }
 
   React.useEffect(() => {
     async function fetchMatches(date: string) {
@@ -160,30 +180,11 @@ function MatchesPageContent() {
       }
     }
     
+    // Only fetch matches if a date has been set (on client-side)
     if (selectedDate) {
         fetchMatches(selectedDate);
     }
   }, [selectedDate]);
-  
-  const groupMatches = (matchesToGroup: ApiMatch[]) => {
-      const grouped = matchesToGroup.reduce(
-          (acc: GroupedMatches, match: ApiMatch) => {
-            const country = match.league.country || 'Global';
-            const leagueName = match.league.name;
-
-            if (!acc[country]) {
-              acc[country] = {};
-            }
-            if (!acc[country][leagueName]) {
-              acc[country][leagueName] = [];
-            }
-            acc[country][leagueName].push(match);
-            return acc;
-          },
-          {} as GroupedMatches
-      );
-      setGroupedMatches(grouped);
-  }
   
   // Effect for live searching teams
   React.useEffect(() => {
@@ -308,9 +309,9 @@ function MatchesPageContent() {
 
     return "font-medium";
   };
-
+  
+  // While waiting for the client-side effect to set the date, show a loader.
   if (!selectedDate) {
-    // Render a loading state or null while waiting for the client-side effect to run
     return (
         <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -352,7 +353,7 @@ function MatchesPageContent() {
                   {searchResults.map(({ team }) => (
                     <li key={team.id}>
                        <Link href={`/team/${team.id}`} className='flex items-center gap-3 p-2 mx-2 rounded-md hover:bg-muted'>
-                         <Image src={team.logo} alt={team.name} width={24} height={24} />
+                         <Image src={team.logo} alt={team.name} width={24} height={24} data-ai-hint="team logo"/>
                          <span>{team.name}</span>
                        </Link>
                     </li>
@@ -453,3 +454,5 @@ export default function MatchesPage() {
         </React.Suspense>
     )
 }
+
+    

@@ -12,7 +12,6 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
 import { CalendarIcon, Crown, Radio, Star } from 'lucide-react';
 
 
@@ -24,24 +23,28 @@ type MatchFilterControlsProps = {
 export function MatchFilterControls({ selectedDate, isVip }: MatchFilterControlsProps) {
     const router = useRouter();
     const [popoverOpen, setPopoverOpen] = React.useState(false);
-    const [date, setDate] = React.useState<Date | undefined>(() => {
-        const initialDate = new Date(selectedDate);
-        const timezoneOffset = initialDate.getTimezoneOffset() * 60000;
-        return new Date(initialDate.getTime() + timezoneOffset);
-    });
-    
+
     // This state ensures the calendar is only rendered on the client
     const [isClient, setIsClient] = React.useState(false);
     React.useEffect(() => {
       setIsClient(true);
     }, []);
 
+    // Create a date object from the string, ensuring correct timezone handling
+    const dateForCalendar = React.useMemo(() => {
+        if (!selectedDate) return undefined;
+        // The date string is 'YYYY-MM-DD'. When parsed as new Date('...'), it's treated as UTC.
+        // To show the correct day in the user's local timezone calendar, we add the offset.
+        const date = new Date(selectedDate);
+        const timezoneOffset = date.getTimezoneOffset() * 60000;
+        return new Date(date.getTime() + timezoneOffset);
+    }, [selectedDate]);
+
 
     const handleDateSelect = (selectedDay: Date | undefined) => {
         if (selectedDay) {
             const dateString = selectedDay.toISOString().split('T')[0];
             router.push(`/matches?date=${dateString}`);
-            setDate(selectedDay);
         }
         setPopoverOpen(false);
     };
@@ -63,14 +66,14 @@ export function MatchFilterControls({ selectedDate, isVip }: MatchFilterControls
             {isClient && (
                  <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
                     <PopoverTrigger asChild>
-                    <Button variant="outline" size="icon" className={cn(!date && 'text-muted-foreground')}>
+                    <Button variant="outline" size="icon" className={cn(!dateForCalendar && 'text-muted-foreground')}>
                         <CalendarIcon className="h-4 w-4" />
                     </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                         mode="single"
-                        selected={date}
+                        selected={dateForCalendar}
                         onSelect={handleDateSelect}
                         initialFocus
                     />
@@ -89,5 +92,4 @@ export function MatchFilterControls({ selectedDate, isVip }: MatchFilterControls
     );
 }
 
-
-      
+    
