@@ -2,22 +2,25 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Megaphone } from "lucide-react";
+import { Loader2, Megaphone, Lock, ArrowLeft } from "lucide-react";
 import { useFirestore } from '@/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import Link from 'next/link';
 
 export default function AdminAnnouncementsPage() {
     const [title, setTitle] = useState('');
     const [message, setMessage] = useState('');
     const [priority, setPriority] = useState<'Normal' | 'Urgent'>('Normal');
     const [target, setTarget] = useState<'all' | 'vip' | 'free'>('all');
+    const [isLocked, setIsLocked] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
     
     const firestore = useFirestore();
@@ -42,6 +45,7 @@ export default function AdminAnnouncementsPage() {
                 target,
                 createdAt: serverTimestamp(),
                 readBy: [], // To track which users have read it
+                isLocked, // Add lock status
             });
 
             toast({
@@ -54,6 +58,7 @@ export default function AdminAnnouncementsPage() {
             setMessage('');
             setPriority('Normal');
             setTarget('all');
+            setIsLocked(false);
 
         } catch (error) {
             console.error("Error publishing announcement:", error);
@@ -71,10 +76,15 @@ export default function AdminAnnouncementsPage() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Megaphone className="text-primary" />
-                    Create Announcement
-                </CardTitle>
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <Megaphone className="text-primary" />
+                        <CardTitle>Create Announcement</CardTitle>
+                    </div>
+                    <Button variant="outline" asChild>
+                        <Link href="/admin/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Back to Dashboard</Link>
+                    </Button>
+                </div>
                 <CardDescription>
                     Broadcast a global message to your users. It will appear on the announcements page.
                 </CardDescription>
@@ -86,7 +96,7 @@ export default function AdminAnnouncementsPage() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="message">Message</Label>
-                    <Textarea id="message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Write your detailed announcement here..." rows={6} />
+                    <Textarea id="message" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Write your detailed announcement here... You can include links like https://example.com" rows={6} />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -115,11 +125,20 @@ export default function AdminAnnouncementsPage() {
                         </Select>
                     </div>
                 </div>
-                <Button onClick={handlePublish} disabled={isPublishing} className="w-full">
+                 <div className="flex items-center space-x-2">
+                    <Switch id="lock-announcement" checked={isLocked} onCheckedChange={setIsLocked} />
+                    <Label htmlFor="lock-announcement" className="flex items-center gap-2 text-muted-foreground">
+                        <Lock className="h-4 w-4" />
+                        Lock announcement (prevents accidental deletion)
+                    </Label>
+                </div>
+            </CardContent>
+            <CardFooter>
+                 <Button onClick={handlePublish} disabled={isPublishing} className="w-full">
                     {isPublishing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Publish Announcement
                 </Button>
-            </CardContent>
+            </CardFooter>
         </Card>
     );
 }

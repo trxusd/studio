@@ -14,6 +14,7 @@ import type { Post } from "@/app/(app)/community/page";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "./ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { LinkRenderer } from "./link-renderer";
 
 
 type Comment = {
@@ -62,8 +63,8 @@ const TranslatedContent = ({ originalContent }: { originalContent: string }) => 
     };
 
     return (
-        <div className="whitespace-pre-wrap">
-            <p>{showOriginal ? originalContent : translatedContent}</p>
+        <div>
+            <LinkRenderer text={showOriginal ? originalContent : translatedContent || originalContent} />
             <div className="flex items-center gap-2 mt-2">
                 <Button variant="ghost" size="sm" onClick={() => setShowLangSelector(!showLangSelector)} disabled={isTranslating}>
                     {isTranslating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
@@ -114,11 +115,18 @@ export function CommunityPostCard({ post }: { post: Post }) {
 
     const handleDelete = async () => {
         if (!firestore) return;
+        if (post.isPinned && !isUserAdmin) {
+            toast({
+                title: "Cannot Delete Pinned Post",
+                description: "This post is pinned and cannot be deleted by non-admins.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         const postRef = doc(firestore, "community-posts", post.id);
         try {
             await deleteDoc(postRef);
-            // In a real production app, deleting subcollections should be handled by a Cloud Function
-            // to avoid client-side limitations. This is a simplified version.
             toast({
                 title: "Post Deleted",
                 description: "The post has been successfully removed.",
@@ -184,9 +192,9 @@ export function CommunityPostCard({ post }: { post: Post }) {
                                         <span>{post.isPinned ? 'Unpin Post' : 'Pin Post'}</span>
                                     </DropdownMenuItem>
                                 )}
-                                {isOwner && (
+                                {(isOwner || isUserAdmin) && (
                                     <AlertDialogTrigger asChild>
-                                        <DropdownMenuItem className="text-destructive focus:text-destructive">
+                                        <DropdownMenuItem className="text-destructive focus:text-destructive" disabled={post.isPinned && !isUserAdmin}>
                                             <Trash2 className="mr-2 h-4 w-4" />
                                             <span>Delete Post</span>
                                         </DropdownMenuItem>
@@ -252,7 +260,6 @@ function CommentSection({ postId }: { postId: string }) {
                 content: newComment,
                 timestamp: serverTimestamp(),
             });
-            // Increment comment count on parent post
             await updateDoc(postRef, {
                 comments: increment(1)
             });

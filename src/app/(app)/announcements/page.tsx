@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useFirestore, useCollection, useUser } from "@/firebase";
 import { collection, query, orderBy, Timestamp, doc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { Loader2, Megaphone } from "lucide-react";
+import { Loader2, Megaphone, Lock } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { LinkRenderer } from '@/components/link-renderer';
 
 type Announcement = {
     id: string;
@@ -19,6 +20,7 @@ type Announcement = {
     target: 'all' | 'vip' | 'free';
     createdAt: Timestamp;
     readBy: string[];
+    isLocked?: boolean;
 };
 
 export default function AnnouncementsPage() {
@@ -27,7 +29,6 @@ export default function AnnouncementsPage() {
     const { toast } = useToast();
     const prevAnnouncementsRef = useRef<Announcement[]>();
     
-    // Base query to get all announcements sorted by date
     const announcementsQuery = firestore 
         ? query(collection(firestore, 'announcements'), orderBy('createdAt', 'desc'))
         : null;
@@ -37,12 +38,9 @@ export default function AnnouncementsPage() {
 
     useEffect(() => {
         if (!loading && allAnnouncements && prevAnnouncementsRef.current) {
-            // Simple check for new announcements. In a more complex app, you might compare IDs.
             if (allAnnouncements.length > prevAnnouncementsRef.current.length) {
-                const newAnnouncement = allAnnouncements[0]; // The newest is at the top
+                const newAnnouncement = allAnnouncements[0];
                 
-                // Check if the new announcement is visible to the current user
-                // This logic is simplified; a real app might need to fetch user profile for VIP status
                 const isVip = false; // Placeholder
                 let isVisible = false;
                 if (newAnnouncement.target === 'all') isVisible = true;
@@ -59,7 +57,6 @@ export default function AnnouncementsPage() {
                 }
             }
         }
-        // Update the ref with the current announcements for the next render.
         prevAnnouncementsRef.current = allAnnouncements || undefined;
     }, [allAnnouncements, loading, toast, user]);
 
@@ -67,7 +64,6 @@ export default function AnnouncementsPage() {
     useEffect(() => {
         if (loading || !allAnnouncements) {
             if (allAnnouncements) {
-                 // For users not logged in, show 'all' announcements
                 setVisibleAnnouncements(allAnnouncements.filter(a => a.target === 'all'));
             }
             return;
@@ -78,14 +74,7 @@ export default function AnnouncementsPage() {
             return;
         }
 
-        // This logic needs to be in a hook that depends on user data, for now a simple filter
         const filterAnnouncements = async () => {
-             // In a real app, user's VIP status would be fetched from a reliable source like a custom claim or a user profile document
-             // For now, we'll assume a simplified check.
-             // const userDoc = await firestore.collection('users').doc(user.uid).get();
-             // const isVip = userDoc.data()?.isVip || false;
-             
-             // This is a placeholder. You should replace this with your actual VIP logic.
              const isVip = false; 
 
              const filtered = allAnnouncements.filter(ann => {
@@ -97,8 +86,6 @@ export default function AnnouncementsPage() {
              setVisibleAnnouncements(filtered);
         }
 
-        // Simplified logic without fetching user's VIP status for now
-        // In a real app, you would fetch user data and filter based on VIP status
         setVisibleAnnouncements(allAnnouncements);
 
 
@@ -149,7 +136,10 @@ export default function AnnouncementsPage() {
                             <Card key={announcement.id} className={cn("transition-opacity", isRead && "opacity-60 hover:opacity-100")}>
                                 <CardHeader className="flex-row items-start justify-between gap-4">
                                     <div>
-                                        <CardTitle>{announcement.title}</CardTitle>
+                                        <CardTitle className="flex items-center gap-2">
+                                            {announcement.isLocked && <Lock className="h-4 w-4 text-muted-foreground" />}
+                                            {announcement.title}
+                                        </CardTitle>
                                         <CardDescription>
                                             Posted {formatTimestamp(announcement.createdAt)}
                                         </CardDescription>
@@ -159,7 +149,7 @@ export default function AnnouncementsPage() {
                                     </Badge>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="whitespace-pre-wrap">{announcement.message}</p>
+                                    <LinkRenderer text={announcement.message} />
                                 </CardContent>
                                 {user && !isRead && (
                                      <CardFooter>
