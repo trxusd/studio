@@ -4,7 +4,6 @@
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
-import { initializeAppCheck, ReCaptchaV3Provider, type AppCheck } from 'firebase/app-check';
 import { firebaseConfig } from './config';
 
 // Providers and hooks
@@ -19,7 +18,6 @@ let firebaseInstances: {
   app: FirebaseApp;
   auth: Auth;
   firestore: Firestore;
-  appCheck?: AppCheck;
 } | null = null;
 
 // This is the single, centralized initialization function.
@@ -51,21 +49,7 @@ export function initializeFirebase() {
   const auth = getAuth(app);
   const firestore = getFirestore(app);
 
-  let appCheck: AppCheck | undefined;
-  if (typeof window !== 'undefined') {
-    // Ensure you have the site key in your environment variables
-    const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
-    if (recaptchaSiteKey) {
-        appCheck = initializeAppCheck(app, {
-          provider: new ReCaptchaV3Provider(recaptchaSiteKey),
-          isTokenAutoRefreshEnabled: true,
-        });
-    } else {
-        console.warn("reCAPTCHA site key not found. App Check will not be initialized.");
-    }
-  }
-
-  firebaseInstances = { app, auth, firestore, appCheck };
+  firebaseInstances = { app, auth, firestore };
   return firebaseInstances;
 }
 
