@@ -68,7 +68,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex flex-col">
                 <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
                     <div className="w-full flex-1">
-                        {/* The back button was removed to avoid confusion with the main sidebar navigation */}
+                        <Button asChild variant="outline">
+                            <Link href="/dashboard">
+                                <ArrowLeft className="mr-2 h-4 w-4" /> Back to App
+                            </Link>
+                        </Button>
                     </div>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -84,9 +88,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             <DropdownMenuLabel>Admin Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
-                                <Link href="/dashboard">Back to App</Link>
+                                <Link href="/settings">Settings</Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem>Settings</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem>Logout</DropdownMenuItem>
                         </DropdownMenuContent>
