@@ -76,7 +76,7 @@ export default function ReferralPage() {
 
 
     const referralCode = user ? `FBW-${user.uid}` : '...';
-    const referralLink = `https://footbetwin.com/signup?ref=${referralCode}`;
+    const referralLink = `https://footbetwin.com/login?ref=${referralCode}`;
     
     const copyToClipboard = () => {
         if (!user) return;
