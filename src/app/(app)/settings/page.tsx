@@ -5,16 +5,15 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useUser, useAuth } from "@/firebase"
 import { updateProfile, reauthenticateWithCredential, EmailAuthProvider, signOut } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Loader2, LogOut } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog"
+import { Separator } from "@/components/ui/separator";
 
 
 export default function SettingsPage() {
@@ -125,132 +124,93 @@ export default function SettingsPage() {
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <h2 className="font-headline text-3xl font-bold tracking-tight">Settings</h2>
+        <h2 className="font-headline text-3xl font-bold tracking-tight flex items-center gap-3">
+          <User />
+          Profil
+        </h2>
       </div>
-      <Tabs defaultValue="profile" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="language">Language & Region</TabsTrigger>
-          <TabsTrigger value="security">Security</TabsTrigger>
-        </TabsList>
-        <TabsContent value="profile" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile</CardTitle>
-              <CardDescription>
-                This is how others will see you on the site.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nom complet</Label>
-                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={user?.email || ''} disabled />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="uid">User ID</Label>
-                <Input id="uid" value={user?.uid || ''} disabled />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handleProfileUpdate} disabled={isSaving || name === user?.displayName}>
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Save changes
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        <TabsContent value="language" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Language & Region</CardTitle>
-              <CardDescription>
-                Manage your language and region settings.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="language">Language</Label>
-                <Select defaultValue="en">
-                    <SelectTrigger id="language">
-                        <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="fr">Français</SelectItem>
-                        <SelectItem value="es">Español</SelectItem>
-                        <SelectItem value="ht">Kreyòl Ayisyen</SelectItem>
-                    </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground">This will be the default language on the platform.</p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button>Save language</Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-        <TabsContent value="security" className="space-y-4">
-           <Card>
-            <CardHeader>
-              <CardTitle>Password</CardTitle>
-              <CardDescription>
-                Change your password here. After saving, you'll be logged out.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Current Password</Label>
-                <Input id="current-password" type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} disabled={isUpdatingPassword} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input id="new-password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} disabled={isUpdatingPassword} />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button onClick={handlePasswordUpdate} disabled={isUpdatingPassword}>
-                {isUpdatingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Update Password
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
       
-      <Card className="border-destructive">
+      <div className="space-y-6">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-destructive">Logout</CardTitle>
+            <CardTitle>Enfòmasyon Pèsonèl</CardTitle>
             <CardDescription>
-              This will log you out of your account on this device.
+              This is how others will see you on the site.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <LogOut className="mr-2 h-4 w-4" /> Logout
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    You will be returned to the login page.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleSignOut}>Logout</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nom complet</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} disabled={isSaving} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={user?.email || ''} disabled />
+            </div>
           </CardContent>
+          <CardFooter>
+            <Button onClick={handleProfileUpdate} disabled={isSaving || name === user?.displayName}>
+              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Save changes
+            </Button>
+          </CardFooter>
         </Card>
 
+        <Card>
+          <CardHeader>
+            <CardTitle>Sekirite</CardTitle>
+            <CardDescription>
+              Change your password here. After saving, you'll be logged out.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="current-password">Current Password</Label>
+              <Input id="current-password" type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} disabled={isUpdatingPassword} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="new-password">New Password</Label>
+              <Input id="new-password" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} disabled={isUpdatingPassword} />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button onClick={handlePasswordUpdate} disabled={isUpdatingPassword}>
+              {isUpdatingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Update Password
+            </Button>
+          </CardFooter>
+        </Card>
+        
+        <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Dekoneksyon</CardTitle>
+              <CardDescription>
+                This will log you out of your account on this device.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+               <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive">
+                    <LogOut className="mr-2 h-4 w-4" /> Logout
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to log out?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      You will be returned to the login page.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleSignOut}>Logout</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

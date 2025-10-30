@@ -19,7 +19,7 @@ import {
   Crown,
   MessageSquare,
   CreditCard,
-  Settings,
+  User,
   Shield,
   LifeBuoy,
   Gift,
@@ -41,7 +41,7 @@ const navItems = [
 ];
 
 const secondaryNavItems = [
-  { href: '/settings', icon: Settings, label: 'Settings' },
+  { href: '/settings', icon: User, label: 'Profil' },
   { href: '/admin/dashboard', icon: Shield, label: 'Admin', adminOnly: true },
 ];
 

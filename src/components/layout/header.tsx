@@ -1,7 +1,6 @@
 
 'use client';
 import { SidebarTrigger } from '@/components/ui/sidebar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -31,12 +30,14 @@ export function Header() {
              
              if (segment === 'app' || segment === 'dashboard' && index > 0) return null;
              if (index === 0 && segment === 'dashboard') return null;
+
+             const label = segment === 'settings' ? 'Profil' : segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ');
              
              return (
                  <span key={segment} className="flex items-center gap-2">
                     <span>/</span>
                     <Link href={href} className={cn(isLast ? "text-foreground font-semibold" : "hover:text-foreground")}>
-                        {segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')}
+                        {label}
                     </Link>
                  </span>
              )
@@ -51,17 +52,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
-        <Select defaultValue="en">
-          <SelectTrigger className="w-28 h-9 text-xs">
-            <SelectValue placeholder="Language" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="en">English</SelectItem>
-            <SelectItem value="fr">Français</SelectItem>
-            <SelectItem value="es">Español</SelectItem>
-            <SelectItem value="ht">Kreyòl</SelectItem>
-          </SelectContent>
-        </Select>
+        {/* Language selector removed */}
       </div>
     </header>
   );
