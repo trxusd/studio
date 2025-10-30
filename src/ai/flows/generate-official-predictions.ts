@@ -14,7 +14,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { doc, writeBatch, getFirestore, serverTimestamp } from 'firebase/firestore';
 import { OfficialPredictionsOutputSchema, type OfficialPredictionsOutput } from '@/ai/schemas/prediction-schemas';
-import { getFirebaseApp } from '@/firebase';
+import { initializeApp, getApps } from 'firebase/app';
+import { firebaseConfig } from '@/firebase/config';
 
 
 const API_HOST = "api-football.p.rapidapi.com";
@@ -34,7 +35,8 @@ export async function generateOfficialPredictions(): Promise<OfficialPredictions
   
   // The firestore instance must be initialized within the server-side function
   // that uses it, not at the top level.
-  const firestore = getFirestore(getFirebaseApp());
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  const firestore = getFirestore(app);
 
   // Save each category to a separate document in Firestore
   const today = new Date().toISOString().split('T')[0];
