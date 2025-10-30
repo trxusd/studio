@@ -137,6 +137,8 @@ export default function DashboardPage() {
         <h2 className="font-headline text-3xl font-bold tracking-tight">Dashboard</h2>
       </div>
 
+      <NavMenu />
+      
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         
         <Card>
@@ -249,11 +251,11 @@ export default function DashboardPage() {
           </CardFooter>
         </Card>
       </div>
-        
-      <NavMenu />
 
     </div>
   );
 }
+
+    
 
     
