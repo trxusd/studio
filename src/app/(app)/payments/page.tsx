@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { useUser, useFirestore } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import Link from 'next/link';
 
 type PaymentMethod = 'MonCash' | 'NatCash' | 'Crypto';
 type Step = 'select-plan' | 'select-method' | 'verify-payment';
@@ -188,9 +189,15 @@ export default function PaymentsPage() {
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       <div className="flex items-center gap-4">
-        {currentStep !== 'select-plan' && (
+        {currentStep !== 'select-plan' ? (
           <Button variant="outline" size="icon" onClick={prevStep}>
             <ArrowLeft className="h-4 w-4" />
+          </Button>
+        ) : (
+          <Button asChild variant="outline" size="icon" className="md:hidden">
+            <Link href="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
           </Button>
         )}
         <h2 className="font-headline text-3xl font-bold tracking-tight">Payments & Subscriptions</h2>
