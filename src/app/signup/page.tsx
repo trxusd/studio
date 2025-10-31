@@ -43,21 +43,22 @@ function SignUpForm() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleSocialSignUp = async (provider: GoogleAuthProvider | FacebookAuthProvider) => {
+  const handleGoogleSignUp = async () => {
     if (!auth || !firestore) {
       setError("Authentication service not available.");
       return;
     }
-    
-    provider.setCustomParameters({ prompt: 'select_account' });
-
+    setIsGoogleLoading(true);
+    setError(null);
     try {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
 
         const userDocRef = doc(firestore, 'users', user.uid);
         const userDoc = await getDoc(userDocRef);
-
+        
         let referredBy = null;
         if (referralId && referralId.startsWith('FBW-')) {
             const uidPart = referralId.substring(4);
@@ -89,22 +90,67 @@ function SignUpForm() {
                 friendlyMessage = 'An account already exists with this email. Please sign in using the original method.';
                 break;
             default:
-                friendlyMessage = 'Could not sign up. Please try again.';
+                friendlyMessage = 'Could not sign up with Google. Please try again.';
         }
         setError(friendlyMessage);
+    } finally {
+        setIsGoogleLoading(false);
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    setIsGoogleLoading(true);
-    await handleSocialSignUp(new GoogleAuthProvider());
-    setIsGoogleLoading(false);
-  };
-
   const handleFacebookSignUp = async () => {
+    if (!auth || !firestore) {
+      setError("Authentication service not available.");
+      return;
+    }
     setIsFacebookLoading(true);
-    await handleSocialSignUp(new FacebookAuthProvider());
-    setIsFacebookLoading(false);
+    setError(null);
+    try {
+        const provider = new FacebookAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        let referredBy = null;
+        if (referralId && referralId.startsWith('FBW-')) {
+            const uidPart = referralId.substring(4);
+            if(uidPart) referredBy = uidPart;
+        }
+
+        if (!userDoc.exists()) {
+            await setDoc(userDocRef, {
+                uid: user.uid,
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                createdAt: serverTimestamp(),
+                isVip: false,
+                referredBy: referredBy,
+            });
+            toast({ title: "Account created successfully!" });
+        } else {
+            toast({ title: "Welcome back!" });
+        }
+        router.push('/dashboard');
+    } catch (err: any) {
+        let friendlyMessage = "An unknown error occurred.";
+        switch (err.code) {
+            case 'auth/popup-closed-by-user':
+                friendlyMessage = 'Sign-up process was cancelled.';
+                break;
+            case 'auth/account-exists-with-different-credential':
+                friendlyMessage = 'An account already exists with this email. Please sign in using the original method.';
+                break;
+            default:
+                friendlyMessage = 'Could not sign up with Facebook. Please try again.';
+        }
+        setError(friendlyMessage);
+    } finally {
+        setIsFacebookLoading(false);
+    }
   };
 
 
