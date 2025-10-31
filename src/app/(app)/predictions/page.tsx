@@ -194,11 +194,12 @@ export default function PredictionsPage() {
     // This logic now only runs on the client when `user` or `profile` changes.
     if (!userLoading && user && user.metadata.creationTime) {
       const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
-      const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
-      const isUserAdmin = user?.email ? adminEmails.includes(user.email) : false;
       const isVip = profile?.isVip || false;
       
-      setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
+      setCanAccessSecureTrial(isVip || accountAgeInDays < 10);
+    } else if (!userLoading && user) {
+        // Fallback for users where creationTime might not be available
+        setCanAccessSecureTrial(profile?.isVip || false);
     }
   }, [user, profile, userLoading]);
 
@@ -270,7 +271,7 @@ export default function PredictionsPage() {
 
       {!isLoading && !noPredictionsAvailable && (
         <div className="space-y-8">
-            {/* FBW Special Section */}
+             {/* FBW Special Section */}
             {canAccessFbwSpecial && predictions.fbw_special.length > 0 && (
                 <section>
                     <Card className="mt-8 border-blue-500/50 bg-gradient-to-br from-blue-400/20 to-transparent">
@@ -347,5 +348,3 @@ export default function PredictionsPage() {
     </div>
   );
 }
-
-    
