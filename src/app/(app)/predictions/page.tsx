@@ -180,7 +180,6 @@ const PaidSectionContent = ({ predictions, isVip, canAccessVip }: { predictions:
 export default function PredictionsPage() {
   const { user, loading: userLoading } = useUser();
   const { profile, loading: profileLoading } = useUserProfile(user);
-  const router = useRouter();
   const firestore = useFirestore();
 
   const [canAccessSecureTrial, setCanAccessSecureTrial] = useState(false);
@@ -278,14 +277,14 @@ export default function PredictionsPage() {
                         <CardHeader>
                             <CardTitle className="flex items-center gap-3 text-blue-300"><Star className="text-blue-400 fill-blue-400" /> FBW Special</CardTitle>
                             <CardDescription className="text-blue-300/80">
-                                Our most elite, highly-confident predictions.
+                                Our most elite, highly-confident predictions, reserved for Lifetime members.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-1">
                              {predictions.fbw_special.map((match, index) => (
                                 <div key={index} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-blue-400/10">
                                   <div className="flex-1 truncate pr-2">
-                                    <p className="font-medium truncate">{match.match}</p>
+                                    <p className="font-medium truncate text-blue-200">{match.match}</p>
                                     <p className="text-blue-300/70">{match.prediction}</p>
                                   </div>
                                   <Badge variant="outline" className="font-bold border-blue-400 text-blue-300 bg-blue-900/50">{match.odds?.toFixed(2)}</Badge>
@@ -304,7 +303,7 @@ export default function PredictionsPage() {
                       Free Section
                     </h3>
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      {canAccessSecureTrial && renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial)}
+                      {canAccessSecureTrial && predictions.secure_trial.length > 0 && renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial)}
                       {renderCouponCard('free_coupon', 'Free Coupon', 'Access free coupons for special predictions.', <Ticket className="h-6 w-6 text-primary" />, predictions.free_coupon)}
                       
                       {predictions.free_individual.length > 0 && (
