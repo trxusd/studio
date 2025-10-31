@@ -111,7 +111,6 @@ async function fetchMatchesForAI() {
       .filter((match: any) => majorLeagues.some(league => 
         match.league.name.includes(league) || match.league.country === 'Brazil' || match.league.country === 'Argentina'
       ))
-      .slice(0, 100)
       .map((match: any) => ({
         fixture_id: match.fixture.id,
         date: match.fixture.date,
