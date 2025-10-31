@@ -41,6 +41,59 @@ export type FBWSpecialOutput = z.infer<typeof FBWSpecialOutputSchema>;
 const API_HOST = "api-football.p.rapidapi.com";
 const API_KEY = process.env.FOOTBALL_API_KEY;
 
+
+/**
+ * Genkit Tool to fetch Head-to-Head (H2H) matches between two teams.
+ * The AI will call this tool to get historical data needed for its analysis.
+ */
+const fetchH2HMatches = ai.defineTool(
+  {
+    name: 'fetchH2HMatches',
+    description: 'Fetches the head-to-head (H2H) match history between two teams within the last 2 years.',
+    inputSchema: z.object({
+      teamAId: z.number().describe('The ID of the first team.'),
+      teamBId: z.number().describe('The ID of the second team.'),
+    }),
+    outputSchema: z.array(z.object({
+        fixture_id: z.number(),
+        date: z.string(),
+        home_team: z.string(),
+        away_team: z.string(),
+        score: z.string(), // e.g., '2-1'
+    })),
+  },
+  async ({ teamAId, teamBId }) => {
+    if (!API_KEY) throw new Error("FOOTBALL_API_KEY is not configured.");
+    
+    const response = await fetch(`https://v3.football.api-sports.io/fixtures/headtohead?h2h=${teamAId}-${teamBId}&last=10`, {
+      headers: {
+        'x-rapidapi-key': API_KEY,
+        'x-rapidapi-host': API_HOST
+      }
+    });
+
+    if (!response.ok) {
+        console.error(`H2H API request failed: ${response.statusText}`);
+        return [];
+    }
+    const data = await response.json();
+
+    const twoYearsAgo = new Date();
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+    return data.response
+        .map((match: any) => ({
+            fixture_id: match.fixture.id,
+            date: match.fixture.date,
+            home_team: match.teams.home.name,
+            away_team: match.teams.away.name,
+            score: `${match.goals.home}-${match.goals.away}`,
+        }))
+        .filter((match: any) => new Date(match.date) >= twoYearsAgo);
+  }
+);
+
+
 /**
  * Main exported function to run the FBW Special prediction generation flow.
  * It fetches matches, runs AI analysis, and saves the result.
@@ -102,14 +155,16 @@ async function fetchMatchesForAI() {
     const data = await response.json();
     
     // Analyze all matches to find the best picks based on strict criteria.
-    // No pre-filtering by league.
     const allMatches = data.response
+      .slice(0, 100) // Limit to 100 matches to keep prompt reasonable
       .map((match: any) => ({
         fixture_id: match.fixture.id,
         date: match.fixture.date,
         time: match.fixture.date,
         home_team: match.teams.home.name,
+        home_team_id: match.teams.home.id,
         away_team: match.teams.away.name,
+        away_team_id: match.teams.away.id,
         league: match.league.name,
         country: match.league.country,
         venue: match.fixture.venue.name
@@ -127,11 +182,12 @@ const systemPrompt = `Tu es un analyste de paris sportifs d'élite, connu pour t
 Ta mission est de produire une liste TRÈS SÉLECTIVE de prédictions, appelée "FBW SPECIAL". Cette liste doit contenir entre 3 et 10 prédictions MAXIMUM.
 
 RÈGLES D'OR (NON-NÉGOCIABLES):
-1.  **Règle H2H #1:** Pour analyser un match, il doit y avoir un minimum de 4 matchs en tête-à-tête (H2H), et ces matchs ne doivent pas dater de plus de 2 ans.
-2.  **Règle H2H #2:** Il est STRICTEMENT INTERDIT de faire des prédictions sur un match si les deux équipes ne se sont jamais affrontées.
-3.  **Règle H2H #3 pour 'Under 2.5':** Si l'historique des matchs (H2H) montre des scores comme 3-0, 2-1, 1-0 ou 1-2, il est INTERDIT de prédire 'Under 2.5'. Les meilleures options sont '1X' (Double Chance), 'Victoire' (avec risque), ou 'Over 1.5'.
-4.  **Qualité > Quantité:** Ne sélectionne QUE les matchs où tu as une confiance EXTRÊME (85% à 99%). Si aucun match ne respecte tes critères, retourne une liste vide.
-5.  **Fixture ID Obligatoire:** Chaque prédiction DOIT inclure le 'fixture_id'.
+1.  **Analyse H2H Obligatoire:** Pour chaque match, tu DOIS utiliser l'outil 'fetchH2HMatches' pour obtenir l'historique des confrontations.
+2.  **Règle H2H #1:** Si l'outil 'fetchH2HMatches' retourne moins de 4 matchs, le match est IMMÉDIATEMENT disqualifié. Ignore-le.
+3.  **Règle H2H #2:** Si l'outil ne retourne aucun match (zéro H2H), il est STRICTEMENT INTERDIT de faire une prédiction. Ignore le match.
+4.  **Règle H2H #3 pour 'Under 2.5':** Si l'historique H2H montre des scores comme 3-0, 2-1, 1-0 ou 1-2, il est INTERDIT de prédire 'Under 2.5'. Les meilleures options sont '1X' (Double Chance), 'Victoire' (avec risque), ou 'Over 1.5'.
+5.  **Qualité > Quantité:** Ne sélectionne QUE les matchs où tu as une confiance EXTRÊME (85% à 99%). Si aucun match ne respecte tes critères après analyse, retourne une liste vide.
+6.  **Fixture ID Obligatoire:** Chaque prédiction DOIT inclure le 'fixture_id'.
 
 CRITÈRES D'ANALYSE ADDITIONNELS:
 - Forme récente (5 derniers matchs), blessures clés, importance du match.
@@ -145,16 +201,16 @@ TYPES DE PARIS AUTORISÉS:
 
 FORMAT DE SORTIE:
 - Retourne UNIQUEMENT un objet JSON valide avec une seule clé: "special_picks".
-- La valeur de "special_picks" est un tableau de tes prédictions.
-`;
+- La valeur de "special_picks" est un tableau de tes prédictions.`;
 
 const prompt = ai.definePrompt({
     name: 'fbwSpecialPrompt',
+    tools: [fetchH2HMatches],
     input: { schema: z.any() },
     output: { schema: FBWSpecialOutputSchema },
     system: systemPrompt,
-    prompt: `Analyse les matchs suivants en respectant SCRUPULEUSEMENT les règles d'or.
-    Produis la liste "FBW SPECIAL" contenant entre 3 et 10 prédictions de très haute confiance.
+    prompt: `Analyse la liste de matchs suivante. Pour chaque match, utilise l'outil 'fetchH2HMatches' et respecte SCRUPULEUSEMENT les règles d'or pour construire la liste "FBW SPECIAL".
+    Produis une liste contenant entre 3 et 10 prédictions de très haute confiance.
     Si aucun match ne satisfait les critères, retourne un tableau "special_picks" vide.
     
     Matches: {{{json matches}}}
@@ -188,3 +244,5 @@ const fbwSpecialPredictionsFlow = ai.defineFlow(
     return output;
   }
 );
+
+    
