@@ -160,13 +160,13 @@ const prompt = ai.definePrompt({
     input: { schema: z.any() },
     output: { schema: FBWSpecialOutputSchema },
     system: systemPrompt,
-    prompt: \`Analyse les matchs suivants en respectant SCRUPULEUSEMENT les règles d'or.
+    prompt: `Analyse les matchs suivants en respectant SCRUPULEUSEMENT les règles d'or.
     Produis la liste "FBW SPECIAL" contenant entre 3 et 10 prédictions de très haute confiance.
     Si aucun match ne satisfait les critères, retourne un tableau "special_picks" vide.
     
     Matches: {{{json matches}}}
     
-    Retourne UNIQUEMENT le JSON structuré.\`,
+    Retourne UNIQUEMENT le JSON structuré.`,
 });
 
 const fbwSpecialPredictionsFlow = ai.defineFlow(
