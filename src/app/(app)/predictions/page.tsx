@@ -266,7 +266,7 @@ export default function PredictionsPage() {
 
 
       {!isLoading && !noPredictionsAvailable && (
-        <>
+        <section className="space-y-6">
             {/* FBW Special Section */}
             {canAccessVip && predictions.fbw_special.length > 0 && (
                 <section>
@@ -339,7 +339,7 @@ export default function PredictionsPage() {
                 </div>
                 <PaidSectionContent predictions={predictions} isVip={isVip} canAccessVip={canAccessVip} />
               </section>
-        </>
+        </section>
       )}
     </div>
   );
