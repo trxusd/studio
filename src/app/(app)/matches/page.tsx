@@ -128,12 +128,14 @@ function MatchesPageContent() {
 
 
   const { user, loading: userLoading } = useUser();
-  const { data: userData, loading: userDataLoading } = useCollection(
-    useFirestore() && user ? query(collection(useFirestore()!, 'users'), where('uid', '==', user.uid)) : null
-  );
+  const firestore = useFirestore();
+
+  // Corrected Hook call: Hooks are now called unconditionally.
+  const userDocQuery = (firestore && user) ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
+  const { data: userData, loading: userDataLoading } = useCollection(userDocQuery);
+  
   const isVip = userData?.[0]?.isVip || false;
 
-  const firestore = useFirestore();
   const { toast } = useToast();
 
   const favoritesQuery = firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null;
