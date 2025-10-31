@@ -194,25 +194,25 @@ export default function PredictionsPage() {
 
   const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
   const isUserAdmin = user?.email ? adminEmails.includes(user.email) : false;
-
-  const isLoading = userLoading || profileLoading || predictionsLoading || !isClient;
-
+  
   const isVip = profile?.isVip || false;
   const canAccessVip = isUserAdmin || isVip;
-  
+
   useEffect(() => {
     setIsClient(true);
-    if(user?.metadata.creationTime) {
-      const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
-      setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
-    } else if (isUserAdmin || isVip) {
-      setCanAccessSecureTrial(true);
-    } else {
-       setCanAccessSecureTrial(false);
+    if (!userLoading && user) {
+        if(user.metadata.creationTime) {
+            const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
+            setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
+        } else {
+            setCanAccessSecureTrial(isUserAdmin || isVip);
+        }
+    } else if (!userLoading) {
+        setCanAccessSecureTrial(false);
     }
-  }, [user, isUserAdmin, isVip]);
+  }, [user, userLoading, isUserAdmin, isVip]);
 
-
+  const isLoading = userLoading || profileLoading || predictionsLoading || !isClient;
 
   const predictions = useMemo(() => {
     const structuredData = {
@@ -266,7 +266,7 @@ export default function PredictionsPage() {
 
 
       {!isLoading && !noPredictionsAvailable && (
-        <section className="space-y-6">
+        <div className="space-y-6">
             {/* FBW Special Section */}
             {canAccessVip && predictions.fbw_special.length > 0 && (
                 <section>
@@ -292,9 +292,8 @@ export default function PredictionsPage() {
                 </section>
             )}
 
-
-            {/* Free Section */}
-            {hasFreePredictions && (
+            {/* Free and Paid Sections */}
+            {hasFreePredictions ? (
               <section className="space-y-4">
                 <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
                   Free Section
@@ -321,11 +320,10 @@ export default function PredictionsPage() {
                   )}
                 </div>
               </section>
-            )}
+            ) : null}
             
             <Separator />
 
-            {/* Paid Section */}
               <section className="space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
@@ -339,7 +337,7 @@ export default function PredictionsPage() {
                 </div>
                 <PaidSectionContent predictions={predictions} isVip={isVip} canAccessVip={canAccessVip} />
               </section>
-        </section>
+        </div>
       )}
     </div>
   );
