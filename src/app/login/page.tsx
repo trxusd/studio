@@ -13,9 +13,12 @@ import { useAuth, useFirestore } from '@/firebase';
 import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup,
+  getAdditionalUserInfo,
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,9 +27,11 @@ function AuthForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -62,6 +67,58 @@ function AuthForm() {
       setIsLoading(false);
     }
   };
+
+  const handleGoogleSignIn = async () => {
+    if (!auth || !firestore) {
+      setError("Authentication service not available.");
+      return;
+    }
+    setIsGoogleLoading(true);
+    setError(null);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      // If user document doesn't exist, create it.
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          createdAt: serverTimestamp(),
+          isVip: false,
+        });
+        toast({ title: "Account created successfully!" });
+      } else {
+        toast({ title: "Welcome back!" });
+      }
+      
+      router.push('/dashboard');
+
+    } catch (err: any) {
+      let friendlyMessage = "An unknown error occurred.";
+      switch(err.code) {
+        case 'auth/popup-closed-by-user':
+          friendlyMessage = 'Sign-in process was cancelled.';
+          break;
+        case 'auth/account-exists-with-different-credential':
+          friendlyMessage = 'An account already exists with this email address. Please sign in using the method you originally used.';
+          break;
+        default:
+          friendlyMessage = 'Could not sign in with Google. Please try again.';
+      }
+      setError(friendlyMessage);
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
 
   const handlePasswordReset = () => {
     if (!auth || !email) {
@@ -119,7 +176,7 @@ function AuthForm() {
                     </div>
                   </div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button onClick={handleSignIn} className="w-full font-bold" disabled={isLoading}>
+                  <Button onClick={handleSignIn} className="w-full font-bold" disabled={isLoading || isGoogleLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Sign In
                   </Button>
@@ -140,7 +197,10 @@ function AuthForm() {
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline"><Chrome className="mr-2 h-4 w-4" /> Google</Button>
+                  <Button variant="outline" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+                     {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Chrome className="mr-2 h-4 w-4" />}
+                     Google
+                  </Button>
                   <Button variant="outline"><Facebook className="mr-2 h-4 w-4" /> Facebook</Button>
                 </div>
             </CardContent>
