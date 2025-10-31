@@ -199,16 +199,13 @@ export default function PredictionsPage() {
   const canAccessVip = isUserAdmin || isVip;
 
   useEffect(() => {
+    // This now only runs on the client.
     setIsClient(true);
-    if (!userLoading && user) {
-        if(user.metadata.creationTime) {
-            const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
-            setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
-        } else {
-            setCanAccessSecureTrial(isUserAdmin || isVip);
-        }
+    if (!userLoading && user?.metadata.creationTime) {
+      const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
+      setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
     } else if (!userLoading) {
-        setCanAccessSecureTrial(false);
+      setCanAccessSecureTrial(isUserAdmin || isVip);
     }
   }, [user, userLoading, isUserAdmin, isVip]);
 
@@ -292,51 +289,53 @@ export default function PredictionsPage() {
                 </section>
             )}
 
-            {/* Free and Paid Sections */}
-            {(hasFreePredictions && predictions.free_individual.length > 0 || predictions.free_coupon.length > 0 || (canAccessSecureTrial && predictions.secure_trial.length > 0)) && (
-              <section className="space-y-4">
-                <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
-                  Free Section
-                </h3>
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {canAccessSecureTrial && renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial)}
-                  {renderCouponCard('free_coupon', 'Free Coupon', 'Access free coupons for special predictions.', <Ticket className="h-6 w-6 text-primary" />, predictions.free_coupon)}
-                  
-                  {predictions.free_individual.length > 0 && (
-                     <Card className="hover/card:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full">
-                       <CardHeader>
-                           <CardTitle className="flex items-center gap-3">
-                               <List className="h-6 w-6 text-primary" />
-                               <span>Free Individual List</span>
-                           </CardTitle>
-                         <CardDescription>
-                           See our list of free individual matches for the day.
-                         </CardDescription>
-                       </CardHeader>
-                       <CardContent className='flex-grow space-y-1'>
-                         {predictions.free_individual.map(renderMatchFree)}
-                       </CardContent>
-                     </Card>
-                  )}
-                </div>
-              </section>
-            )}
-            
-            <Separator />
-
-              <section className="space-y-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                    <div>
-                        <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2 text-yellow-500">
-                            <Crown /> Subscription Section
-                        </h3>
-                        <p className="text-muted-foreground max-w-2xl">
-                            Unlock access to our Subscription predictions for the best chance to win.
-                        </p>
+            {/* Free and Paid Sections Wrapper */}
+            <div className="space-y-8">
+                {(hasFreePredictions && predictions.free_individual.length > 0 || predictions.free_coupon.length > 0 || (isClient && canAccessSecureTrial && predictions.secure_trial.length > 0)) && (
+                  <section className="space-y-4">
+                    <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
+                      Free Section
+                    </h3>
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {isClient && canAccessSecureTrial && renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial)}
+                      {renderCouponCard('free_coupon', 'Free Coupon', 'Access free coupons for special predictions.', <Ticket className="h-6 w-6 text-primary" />, predictions.free_coupon)}
+                      
+                      {predictions.free_individual.length > 0 && (
+                         <Card className="hover/card:border-primary/50 hover:bg-muted/50 transition-colors flex flex-col h-full">
+                           <CardHeader>
+                               <CardTitle className="flex items-center gap-3">
+                                   <List className="h-6 w-6 text-primary" />
+                                   <span>Free Individual List</span>
+                               </CardTitle>
+                             <CardDescription>
+                               See our list of free individual matches for the day.
+                             </CardDescription>
+                           </CardHeader>
+                           <CardContent className='flex-grow space-y-1'>
+                             {predictions.free_individual.map(renderMatchFree)}
+                           </CardContent>
+                         </Card>
+                      )}
                     </div>
-                </div>
-                <PaidSectionContent predictions={predictions} isVip={isVip} canAccessVip={canAccessVip} />
-              </section>
+                  </section>
+                )}
+                
+                <Separator />
+
+                  <section className="space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <div>
+                            <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2 text-yellow-500">
+                                <Crown /> Subscription Section
+                            </h3>
+                            <p className="text-muted-foreground max-w-2xl">
+                                Unlock access to our Subscription predictions for the best chance to win.
+                            </p>
+                        </div>
+                    </div>
+                    <PaidSectionContent predictions={predictions} isVip={isVip} canAccessVip={canAccessVip} />
+                  </section>
+            </div>
         </div>
       )}
     </div>
