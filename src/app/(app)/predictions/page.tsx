@@ -22,6 +22,7 @@ import { differenceInDays } from 'date-fns';
 
 type UserProfile = {
   isVip?: boolean;
+  vipPlan?: string;
   createdAt?: Timestamp;
 };
 
@@ -192,7 +193,7 @@ export default function PredictionsPage() {
   
   useEffect(() => {
     // This logic now only runs on the client when `user` or `profile` changes.
-    if (user && user.metadata.creationTime) {
+    if (!userLoading && user && user.metadata.creationTime) {
       const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
       const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
       const isUserAdmin = user?.email ? adminEmails.includes(user.email) : false;
@@ -200,7 +201,7 @@ export default function PredictionsPage() {
       
       setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
     }
-  }, [user, profile]);
+  }, [user, profile, userLoading]);
 
   const categoriesQuery = useMemo(() => (firestore && today
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
@@ -213,6 +214,7 @@ export default function PredictionsPage() {
   
   const isVip = profile?.isVip || false;
   const canAccessVip = isUserAdmin || isVip;
+  const canAccessFbwSpecial = isUserAdmin || (isVip && profile?.vipPlan === 'Lifetime');
 
   const isLoading = userLoading || profileLoading || predictionsLoading || !today;
 
@@ -270,7 +272,7 @@ export default function PredictionsPage() {
       {!isLoading && !noPredictionsAvailable && (
         <div className="space-y-8">
             {/* FBW Special Section */}
-            {canAccessVip && predictions.fbw_special.length > 0 && (
+            {canAccessFbwSpecial && predictions.fbw_special.length > 0 && (
                 <section>
                     <Card className="mt-8 border-blue-500/50 bg-gradient-to-br from-blue-400/20 to-transparent">
                         <CardHeader>
@@ -346,3 +348,5 @@ export default function PredictionsPage() {
     </div>
   );
 }
+
+    
