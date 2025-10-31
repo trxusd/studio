@@ -10,7 +10,7 @@
  * @interface AiChatbotSupportInput - The input type for the aiChatbotSupport function.
  * @interface AiChatbotSupportOutput - The output type for the aiChatbotSupport function.
  */
-
+import 'dotenv/config';
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 

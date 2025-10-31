@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -7,7 +8,7 @@
  * - AiPoweredMatchPredictionsInput - The input type for the aiPoweredMatchPredictions function.
  * - AiPoweredMatchPredictionsOutput - The return type for the aiPoweredMatchPredictions function.
  */
-
+import 'dotenv/config';
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 

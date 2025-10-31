@@ -9,7 +9,7 @@
  * The flow fetches live football matches, uses an AI prompt to analyze them,
  * validates the output, and is intended to be saved to Firestore.
  */
-
+import 'dotenv/config';
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { doc, writeBatch, getFirestore, serverTimestamp } from 'firebase/firestore';
@@ -78,17 +78,15 @@ const fetchH2HMatches = ai.defineTool(
  * It fetches matches, runs AI analysis, validates, and saves the result.
  */
 export async function generateOfficialPredictions(): Promise<OfficialPredictionsOutput> {
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  const firestore = getFirestore(app);
+
   const predictions = await generateOfficialPredictionsFlow();
 
   if (!predictions) {
     throw new Error("AI analysis did not return any output.");
   }
   
-  // The firestore instance must be initialized within the server-side function
-  // that uses it, not at the top level.
-  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  const firestore = getFirestore(app);
-
   // Save each category to a separate document in Firestore
   const today = new Date().toISOString().split('T')[0];
   const batch = writeBatch(firestore);

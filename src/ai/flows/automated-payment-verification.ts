@@ -1,4 +1,5 @@
 
+
 'use server';
 
 /**
@@ -8,7 +9,7 @@
  * - AutomatedPaymentVerificationInput - The input type for the automatedPaymentVerification function.
  * - AutomatedPaymentVerificationOutput - The return type for the automatedPaymentVerification function.
  */
-
+import 'dotenv/config';
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 

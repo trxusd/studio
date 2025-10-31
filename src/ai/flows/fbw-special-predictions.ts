@@ -9,7 +9,7 @@
  * The flow fetches live football matches, uses an AI prompt with very strict rules to analyze them,
  * and saves the result to a specific Firestore document.
  */
-
+import 'dotenv/config';
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { doc, writeBatch, getFirestore, serverTimestamp } from 'firebase/firestore';
@@ -99,15 +99,15 @@ const fetchH2HMatches = ai.defineTool(
  * It fetches matches, runs AI analysis, and saves the result.
  */
 export async function generateFBWSpecialPredictions(): Promise<FBWSpecialOutput> {
+  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  const firestore = getFirestore(app);
+
   const predictions = await fbwSpecialPredictionsFlow();
 
   if (!predictions) {
     throw new Error("AI analysis for FBW Special did not return any output.");
   }
   
-  const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  const firestore = getFirestore(app);
-
   const today = new Date().toISOString().split('T')[0];
   const batch = writeBatch(firestore);
 

@@ -7,7 +7,7 @@
  * It includes the `translateText` function, which takes text and a target language
  * and returns the translated text.
  */
-
+import 'dotenv/config';
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 
