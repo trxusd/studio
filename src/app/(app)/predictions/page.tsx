@@ -38,7 +38,7 @@ const useUserProfile = (user: any) => {
   const [loading, setLoading] = useState(true);
   const firestore = useFirestore();
 
-  const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
+  const userQuery = useMemo(() => (firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null), [firestore, user]);
   const { data: userData, loading: userDataLoading } = useCollection<UserProfile>(userQuery);
 
   useEffect(() => {
@@ -188,7 +188,9 @@ export default function PredictionsPage() {
   useEffect(() => {
     // This effect runs only on the client, after hydration.
     setToday(new Date().toISOString().split('T')[0]);
-
+  }, []);
+  
+  useEffect(() => {
     if (user && user.metadata.creationTime) {
       const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
       const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
@@ -199,9 +201,9 @@ export default function PredictionsPage() {
     }
   }, [user, profile]);
 
-  const categoriesQuery = firestore && today
+  const categoriesQuery = useMemo(() => (firestore && today
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
-    : null;
+    : null), [firestore, today]);
     
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
 

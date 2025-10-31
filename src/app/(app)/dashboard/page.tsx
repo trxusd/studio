@@ -37,12 +37,12 @@ export default function DashboardPage() {
   }, []);
 
   // Fetch user's VIP status
-  const userQuery = firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
+  const userQuery = useMemo(() => (firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null), [firestore, user]);
   const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean; vipPlan?: string }>(userQuery);
   const vipStatus = userData?.[0];
 
   // Fetch today's predictions - This now depends on the `today` state
-  const categoriesQuery = firestore && today ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
+  const categoriesQuery = useMemo(() => (firestore && today ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null), [firestore, today]);
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
   useEffect(() => {

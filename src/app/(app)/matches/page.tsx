@@ -107,6 +107,14 @@ type Favorite = { id: string };
 const priorityCountries = ['World', 'England', 'Spain', 'Germany', 'Italy', 'France', 'Brazil', 'Argentina', 'Portugal', 'Netherlands'];
 
 function MatchesPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const dateFromParams = searchParams.get('date');
+
+  const { user, loading: userLoading } = useUser();
+  const firestore = useFirestore();
+  const { toast } = useToast();
+
   const [matches, setMatches] = React.useState<ApiMatch[]>([]);
   const [groupedMatches, setGroupedMatches] = React.useState<GroupedMatches>({});
   const [isLoading, setIsLoading] = React.useState(true);
@@ -114,34 +122,23 @@ function MatchesPageContent() {
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [searchResults, setSearchResults] = React.useState<ApiTeam[]>([]);
   const [isSearching, setIsSearching] = React.useState(false);
-  
-  const searchParams = useSearchParams();
-  const dateFromParams = searchParams.get('date');
-
   const [selectedDate, setSelectedDate] = React.useState<string>('');
+
+  // Unconditional hook calls
+  const userDocQuery = useMemo(() => (firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null), [firestore, user]);
+  const { data: userData, loading: userDataLoading } = useCollection(userDocQuery);
+
+  const favoritesQuery = useMemo(() => (firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null), [firestore, user]);
+  const { data: favorites } = useCollection<Favorite>(favoritesQuery);
   
+  const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
+  const isVip = userData?.[0]?.isVip || false;
+
   React.useEffect(() => {
-    // This effect runs only on the client, after hydration.
-    // It sets the date to either the one from the URL or today's date.
     setSelectedDate(dateFromParams || new Date().toISOString().split('T')[0]);
   }, [dateFromParams]);
 
 
-  const { user, loading: userLoading } = useUser();
-  const firestore = useFirestore();
-
-  // Corrected Hook call: Hooks are now called unconditionally.
-  const userDocQuery = (firestore && user) ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null;
-  const { data: userData, loading: userDataLoading } = useCollection(userDocQuery);
-  
-  const isVip = userData?.[0]?.isVip || false;
-
-  const { toast } = useToast();
-
-  const favoritesQuery = firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null;
-  const { data: favorites } = useCollection<Favorite>(favoritesQuery);
-  const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
-  
   const groupMatches = (matchesToGroup: ApiMatch[]) => {
       const grouped = matchesToGroup.reduce(
           (acc: GroupedMatches, match: ApiMatch) => {
