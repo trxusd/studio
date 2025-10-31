@@ -6,19 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Loader2, PlayCircle, Terminal, FileJson, UploadCloud, ArrowLeft, Star } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { generateFBWSpecialPredictions } from "@/ai/flows/fbw-special-predictions";
+import { generateFBWSpecialPredictions, type FBWSpecialOutput } from "@/ai/flows/fbw-special-predictions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useFirestore, useDoc } from "@/firebase";
 import { doc, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
+import type { MatchPrediction as BaseMatchPrediction } from '@/ai/schemas/prediction-schemas';
 
-type MatchPrediction = {
-    fixture_id: number;
-    match: string;
-    league: string;
-    prediction: string;
-    odds: number;
+type MatchPrediction = BaseMatchPrediction & {
     confidence: number;
 };
 
@@ -61,6 +57,7 @@ const PredictionTable = ({ matches }: { matches: MatchPrediction[] }) => {
 export default function FBWSpecialPage() {
     const [isGenerating, setIsGenerating] = useState(false);
     const [logs, setLogs] = useState<string[]>([]);
+    const [generatedOutput, setGeneratedOutput] = useState<FBWSpecialOutput | null>(null);
     const [isPublishing, setPublishing] = useState(false);
     const { toast } = useToast();
     const firestore = useFirestore();
@@ -71,11 +68,13 @@ export default function FBWSpecialPage() {
 
     const handleGeneratePredictions = async () => {
         setIsGenerating(true);
+        setGeneratedOutput(null);
         setLogs(['🚀 Starting FBW SPECIAL Predictions Generation...']);
 
         try {
             setLogs(prev => [...prev, '⏳ Fetching matches & running elite AI analysis... This may take a moment.']);
             const result = await generateFBWSpecialPredictions();
+            setGeneratedOutput(result);
             
             setLogs(prev => [...prev, `✅ AI Analysis complete. Found ${result.special_picks.length} special picks.`]);
             setLogs(prev => [...prev, '✅ Predictions saved to Firestore with "unpublished" status.']);
@@ -122,7 +121,7 @@ export default function FBWSpecialPage() {
         }
     };
     
-    const predictions = predictionDoc?.predictions || [];
+    const predictions = generatedOutput ? generatedOutput.special_picks : predictionDoc?.predictions || [];
     const status = predictionDoc?.status || 'unpublished';
 
     return (
@@ -180,12 +179,12 @@ export default function FBWSpecialPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {docLoading ? (
+                    {docLoading && !generatedOutput ? (
                         <div className="flex justify-center items-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         </div>
                     ) : (
-                        <PredictionTable matches={predictions} />
+                        <PredictionTable matches={predictions as MatchPrediction[]} />
                     )}
                 </CardContent>
             </Card>

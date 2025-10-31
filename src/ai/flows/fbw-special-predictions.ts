@@ -118,6 +118,7 @@ async function fetchMatchesForAI() {
     return allMatches;
 
   } catch (error) {
+    console.error("Failed to fetch matches for AI analysis:", error)
     throw new Error("Failed to fetch matches for AI analysis.");
   }
 }
