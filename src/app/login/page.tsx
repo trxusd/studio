@@ -14,6 +14,7 @@ import {
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
   GoogleAuthProvider,
+  FacebookAuthProvider,
   signInWithPopup,
   getAdditionalUserInfo,
 } from 'firebase/auth';
@@ -28,6 +29,7 @@ function AuthForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const auth = useAuth();
@@ -118,6 +120,56 @@ function AuthForm() {
       setIsGoogleLoading(false);
     }
   };
+  
+  const handleFacebookSignIn = async () => {
+    if (!auth || !firestore) {
+      setError("Authentication service not available.");
+      return;
+    }
+    setIsFacebookLoading(true);
+    setError(null);
+
+    try {
+      const provider = new FacebookAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      const userDocRef = doc(firestore, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        await setDoc(userDocRef, {
+          uid: user.uid,
+          displayName: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL,
+          createdAt: serverTimestamp(),
+          isVip: false,
+        });
+        toast({ title: "Account created successfully!" });
+      } else {
+        toast({ title: "Welcome back!" });
+      }
+      
+      router.push('/dashboard');
+
+    } catch (err: any) {
+      let friendlyMessage = "An unknown error occurred.";
+      switch(err.code) {
+        case 'auth/popup-closed-by-user':
+          friendlyMessage = 'Sign-in process was cancelled.';
+          break;
+        case 'auth/account-exists-with-different-credential':
+          friendlyMessage = 'An account already exists with this email. Please sign in using your original method.';
+          break;
+        default:
+          friendlyMessage = 'Could not sign in with Facebook. Please try again.';
+      }
+      setError(friendlyMessage);
+    } finally {
+      setIsFacebookLoading(false);
+    }
+  };
 
 
   const handlePasswordReset = () => {
@@ -176,7 +228,7 @@ function AuthForm() {
                     </div>
                   </div>
                   {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button onClick={handleSignIn} className="w-full font-bold" disabled={isLoading || isGoogleLoading}>
+                  <Button onClick={handleSignIn} className="w-full font-bold" disabled={isLoading || isGoogleLoading || isFacebookLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Sign In
                   </Button>
@@ -197,11 +249,14 @@ function AuthForm() {
                     </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading}>
+                  <Button variant="outline" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading || isFacebookLoading}>
                      {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Chrome className="mr-2 h-4 w-4" />}
                      Google
                   </Button>
-                  <Button variant="outline"><Facebook className="mr-2 h-4 w-4" /> Facebook</Button>
+                  <Button variant="outline" onClick={handleFacebookSignIn} disabled={isLoading || isGoogleLoading || isFacebookLoading}>
+                    {isFacebookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Facebook className="mr-2 h-4 w-4" />} 
+                    Facebook
+                  </Button>
                 </div>
             </CardContent>
         </Card>
