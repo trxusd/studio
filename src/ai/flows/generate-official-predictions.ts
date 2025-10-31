@@ -162,7 +162,13 @@ RÈGLES IMPÉRATIVES:
 ✅ Distribution IDÉALE (si 50 matchs trouvés): Secure Trial (4), Exclusive VIP (12, split 4-4-4), Individual VIP (15), Free Coupon (4), Free Individual (15).
 ✅ Si le nombre de matchs de qualité est faible, voici la distribution prioritaire pour les sections payantes: Exclusive VIP (12 matchs, répartis en 4-4-4), Individual VIP (5 matchs).
 ✅ Varie les types de paris.
-✅ Retourne UNIQUEMENT du JSON valide. Ne retourne aucun texte en dehors de l'objet JSON.`;
+✅ Retourne UNIQUEMENT du JSON valide. Ne retourne aucun texte en dehors de l'objet JSON.
+
+RÈGLES IMPÉRATIVES ADDITIONNELLES:
+1.  Règle H2H #1: Pour analyser un match, il doit y avoir un minimum de 4 matchs en tête-à-tête (H2H), et ces matchs ne doivent pas dater de plus de 2 ans.
+2.  Règle H2H #2: Il est strictement interdit de faire des prédictions sur un match si les deux équipes ne se sont jamais affrontées.
+3.  Règle H2H #3 pour 'Under 2.5': Si l'historique des matchs (H2H) montre des scores comme 3-0, 2-1, 1-0 ou 1-2, il est INTERDIT de prédire 'Under 2.5'. Les meilleures options sont '1X' (Double Chance), 'Victoire' (avec risque), ou 'Over 1.5'.
+`;
 
 
 const prompt = ai.definePrompt({
