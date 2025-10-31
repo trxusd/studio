@@ -8,14 +8,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { AppLogo } from '@/components/icons';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Chrome, Facebook } from 'lucide-react';
 import { useAuth, useFirestore } from '@/firebase';
 import {
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  GoogleAuthProvider,
+  FacebookAuthProvider,
+  signInWithPopup,
 } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 function SignUpForm() {
@@ -29,6 +32,8 @@ function SignUpForm() {
   const [phone, setPhone] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [referralId, setReferralId] = useState(referralCode || '');
 
@@ -37,6 +42,71 @@ function SignUpForm() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+
+  const handleSocialSignUp = async (provider: GoogleAuthProvider | FacebookAuthProvider) => {
+    if (!auth || !firestore) {
+      setError("Authentication service not available.");
+      return;
+    }
+    
+    provider.setCustomParameters({ prompt: 'select_account' });
+
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        const userDocRef = doc(firestore, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+
+        let referredBy = null;
+        if (referralId && referralId.startsWith('FBW-')) {
+            const uidPart = referralId.substring(4);
+            if(uidPart) referredBy = uidPart;
+        }
+
+        if (!userDoc.exists()) {
+            await setDoc(userDocRef, {
+                uid: user.uid,
+                displayName: user.displayName,
+                email: user.email,
+                photoURL: user.photoURL,
+                createdAt: serverTimestamp(),
+                isVip: false,
+                referredBy: referredBy,
+            });
+            toast({ title: "Account created successfully!" });
+        } else {
+            toast({ title: "Welcome back!" });
+        }
+        router.push('/dashboard');
+    } catch (err: any) {
+        let friendlyMessage = "An unknown error occurred.";
+        switch (err.code) {
+            case 'auth/popup-closed-by-user':
+                friendlyMessage = 'Sign-up process was cancelled.';
+                break;
+            case 'auth/account-exists-with-different-credential':
+                friendlyMessage = 'An account already exists with this email. Please sign in using the original method.';
+                break;
+            default:
+                friendlyMessage = 'Could not sign up. Please try again.';
+        }
+        setError(friendlyMessage);
+    }
+  };
+
+  const handleGoogleSignUp = async () => {
+    setIsGoogleLoading(true);
+    await handleSocialSignUp(new GoogleAuthProvider());
+    setIsGoogleLoading(false);
+  };
+
+  const handleFacebookSignUp = async () => {
+    setIsFacebookLoading(true);
+    await handleSocialSignUp(new FacebookAuthProvider());
+    setIsFacebookLoading(false);
+  };
+
 
   const handleSignup = async () => {
     if (!auth || !firestore) {
@@ -115,6 +185,28 @@ function SignUpForm() {
             </CardHeader>
             <CardContent>
                 <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Button variant="outline" className="w-full" onClick={handleGoogleSignUp} disabled={isGoogleLoading || isLoading}>
+                            {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Chrome className="mr-2 h-4 w-4" />}
+                            Google
+                        </Button>
+                        <Button variant="outline" className="w-full" onClick={handleFacebookSignUp} disabled={isFacebookLoading || isLoading}>
+                            {isFacebookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Facebook className="mr-2 h-4 w-4" />}
+                            Facebook
+                        </Button>
+                    </div>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                            <span className="bg-card px-2 text-muted-foreground">
+                                Or continue with
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
                         <Label htmlFor="fullname-signup">Nom complet</Label>
                         <Input id="fullname-signup" placeholder="John Doe" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
@@ -168,7 +260,7 @@ function SignUpForm() {
                         <Input id="referral-signup" placeholder="Enter referral code" value={referralId} onChange={(e) => setReferralId(e.target.value)} />
                     </div>
                     {error && <p className="text-sm text-destructive">{error}</p>}
-                    <Button onClick={handleSignup} className="w-full font-bold" disabled={isLoading}>
+                    <Button onClick={handleSignup} className="w-full font-bold" disabled={isLoading || isGoogleLoading || isFacebookLoading}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                         Sign Up
                     </Button>
@@ -194,3 +286,5 @@ export default function SignupPage() {
     </Suspense>
   )
 }
+
+    
