@@ -21,6 +21,57 @@ import { firebaseConfig } from '@/firebase/config';
 const API_HOST = "api-football.p.rapidapi.com";
 const API_KEY = process.env.FOOTBALL_API_KEY;
 
+/**
+ * Genkit Tool to fetch Head-to-Head (H2H) matches between two teams.
+ * The AI will call this tool to get historical data needed for its analysis.
+ */
+const fetchH2HMatches = ai.defineTool(
+  {
+    name: 'fetchH2HMatches',
+    description: 'Fetches the head-to-head (H2H) match history between two teams within the last 2 years.',
+    inputSchema: z.object({
+      teamAId: z.number().describe('The ID of the first team.'),
+      teamBId: z.number().describe('The ID of the second team.'),
+    }),
+    outputSchema: z.array(z.object({
+        fixture_id: z.number(),
+        date: z.string(),
+        home_team: z.string(),
+        away_team: z.string(),
+        score: z.string(), // e.g., '2-1'
+    })),
+  },
+  async ({ teamAId, teamBId }) => {
+    if (!API_KEY) throw new Error("FOOTBALL_API_KEY is not configured.");
+    
+    const response = await fetch(`https://v3.football.api-sports.io/fixtures/headtohead?h2h=${teamAId}-${teamBId}&last=10`, {
+      headers: {
+        'x-rapidapi-key': API_KEY,
+        'x-rapidapi-host': API_HOST
+      }
+    });
+
+    if (!response.ok) {
+        console.error(`H2H API request failed: ${response.statusText}`);
+        return [];
+    }
+    const data = await response.json();
+
+    const twoYearsAgo = new Date();
+    twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2);
+
+    return data.response
+        .map((match: any) => ({
+            fixture_id: match.fixture.id,
+            date: match.fixture.date,
+            home_team: match.teams.home.name,
+            away_team: match.teams.away.name,
+            score: `${match.goals.home}-${match.goals.away}`,
+        }))
+        .filter((match: any) => new Date(match.date) >= twoYearsAgo);
+  }
+);
+
 
 /**
  * Main exported function to run the prediction generation flow.
@@ -117,7 +168,9 @@ async function fetchMatchesForAI() {
         date: match.fixture.date,
         time: match.fixture.date, // Use the full ISO string for time
         home_team: match.teams.home.name,
+        home_team_id: match.teams.home.id,
         away_team: match.teams.away.name,
+        away_team_id: match.teams.away.id,
         league: match.league.name,
         country: match.league.country,
         venue: match.fixture.venue.name
@@ -134,12 +187,9 @@ const systemPrompt = `Tu es un expert en analyse de matchs de football avec 15 a
 Ta mission est de sélectionner JUSQU'À 50 prédictions de haute qualité.
 
 CRITÈRES D'ANALYSE OBLIGATOIRES:
-1. Forme récente des équipes (5 derniers matchs)
-2. Statistiques face-à-face (head-to-head)
-3. Performance à domicile vs extérieur
-4. Cotes disponibles (valeur des paris)
-5. Importance du match (enjeux: relégation, titre, coupe)
-6. Motivation des équipes
+1.  **Analyse H2H Obligatoire:** Pour chaque match, tu DOIS utiliser l'outil 'fetchH2HMatches' pour obtenir l'historique des confrontations (H2H). C'est ta première étape.
+2.  Forme récente des équipes (5 derniers matchs), blessures, importance du match.
+3.  Performance à domicile vs extérieur et motivation.
 
 NIVEAUX DE CONFIANCE:
 - Secure Trial: 90-95% confiance
@@ -157,26 +207,28 @@ TYPES DE PARIS AUTORISÉS:
 
 RÈGLES IMPÉRATIVES:
 ✅ Sélectionne un MAXIMUM de 50 matchs. Ne dépasse JAMAIS ce nombre.
-✅ Pour chaque prédiction, INCLUS OBLIGATOIREMENT le 'fixture_id' du match correspondant.
+✅ Pour chaque prédiction, INCLUS OBLIGATOIREMENT le 'fixture_id' et les 'team_id' du match correspondant.
 ✅ Si moins de 50 matchs de qualité sont disponibles, PRIORISE le remplissage des catégories payantes (Exclusive VIP, Individual VIP) avant les catégories gratuites.
 ✅ Distribution IDÉALE (si 50 matchs trouvés): Secure Trial (4), Exclusive VIP (12, split 4-4-4), Individual VIP (15), Free Coupon (4), Free Individual (15).
 ✅ Si le nombre de matchs de qualité est faible, voici la distribution prioritaire pour les sections payantes: Exclusive VIP (12 matchs, répartis en 4-4-4), Individual VIP (5 matchs).
 ✅ Varie les types de paris.
 ✅ Retourne UNIQUEMENT du JSON valide. Ne retourne aucun texte en dehors de l'objet JSON.
 
-RÈGLES IMPÉRATIVES ADDITIONNELLES:
-1.  Règle H2H #1: Pour analyser un match, il doit y avoir un minimum de 4 matchs en tête-à-tête (H2H), et ces matchs ne doivent pas dater de plus de 2 ans.
-2.  Règle H2H #2: Il est strictement interdit de faire des prédictions sur un match si les deux équipes ne se sont jamais affrontées.
-3.  Règle H2H #3 pour 'Under 2.5': Si l'historique des matchs (H2H) montre des scores comme 3-0, 2-1, 1-0 ou 1-2, il est INTERDIT de prédire 'Under 2.5'. Les meilleures options sont '1X' (Double Chance), 'Victoire' (avec risque), ou 'Over 1.5'.
+RÈGLES H2H (NON-NÉGOCIABLES):
+1.  **Règle #1:** Pour analyser un match, tu dois utiliser 'fetchH2HMatches'. Si l'outil retourne moins de 4 matchs, le match est IMMÉDIATEMENT disqualifié.
+2.  **Règle #2:** Il est strictement interdit de faire des prédictions sur un match si l'outil ne retourne aucun match (zéro H2H).
+3.  **Règle #3 pour 'Under 2.5':** Si l'historique des matchs (H2H) montre des scores comme 3-0, 2-1, 1-0 ou 1-2, il est INTERDIT de prédire 'Under 2.5'. Les meilleures options sont '1X' (Double Chance), 'Victoire' (avec risque), ou 'Over 1.5'.
 `;
 
 
 const prompt = ai.definePrompt({
     name: 'officialPredictionsPrompt',
+    tools: [fetchH2HMatches],
     input: { schema: z.any() },
     output: { schema: OfficialPredictionsOutputSchema },
     system: systemPrompt,
-    prompt: `Analyse les matchs suivants et sélectionne JUSQU'À 50 prédictions selon les critères définis. 
+    prompt: `Analyse les matchs suivants et sélectionne JUSQU'À 50 prédictions. 
+    Pour chaque match, utilise l'outil 'fetchH2HMatches' et respecte SCRUPULEUSEMENT les règles H2H.
     Assure-toi d'inclure le 'fixture_id' pour chaque prédiction.
     Priorise les sections payantes si tu ne trouves pas 50 matchs de qualité.
     Retourne UNIQUEMENT le JSON structuré sans texte additionnel:
@@ -223,3 +275,5 @@ const generateOfficialPredictionsFlow = ai.defineFlow(
     return output;
   }
 );
+
+    
