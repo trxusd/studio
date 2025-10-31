@@ -191,6 +191,7 @@ export default function PredictionsPage() {
   }, []);
   
   useEffect(() => {
+    // This logic now only runs on the client when `user` or `profile` changes.
     if (user && user.metadata.creationTime) {
       const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
       const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];

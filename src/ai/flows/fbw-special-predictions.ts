@@ -101,16 +101,9 @@ async function fetchMatchesForAI() {
 
     const data = await response.json();
     
-    const majorLeagues = [
-        'Premier League', 'La Liga', 'Serie A', 'Bundesliga', 
-        'Ligue 1', 'Champions League', 'Europa League', 
-        'Championship', 'Eredivisie', 'Liga Portugal', 'Copa Libertadores', 'Copa Sudamericana', 'MLS'
-    ];
-  
-    const filteredMatches = data.response
-      .filter((match: any) => majorLeagues.some(league => 
-        match.league.name.includes(league) || match.league.country === 'Brazil' || match.league.country === 'Argentina'
-      ))
+    // Analyze all matches to find the best picks based on strict criteria.
+    // No pre-filtering by league.
+    const allMatches = data.response
       .map((match: any) => ({
         fixture_id: match.fixture.id,
         date: match.fixture.date,
@@ -122,7 +115,7 @@ async function fetchMatchesForAI() {
         venue: match.fixture.venue.name
       }));
       
-    return filteredMatches;
+    return allMatches;
 
   } catch (error) {
     throw new Error("Failed to fetch matches for AI analysis.");
