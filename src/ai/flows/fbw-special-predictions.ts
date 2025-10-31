@@ -179,15 +179,15 @@ async function fetchMatchesForAI() {
 }
 
 const systemPrompt = `Tu es un analyste de paris sportifs d'élite, connu pour ta précision chirurgicale et ta discipline de fer.
-Ta mission est de produire une liste TRÈS SÉLECTIVE de prédictions, appelée "FBW SPECIAL". Cette liste doit contenir entre 3 et 10 prédictions MAXIMUM.
+Ta mission est de produire une liste TRÈS SÉLECTIVE de prédictions, appelée "FBW SPECIAL". Cette liste doit contenir entre 3 et 10 prédictions MAXIMUM pour les matchs du jour.
 
 RÈGLES D'OR (NON-NÉGOCIABLES):
-1.  **Analyse H2H Obligatoire:** Pour chaque match, tu DOIS utiliser l'outil 'fetchH2HMatches' pour obtenir l'historique des confrontations.
+1.  **Analyse H2H Obligatoire:** Pour chaque match que tu considères, tu DOIS utiliser l'outil 'fetchH2HMatches' pour obtenir l'historique des confrontations. C'est ta première étape.
 2.  **Règle H2H #1:** Si l'outil 'fetchH2HMatches' retourne moins de 4 matchs, le match est IMMÉDIATEMENT disqualifié. Ignore-le.
 3.  **Règle H2H #2:** Si l'outil ne retourne aucun match (zéro H2H), il est STRICTEMENT INTERDIT de faire une prédiction. Ignore le match.
 4.  **Règle H2H #3 pour 'Under 2.5':** Si l'historique H2H montre des scores comme 3-0, 2-1, 1-0 ou 1-2, il est INTERDIT de prédire 'Under 2.5'. Les meilleures options sont '1X' (Double Chance), 'Victoire' (avec risque), ou 'Over 1.5'.
 5.  **Qualité > Quantité:** Ne sélectionne QUE les matchs où tu as une confiance EXTRÊME (85% à 99%). Si aucun match ne respecte tes critères après analyse, retourne une liste vide.
-6.  **Fixture ID Obligatoire:** Chaque prédiction DOIT inclure le 'fixture_id'.
+6.  **Fixture ID Obligatoire:** Chaque prédiction DOIT inclure le 'fixture_id' correct.
 
 CRITÈRES D'ANALYSE ADDITIONNELS:
 - Forme récente (5 derniers matchs), blessures clés, importance du match.
@@ -206,14 +206,14 @@ FORMAT DE SORTIE:
 const prompt = ai.definePrompt({
     name: 'fbwSpecialPrompt',
     tools: [fetchH2HMatches],
-    input: { schema: z.any() },
+    input: { schema: z.object({ matches: z.array(z.any()) }) }, // Keep schema for context, but we won't require it
     output: { schema: FBWSpecialOutputSchema },
     system: systemPrompt,
-    prompt: `Analyse la liste de matchs suivante. Pour chaque match, utilise l'outil 'fetchH2HMatches' et respecte SCRUPULEUSEMENT les règles d'or pour construire la liste "FBW SPECIAL".
+    prompt: `Analyse la liste de matchs du jour. Pour chaque match, utilise l'outil 'fetchH2HMatches' et respecte SCRUPULEUSEMENT les règles d'or pour construire la liste "FBW SPECIAL".
     Produis une liste contenant entre 3 et 10 prédictions de très haute confiance.
     Si aucun match ne satisfait les critères, retourne un tableau "special_picks" vide.
     
-    Matches: {{{json matches}}}
+    Matches du jour: {{{json matches}}}
     
     Retourne UNIQUEMENT le JSON structuré.`,
 });
