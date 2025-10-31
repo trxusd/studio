@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { MatchFilterControls } from '@/components/match-filter-controls';
 import { Star } from 'lucide-react';
 import { useUser, useFirestore, useCollection } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useSearchParams, useRouter } from 'next/navigation';

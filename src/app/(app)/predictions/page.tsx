@@ -184,12 +184,20 @@ export default function PredictionsPage() {
 
   const [canAccessSecureTrial, setCanAccessSecureTrial] = useState(false);
   const [today, setToday] = useState('');
-  const [isClient, setIsClient] = useState(false);
   
   useEffect(() => {
-    setIsClient(true);
+    // This effect runs only on the client, after hydration.
     setToday(new Date().toISOString().split('T')[0]);
-  }, []);
+
+    if (user && user.metadata.creationTime) {
+      const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
+      const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];
+      const isUserAdmin = user?.email ? adminEmails.includes(user.email) : false;
+      const isVip = profile?.isVip || false;
+      
+      setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
+    }
+  }, [user, profile]);
 
   const categoriesQuery = firestore && today
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
@@ -203,14 +211,7 @@ export default function PredictionsPage() {
   const isVip = profile?.isVip || false;
   const canAccessVip = isUserAdmin || isVip;
 
-  useEffect(() => {
-    if (user && user.metadata.creationTime) {
-      const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
-      setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
-    }
-  }, [user, isUserAdmin, isVip]);
-
-  const isLoading = userLoading || profileLoading || predictionsLoading || !isClient;
+  const isLoading = userLoading || profileLoading || predictionsLoading || !today;
 
   const predictions = useMemo(() => {
     const structuredData = {
@@ -292,7 +293,7 @@ export default function PredictionsPage() {
 
             {/* Free and Paid Sections Wrapper */}
             <section className="space-y-8">
-                {(hasFreePredictions && predictions.free_individual.length > 0 || predictions.free_coupon.length > 0 || (canAccessSecureTrial && predictions.secure_trial.length > 0)) && (
+                {(hasFreePredictions && (predictions.free_individual.length > 0 || predictions.free_coupon.length > 0 || (canAccessSecureTrial && predictions.secure_trial.length > 0))) && (
                   <div className="space-y-4">
                     <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
                       Free Section

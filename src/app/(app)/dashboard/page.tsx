@@ -31,7 +31,7 @@ export default function DashboardPage() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [today, setToday] = useState('');
 
-  // Set date on client-side to avoid hydration mismatch
+  // This will run only on the client, after the component has mounted.
   useEffect(() => {
     setToday(new Date().toISOString().split('T')[0]);
   }, []);
