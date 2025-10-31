@@ -188,7 +188,7 @@ RÈGLES D'OR (NON-NÉGOCIABLES):
 4.  **Règle H2H #3 pour 'Under 2.5':** Si l'historique H2H montre des scores comme 3-0, 2-1, 1-0 ou 1-2, il est INTERDIT de prédire 'Under 2.5'. Les meilleures options sont '1X' (Double Chance), 'Victoire' (avec risque), ou 'Over 1.5'.
 5.  **Qualité > Quantité:** Ne sélectionne QUE les matchs où tu as une confiance EXTRÊME (85% à 99%).
 6.  **Fixture ID Obligatoire:** Chaque prédiction DOIT inclure le 'fixture_id' correct.
-7.  **Sortie JSON Obligatoire:** Si, après ton analyse, AUCUN match ne se qualifie, tu DOIS retourner un objet JSON avec une clé "special_picks" contenant un tableau vide. Exemple : { "special_picks": [] }. Ne retourne JAMAIS null.
+7.  **Sortie JSON OBLIGATOIRE:** Si, après ton analyse, AUCUN match ne se qualifie, tu DOIS retourner un objet JSON avec une clé "special_picks" contenant un tableau vide. Exemple : { "special_picks": [] }. Ne retourne JAMAIS null ou une chaîne de caractères vide.
 
 CRITÈRES D'ANALYSE ADDITIONNELS:
 - Forme récente (5 derniers matchs), blessures clés, importance du match.
@@ -232,20 +232,26 @@ const fbwSpecialPredictionsFlow = ai.defineFlow(
         return { special_picks: [] };
     }
 
-    const { output } = await prompt({ matches });
+    try {
+        const { output } = await prompt({ matches });
 
-    if (!output) {
-      // This path should ideally not be taken anymore due to the updated prompt.
-      console.warn("FBW Special AI analysis returned null/undefined, defaulting to an empty list.");
-      return { special_picks: [] };
+        if (!output) {
+          // Safety net: if the model returns null despite the prompt, return an empty valid object.
+          console.warn("FBW Special AI analysis returned null/undefined, defaulting to an empty list.");
+          return { special_picks: [] };
+        }
+        
+        if (output.special_picks.length > 10) {
+            console.warn(`AI generated ${output.special_picks.length} special picks, over the limit. Slicing.`);
+            output.special_picks = output.special_picks.slice(0, 10);
+        }
+        
+        return output;
+
+    } catch (error) {
+        console.error("Error during AI prompt execution for FBW Special. Returning empty list.", error);
+        // Safety net for any other parsing or execution error.
+        return { special_picks: [] };
     }
-    
-    if (output.special_picks.length > 10) {
-        // This is a safeguard. The AI should respect the prompt's limit.
-        console.warn(`AI generated ${output.special_picks.length} special picks, which is over the 10 limit. Slicing the array.`);
-        output.special_picks = output.special_picks.slice(0, 10);
-    }
-    
-    return output;
   }
 );
