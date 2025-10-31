@@ -125,10 +125,10 @@ function MatchesPageContent() {
   const [selectedDate, setSelectedDate] = React.useState<string>('');
 
   // Unconditional hook calls
-  const userDocQuery = useMemo(() => (firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null), [firestore, user]);
+  const userDocQuery = React.useMemo(() => (firestore && user ? query(collection(firestore, 'users'), where('uid', '==', user.uid)) : null), [firestore, user]);
   const { data: userData, loading: userDataLoading } = useCollection(userDocQuery);
 
-  const favoritesQuery = useMemo(() => (firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null), [firestore, user]);
+  const favoritesQuery = React.useMemo(() => (firestore && user ? collection(firestore, `users/${user.uid}/favorites`) : null), [firestore, user]);
   const { data: favorites } = useCollection<Favorite>(favoritesQuery);
   
   const favoriteIds = React.useMemo(() => new Set(favorites?.map(f => f.id)), [favorites]);
