@@ -110,7 +110,6 @@ function MatchesPageContent() {
   const [matches, setMatches] = React.useState<ApiMatch[]>([]);
   const [groupedMatches, setGroupedMatches] = React.useState<GroupedMatches>({});
   const [isLoading, setIsLoading] = React.useState(true);
-  const isVip = false; // Mock vip status
   const [searchQuery, setSearchQuery] = React.useState('');
   const [debouncedSearchQuery] = useDebounce(searchQuery, 300);
   const [searchResults, setSearchResults] = React.useState<ApiTeam[]>([]);
@@ -119,9 +118,8 @@ function MatchesPageContent() {
   const searchParams = useSearchParams();
   const dateFromParams = searchParams.get('date');
 
-  // We need a state that is only set on the client.
-  const [selectedDate, setSelectedDate] = React.useState<string | null>(null);
-
+  const [selectedDate, setSelectedDate] = React.useState<string>('');
+  
   React.useEffect(() => {
     // This effect runs only on the client, after hydration.
     // It sets the date to either the one from the URL or today's date.
@@ -129,7 +127,12 @@ function MatchesPageContent() {
   }, [dateFromParams]);
 
 
-  const { user } = useUser();
+  const { user, loading: userLoading } = useUser();
+  const { data: userData, loading: userDataLoading } = useCollection(
+    useFirestore() && user ? query(collection(useFirestore()!, 'users'), where('uid', '==', user.uid)) : null
+  );
+  const isVip = userData?.[0]?.isVip || false;
+
   const firestore = useFirestore();
   const { toast } = useToast();
 
@@ -180,7 +183,6 @@ function MatchesPageContent() {
       }
     }
     
-    // Only fetch matches if a date has been set (on client-side)
     if (selectedDate) {
         fetchMatches(selectedDate);
     }
@@ -310,15 +312,8 @@ function MatchesPageContent() {
     return "font-medium";
   };
   
-  // While waiting for the client-side effect to set the date, show a loader.
-  if (!selectedDate) {
-    return (
-        <div className="flex justify-center items-center h-[calc(100vh-5rem)]">
-            <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        </div>
-    );
-  }
-
+  const pageIsLoading = isLoading || userLoading || userDataLoading || !selectedDate;
+  
   return (
     <div className="flex-1 space-y-4 p-4 pt-6 md:p-8">
       {/* Header */}
@@ -365,7 +360,7 @@ function MatchesPageContent() {
         <MatchFilterControls selectedDate={selectedDate} isVip={isVip} />
       </div>
 
-      {isLoading ? (
+      {pageIsLoading ? (
         <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
@@ -454,5 +449,3 @@ export default function MatchesPage() {
         </React.Suspense>
     )
 }
-
-    

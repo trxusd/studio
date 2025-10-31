@@ -183,10 +183,15 @@ export default function PredictionsPage() {
   const firestore = useFirestore();
 
   const [canAccessSecureTrial, setCanAccessSecureTrial] = useState(false);
+  const [today, setToday] = useState('');
   const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+    setToday(new Date().toISOString().split('T')[0]);
+  }, []);
 
-  const today = new Date().toISOString().split('T')[0];
-  const categoriesQuery = firestore 
+  const categoriesQuery = firestore && today
     ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published"))
     : null;
     
@@ -199,15 +204,11 @@ export default function PredictionsPage() {
   const canAccessVip = isUserAdmin || isVip;
 
   useEffect(() => {
-    // This now only runs on the client.
-    setIsClient(true);
-    if (!userLoading && user?.metadata.creationTime) {
+    if (user && user.metadata.creationTime) {
       const accountAgeInDays = differenceInDays(new Date(), new Date(user.metadata.creationTime));
       setCanAccessSecureTrial(isUserAdmin || isVip || accountAgeInDays < 10);
-    } else if (!userLoading) {
-      setCanAccessSecureTrial(isUserAdmin || isVip);
     }
-  }, [user, userLoading, isUserAdmin, isVip]);
+  }, [user, isUserAdmin, isVip]);
 
   const isLoading = userLoading || profileLoading || predictionsLoading || !isClient;
 
@@ -263,7 +264,7 @@ export default function PredictionsPage() {
 
 
       {!isLoading && !noPredictionsAvailable && (
-        <div className="space-y-6">
+        <div className="space-y-8">
             {/* FBW Special Section */}
             {canAccessVip && predictions.fbw_special.length > 0 && (
                 <section>
@@ -290,14 +291,14 @@ export default function PredictionsPage() {
             )}
 
             {/* Free and Paid Sections Wrapper */}
-            <div className="space-y-8">
-                {(hasFreePredictions && predictions.free_individual.length > 0 || predictions.free_coupon.length > 0 || (isClient && canAccessSecureTrial && predictions.secure_trial.length > 0)) && (
-                  <section className="space-y-4">
+            <section className="space-y-8">
+                {(hasFreePredictions && predictions.free_individual.length > 0 || predictions.free_coupon.length > 0 || (canAccessSecureTrial && predictions.secure_trial.length > 0)) && (
+                  <div className="space-y-4">
                     <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
                       Free Section
                     </h3>
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                      {isClient && canAccessSecureTrial && renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial)}
+                      {canAccessSecureTrial && renderCouponCard('secure_trial', 'Secure Trial', 'Try our predictions risk-free with our secure offer.', <ShieldCheck className="h-6 w-6 text-primary" />, predictions.secure_trial)}
                       {renderCouponCard('free_coupon', 'Free Coupon', 'Access free coupons for special predictions.', <Ticket className="h-6 w-6 text-primary" />, predictions.free_coupon)}
                       
                       {predictions.free_individual.length > 0 && (
@@ -317,12 +318,12 @@ export default function PredictionsPage() {
                          </Card>
                       )}
                     </div>
-                  </section>
+                  </div>
                 )}
                 
                 <Separator />
 
-                  <section className="space-y-6">
+                  <div className="space-y-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                         <div>
                             <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2 text-yellow-500">
@@ -334,11 +335,10 @@ export default function PredictionsPage() {
                         </div>
                     </div>
                     <PaidSectionContent predictions={predictions} isVip={isVip} canAccessVip={canAccessVip} />
-                  </section>
-            </div>
+                  </div>
+            </section>
         </div>
       )}
     </div>
   );
 }
-

@@ -31,8 +31,8 @@ export default function DashboardPage() {
   const [statsLoading, setStatsLoading] = useState(true);
   const [today, setToday] = useState('');
 
+  // Set date on client-side to avoid hydration mismatch
   useEffect(() => {
-    // Set date on client-side to avoid hydration mismatch
     setToday(new Date().toISOString().split('T')[0]);
   }, []);
 
@@ -41,7 +41,7 @@ export default function DashboardPage() {
   const { data: userData, loading: userDataLoading } = useCollection<{ isVip?: boolean; vipPlan?: string }>(userQuery);
   const vipStatus = userData?.[0];
 
-  // Fetch today's predictions
+  // Fetch today's predictions - This now depends on the `today` state
   const categoriesQuery = firestore && today ? query(collection(firestore, `predictions/${today}/categories`), where("status", "==", "published")) : null;
   const { data: publishedCategories, loading: predictionsLoading } = useCollection<PredictionCategoryDoc>(categoriesQuery);
   
@@ -95,7 +95,7 @@ export default function DashboardPage() {
       }
     }
 
-    // Only run fetchStats on the client after the component mounts
+    // Only run fetchStats on the client after the component mounts and firestore is available
     if (firestore) {
         fetchStats();
     }
@@ -120,6 +120,7 @@ export default function DashboardPage() {
 
   }, [publishedCategories]);
 
+  // Combined loading state
   const isLoading = userLoading || userDataLoading || predictionsLoading || statsLoading || !today;
 
   if (isLoading) {
