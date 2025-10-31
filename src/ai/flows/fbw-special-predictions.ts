@@ -160,7 +160,7 @@ async function fetchMatchesForAI() {
       .map((match: any) => ({
         fixture_id: match.fixture.id,
         date: match.fixture.date,
-        time: match.fixture.date,
+        time: new Date(match.fixture.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
         home_team: match.teams.home.name,
         home_team_id: match.teams.home.id,
         away_team: match.teams.away.name,
@@ -186,8 +186,9 @@ RÈGLES D'OR (NON-NÉGOCIABLES):
 2.  **Règle H2H #1:** Si l'outil 'fetchH2HMatches' retourne moins de 4 matchs, le match est IMMÉDIATEMENT disqualifié. Ignore-le.
 3.  **Règle H2H #2:** Si l'outil ne retourne aucun match (zéro H2H), il est STRICTEMENT INTERDIT de faire une prédiction. Ignore le match.
 4.  **Règle H2H #3 pour 'Under 2.5':** Si l'historique H2H montre des scores comme 3-0, 2-1, 1-0 ou 1-2, il est INTERDIT de prédire 'Under 2.5'. Les meilleures options sont '1X' (Double Chance), 'Victoire' (avec risque), ou 'Over 1.5'.
-5.  **Qualité > Quantité:** Ne sélectionne QUE les matchs où tu as une confiance EXTRÊME (85% à 99%). Si aucun match ne respecte tes critères après analyse, retourne une liste vide.
+5.  **Qualité > Quantité:** Ne sélectionne QUE les matchs où tu as une confiance EXTRÊME (85% à 99%).
 6.  **Fixture ID Obligatoire:** Chaque prédiction DOIT inclure le 'fixture_id' correct.
+7.  **Sortie JSON Obligatoire:** Si, après ton analyse, AUCUN match ne se qualifie, tu DOIS retourner un objet JSON avec une clé "special_picks" contenant un tableau vide. Exemple : { "special_picks": [] }. Ne retourne JAMAIS null.
 
 CRITÈRES D'ANALYSE ADDITIONNELS:
 - Forme récente (5 derniers matchs), blessures clés, importance du match.
@@ -195,7 +196,7 @@ CRITÈRES D'ANALYSE ADDITIONNELS:
 
 TYPES DE PARIS AUTORISÉS:
 - 1X2 (Home Win, Draw, Away Win)
-- Over/Under (sauf les restrictions de la règle #3)
+- Over/Under (sauf les restrictions de la règle #4)
 - Both Teams to Score (BTTS)
 - Double Chance (1X, X2, 12)
 
@@ -206,12 +207,12 @@ FORMAT DE SORTIE:
 const prompt = ai.definePrompt({
     name: 'fbwSpecialPrompt',
     tools: [fetchH2HMatches],
-    input: { schema: z.object({ matches: z.array(z.any()) }) }, // Keep schema for context, but we won't require it
+    input: { schema: z.object({ matches: z.array(z.any()) }) },
     output: { schema: FBWSpecialOutputSchema },
     system: systemPrompt,
     prompt: `Analyse la liste de matchs du jour. Pour chaque match, utilise l'outil 'fetchH2HMatches' et respecte SCRUPULEUSEMENT les règles d'or pour construire la liste "FBW SPECIAL".
     Produis une liste contenant entre 3 et 10 prédictions de très haute confiance.
-    Si aucun match ne satisfait les critères, retourne un tableau "special_picks" vide.
+    Si aucun match ne satisfait les critères, retourne un tableau "special_picks" vide, comme demandé dans les règles.
     
     Matches du jour: {{{json matches}}}
     
@@ -234,15 +235,17 @@ const fbwSpecialPredictionsFlow = ai.defineFlow(
     const { output } = await prompt({ matches });
 
     if (!output) {
-      throw new Error("FBW Special AI analysis did not return any output.");
+      // This path should ideally not be taken anymore due to the updated prompt.
+      console.warn("FBW Special AI analysis returned null/undefined, defaulting to an empty list.");
+      return { special_picks: [] };
     }
     
     if (output.special_picks.length > 10) {
-        throw new Error(`Validation Error: AI generated ${output.special_picks.length} special picks, which is over the 10 limit.`);
+        // This is a safeguard. The AI should respect the prompt's limit.
+        console.warn(`AI generated ${output.special_picks.length} special picks, which is over the 10 limit. Slicing the array.`);
+        output.special_picks = output.special_picks.slice(0, 10);
     }
     
     return output;
   }
 );
-
-    
