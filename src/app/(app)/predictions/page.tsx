@@ -293,7 +293,7 @@ export default function PredictionsPage() {
             )}
 
             {/* Free and Paid Sections */}
-            {hasFreePredictions ? (
+            {(hasFreePredictions && predictions.free_individual.length > 0 || predictions.free_coupon.length > 0 || (canAccessSecureTrial && predictions.secure_trial.length > 0)) && (
               <section className="space-y-4">
                 <h3 className="font-headline text-2xl font-semibold tracking-tight flex items-center gap-2">
                   Free Section
@@ -320,7 +320,7 @@ export default function PredictionsPage() {
                   )}
                 </div>
               </section>
-            ) : null}
+            )}
             
             <Separator />
 
@@ -342,3 +342,4 @@ export default function PredictionsPage() {
     </div>
   );
 }
+
