@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AppLogo } from "@/components/icons";
-import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft, Sparkles, Loader2, UserCog, Megaphone } from "lucide-react";
+import { Home, Users, Ticket, LineChart, CheckCheck, Crown, Trophy, ArrowLeft, Sparkles, Loader2, UserCog, Megaphone, Star } from "lucide-react";
 import { useUser } from "@/firebase";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -19,6 +19,7 @@ const navItems = [
     { href: "/admin/check-results", icon: Trophy, label: "Check Results" },
     { href: "/admin/coupons", icon: Ticket, label: "Coupons" },
     { href: "/admin/official-predictions", icon: Sparkles, label: "Official Predictions" },
+    { href: "/admin/fbw-special", icon: Star, label: "FBW Special" },
 ];
 
 const adminEmails = ['trxusdt87@gmail.com', 'footbetwin2025@gmail.com'];

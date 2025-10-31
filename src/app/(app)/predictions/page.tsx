@@ -217,7 +217,7 @@ export default function PredictionsPage() {
   const predictions = useMemo(() => {
     const structuredData = {
         secure_trial: [], exclusive_vip_1: [], exclusive_vip_2: [], exclusive_vip_3: [],
-        individual_vip: [], free_coupon: [], free_individual: [],
+        individual_vip: [], free_coupon: [], free_individual: [], fbw_special: [],
     } as Record<string, MatchPrediction[]>;
 
     if (!publishedCategories) return structuredData;
@@ -267,6 +267,32 @@ export default function PredictionsPage() {
 
       {!isLoading && !noPredictionsAvailable && (
         <>
+            {/* FBW Special Section */}
+            {canAccessVip && predictions.fbw_special.length > 0 && (
+                <section>
+                    <Card className="mt-8 border-blue-500/50 bg-gradient-to-br from-blue-400/20 to-transparent">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-3 text-blue-300"><Star className="text-blue-400 fill-blue-400" /> FBW Special</CardTitle>
+                            <CardDescription className="text-blue-300/80">
+                                Our most elite, highly-confident predictions.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-1">
+                             {predictions.fbw_special.map((match, index) => (
+                                <div key={index} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-blue-400/10">
+                                  <div className="flex-1 truncate pr-2">
+                                    <p className="font-medium truncate">{match.match}</p>
+                                    <p className="text-blue-300/70">{match.prediction}</p>
+                                  </div>
+                                  <Badge variant="outline" className="font-bold border-blue-400 text-blue-300 bg-blue-900/50">{match.odds?.toFixed(2)}</Badge>
+                                </div>
+                              ))}
+                        </CardContent>
+                    </Card>
+                </section>
+            )}
+
+
             {/* Free Section */}
             {hasFreePredictions && (
               <section className="space-y-4">
