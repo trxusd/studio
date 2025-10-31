@@ -160,7 +160,7 @@ function AuthForm() {
           friendlyMessage = 'Sign-in process was cancelled.';
           break;
         case 'auth/account-exists-with-different-credential':
-          friendlyMessage = 'An account already exists with this email. Please sign in using your original method.';
+          friendlyMessage = 'An account already exists with this email. Please use a different sign-in method.';
           break;
         default:
           friendlyMessage = 'Could not sign in with Facebook. Please try again.';
@@ -171,30 +171,27 @@ function AuthForm() {
     }
   };
 
-
-  const handlePasswordReset = () => {
+  const handleForgotPassword = () => {
     if (!auth || !email) {
-      toast({
-        title: "Email required",
-        description: "Please enter your email address to reset your password.",
-        variant: "destructive"
-      });
+      setError("Please enter your email address to reset your password.");
       return;
     }
-    setIsLoading(true);
     sendPasswordResetEmail(auth, email)
       .then(() => {
         toast({
           title: "Password Reset Email Sent",
-          description: "Check your inbox for password reset instructions.",
+          description: "Check your inbox for a link to reset your password.",
         });
       })
       .catch((err) => {
-        setError(err.message);
-      })
-      .finally(() => setIsLoading(false));
+        let friendlyMessage = "Could not send password reset email. Please try again.";
+        if (err.code === 'auth/user-not-found') {
+          friendlyMessage = "No user found with this email address."
+        }
+        setError(friendlyMessage);
+      });
   };
-  
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -203,62 +200,71 @@ function AuthForm() {
           <span className="font-headline text-2xl font-bold">FOOTBET-WIN</span>
         </Link>
         <Card className="shadow-2xl">
-            <CardHeader className="text-center">
-                 <CardTitle>Sign In</CardTitle>
-                <CardDescription>Sign in to access your predictions</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email-signin">Email</Label>
-                    <Input id="email-signin" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <Label htmlFor="password-signin">Password</Label>
-                      <Button variant="link" className="ml-auto inline-block h-auto p-0 text-sm" onClick={handlePasswordReset}>
-                        Forgot your password?
-                      </Button>
-                    </div>
-                    <div className="relative">
-                      <Input id="password-signin" type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)} />
-                      <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
-                        {showPassword ? <EyeOff className="h-4 w-4"/> : <Eye className="h-4 w-4"/>}
-                      </Button>
-                    </div>
-                  </div>
-                  {error && <p className="text-sm text-destructive">{error}</p>}
-                  <Button onClick={handleSignIn} className="w-full font-bold" disabled={isLoading || isGoogleLoading || isFacebookLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign In
-                  </Button>
-                   <p className="text-center text-sm text-muted-foreground">
-                      Don&apos;t have an account?{' '}
-                      <Link href="/signup" className="font-bold underline text-primary">
-                        Sign Up
-                      </Link>
-                    </p>
-                </div>
+          <CardHeader className="text-center">
+            <CardTitle>Welcome Back!</CardTitle>
+            <CardDescription>
+              Sign in to access your dashboard and predictions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Button variant="outline" className="w-full" onClick={handleGoogleSignIn} disabled={isGoogleLoading || isLoading}>
+                  {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Chrome className="mr-2 h-4 w-4" />}
+                   Google
+                </Button>
+                 <Button variant="outline" className="w-full" onClick={handleFacebookSignIn} disabled={isFacebookLoading || isLoading}>
+                    {isFacebookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Facebook className="mr-2 h-4 w-4" />}
+                     Facebook
+                </Button>
+              </div>
 
-                <div className="relative my-4">
-                    <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-                    </div>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Button variant="outline" onClick={handleGoogleSignIn} disabled={isLoading || isGoogleLoading || isFacebookLoading}>
-                     {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Chrome className="mr-2 h-4 w-4" />}
-                     Google
-                  </Button>
-                  <Button variant="outline" onClick={handleFacebookSignIn} disabled={isLoading || isGoogleLoading || isFacebookLoading}>
-                    {isFacebookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Facebook className="mr-2 h-4 w-4" />} 
-                    Facebook
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                   <Button variant="link" className="h-auto p-0 text-xs" onClick={handleForgotPassword}>
+                    Forgot password?
                   </Button>
                 </div>
-            </CardContent>
+                <div className="relative">
+                  <Input id="password" type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={() => setShowPassword(!showPassword)}>
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              {error && <p className="text-sm text-destructive">{error}</p>}
+
+              <Button onClick={handleSignIn} className="w-full font-bold" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Sign In
+              </Button>
+
+              <p className="text-center text-sm text-muted-foreground">
+                Don&apos;t have an account?{' '}
+                <Link href="/signup" className="font-bold underline text-primary">
+                  Sign Up
+                </Link>
+              </p>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </div>
@@ -267,7 +273,11 @@ function AuthForm() {
 
 export default function LoginPage() {
     return (
-        <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
+        <Suspense fallback={
+            <div className="flex justify-center items-center h-screen">
+                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+            </div>
+        }>
             <AuthForm />
         </Suspense>
     )
